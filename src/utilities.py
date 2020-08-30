@@ -3,8 +3,9 @@
 # utilities.py
 """Common functions for the IQDM-Analytics repository."""
 # Copyright (c) 2020 Dan Cutright
-# This file is part of AAPM IMRT QA Data Mining project
-# https://iqdm.github.io/
+# This file is part of DVHA-Stats
+#
+# https://github.com/cutright/DVHA-Stats
 
 import numpy as np
 

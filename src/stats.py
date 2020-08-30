@@ -4,6 +4,8 @@
 """Statistical calculations for the DVH Analytics"""
 # Copyright (c) 2020 Dan Cutright
 # Copyright (c) 2020 Arka Roy
+#
+# https://github.com/cutright/DVHA-Stats
 
 
 from os.path import isfile, splitext
