@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # stats.py
-"""Statistical calculations for the DVH Analytics"""
+"""Statistical calculations for DVH Analytics"""
 # Copyright (c) 2020 Dan Cutright
 # Copyright (c) 2020 Arka Roy
 #
@@ -97,7 +97,7 @@ class DVHAStats:
 
         return {"Q": Q, "CL": cl, "UCL": ucl, "OOC": ooc}
 
-    def univariate_control_limits(self, std=3, ucl=None, lcl=None):
+    def univariate_control_limits(self, std=3, ucl_limit=None, lcl_limit=None):
         """
         Calculate control limits for a standard univariate Control Chart
 
@@ -106,10 +106,10 @@ class DVHAStats:
         std : int, float, optional
             Number of standard deviations used to calculate if a y-value is
             out-of-control
-        ucl : float, optional
-            Over-ride the upper control limit
-        lcl : float, optional
-            Over-ride the lower control limit
+        ucl_limit : float, optional
+            Limit the upper control limit to this value
+        lcl_limit : float, optional
+            Limit the lower control limit to this value
 
         Returns
         ----------
@@ -117,7 +117,7 @@ class DVHAStats:
             Output from get_control_limits stored in a dictionary with
             var_names as keys
         """
-        kwargs = {"std": std, "ucl": ucl, "lcl": lcl}
+        kwargs = {"std": std, "ucl_limit": ucl_limit, "lcl_limit": lcl_limit}
         data = {}
         for i, key in enumerate(self.var_names):
             data[key] = get_control_limits(self.data[:, i], **kwargs)
@@ -287,7 +287,7 @@ def hotelling_t2_control_limit(x, observations, variables):
     return ((N - 1) ** 2 / N) * beta.ppf(x, a, b)
 
 
-def get_control_limits(y, std=3, ucl=None, lcl=None):
+def get_control_limits(y, std=3, ucl_limit=None, lcl_limit=None):
     """
     Calculate control limits for a standard univariate Control Chart
 
@@ -298,10 +298,10 @@ def get_control_limits(y, std=3, ucl=None, lcl=None):
     std : int, float, optional
         Number of standard deviations used to calculate if a y-value is
         out-of-control.
-    ucl : float, optional
-        Over-ride the upper control limit
-    lcl : float, optional
-        Over-ride the lower control limit
+    ucl_limit : float, optional
+        Limit the upper control limit to this value
+    lcl_limit : float, optional
+        Limit the lower control limit to this value
 
     Returns
     ----------
@@ -321,8 +321,11 @@ def get_control_limits(y, std=3, ucl=None, lcl=None):
 
     sigma = avg_moving_range / scalar_d
 
-    ucl = center_line + std * sigma if ucl is None else ucl
-    lcl = center_line - std * sigma if lcl is None else lcl
+    ucl = center_line + std * sigma
+    lcl = center_line - std * sigma
+
+    ucl = ucl_limit if ucl_limit is not None and ucl > ucl_limit else ucl
+    lcl = lcl_limit if lcl_limit is not None and lcl < lcl_limit else lcl
 
     return {
         "CL": center_line,

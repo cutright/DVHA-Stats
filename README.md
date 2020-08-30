@@ -1,11 +1,25 @@
 # DVHA-Stats
 Statistics library for DVH Analytics
 
-### Hotelling T^2
-Example to calculate the Hotelling T^2 values from a csv file
+### Univariate Control Chart
 ~~~
 >>> from src.stats import DVHAStats
 >>> s = DVHAStats("tests/data/multivariate_data.csv")
+>>> uni_cc = s.univariate_control_limits()
+>>> for key, value in uni_cc.items(lcl_limit=0):
+...     print(key, value)
+V1 {'CL': 42.844927536231886, 'UCL': 63.48009649743339, 'LCL': 22.209758575030385, 'sigma': 6.878389653733834, 'OOC': [3, 41, 50, 51], 'OOC_high': [3], 'OOC_low': [41, 50, 51]}
+V2 {'CL': 35.18405797101449, 'UCL': 58.799514792040775, 'LCL': 11.568601149988204, 'sigma': 7.871818940342095, 'OOC': [23, 41, 50, 51, 60], 'OOC_high': [], 'OOC_low': [23, 41, 50, 51, 60]}
+V3 {'CL': 26.160869565217386, 'UCL': 53.984711868095985, 'LCL': 0, 'sigma': 9.274614100959534, 'OOC': [], 'OOC_high': [], 'OOC_low': []}
+V4 {'CL': 16.51159420289855, 'UCL': 45.98593713155938, 'LCL': 0, 'sigma': 9.824780976220278, 'OOC': [3], 'OOC_high': [3], 'OOC_low': []}
+V5 {'CL': 9.175362318840579, 'UCL': 29.54457383323357, 'LCL': 0, 'sigma': 6.78973717146433, 'OOC': [3, 5, 57], 'OOC_high': [3, 5, 57], 'OOC_low': []}
+V6 {'CL': 5.636231884057971, 'UCL': 18.51952349857612, 'LCL': 0, 'sigma': 4.294430538172716, 'OOC': [3, 5, 57], 'OOC_high': [3, 5, 57], 'OOC_low': []}
+
+~~~
+
+### Hotelling T^2
+Example to calculate the Hotelling T^2 values from a csv file
+~~~
 >>> ht2 = s.hotelling_t2()
 >>> print(ht2)
 {'Q': array([ 5.75062092,  3.80141786,  3.67243782, 18.80124504,  2.03849294,
@@ -25,14 +39,4 @@ Example to calculate the Hotelling T^2 values from a csv file
  'CL': 5.375227273052731,
  'UCL': 13.554640306113994,
  'OOC': [3, 5, 13, 23, 50, 51, 57, 60, 65]}
->>> uni_cc = s.univariate_control_limits()
->>> for key, value in uni_cc.items():
-...     print(key, value)
-V1 {'CL': 42.844927536231886, 'UCL': 63.48009649743339, 'LCL': 22.209758575030385, 'sigma': 6.878389653733834, 'OOC': [3, 41, 50, 51], 'OOC_high': [3], 'OOC_low': [41, 50, 51]}
-V2 {'CL': 35.18405797101449, 'UCL': 58.799514792040775, 'LCL': 11.568601149988204, 'sigma': 7.871818940342095, 'OOC': [23, 41, 50, 51, 60], 'OOC_high': [], 'OOC_low': [23, 41, 50, 51, 60]}
-V3 {'CL': 26.160869565217386, 'UCL': 53.984711868095985, 'LCL': -1.6629727376612173, 'sigma': 9.274614100959534, 'OOC': [], 'OOC_high': [], 'OOC_low': []}
-V4 {'CL': 16.51159420289855, 'UCL': 45.98593713155938, 'LCL': -12.962748725762285, 'sigma': 9.824780976220278, 'OOC': [3], 'OOC_high': [3], 'OOC_low': []}
-V5 {'CL': 9.175362318840579, 'UCL': 29.54457383323357, 'LCL': -11.193849195552412, 'sigma': 6.78973717146433, 'OOC': [3, 5, 57], 'OOC_high': [3, 5, 57], 'OOC_low': []}
-V6 {'CL': 5.636231884057971, 'UCL': 18.51952349857612, 'LCL': -7.247059730460179, 'sigma': 4.294430538172716, 'OOC': [3, 5, 57], 'OOC_high': [3, 5, 57], 'OOC_low': []}
-
 ~~~

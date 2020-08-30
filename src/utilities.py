@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # utilities.py
-"""Common functions for the IQDM-Analytics repository."""
+"""Common functions for the DVHA-Stats."""
 # Copyright (c) 2020 Dan Cutright
 # This file is part of DVHA-Stats
 #
