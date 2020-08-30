@@ -123,6 +123,10 @@ class DVHAStats:
             data[key] = get_control_limits(self.data[:, i], **kwargs)
         return data
 
+    @property
+    def pearson_r_matrix(self):
+        return pearson_r_matrix(self.data, self.var_names)
+
 
 class MultiVariableRegression:
     """Multi-variable regression using scikit-learn"""
@@ -237,6 +241,54 @@ class MultiVariableRegression:
     @property
     def f_p_value(self):
         return scipy_stats.f.cdf(self.f_stat, self.df_model, self.df_error)
+
+
+def pearson_r_matrix(X, keys=None):
+    """Calculate a correlation matrix of Pearson-R values
+
+    Parameters
+    ----------
+    X : np.array
+        Input data (2-D) with N rows of observations and
+        p columns of variables.
+    keys : list, optional
+        Specify the names of the independent variables
+    """
+
+    keys = keys if keys is not None else list(range(len(X[:, 0])))
+
+    data = {'x_key': [],
+            'y_key': [],
+            'r': [],
+            'p': [],
+            'x_norm_p': [],
+            'y_norm_p': []}
+
+    for x in range(X.shape[1]):
+        for y in range(X.shape[1]):
+            if x > y:
+                data['x_key'].append(keys[x])
+                data['y_key'].append(keys[y])
+
+                valid_x = ~np.isnan(X[:, x])
+                valid_y = ~np.isnan(X[:, y])
+                include = np.full(len(X[:, x]), True)
+                for i in range(len(valid_x)):
+                    include[i] = valid_x[i] and valid_y[i]
+
+                x_data = X[include, x]
+                y_data = X[include, y]
+
+                r, p_value = scipy_stats.pearsonr(x_data, y_data)
+                data['r'].append(r)
+                data['p'].append(p_value)
+
+                x_norm, x_p = scipy_stats.normaltest(X[:, x])
+                y_norm, y_p = scipy_stats.normaltest(X[:, y])
+                data['x_norm_p'].append(x_p)
+                data['y_norm_p'].append(y_p)
+
+    return data
 
 
 def hotelling_t2(arr):

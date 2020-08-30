@@ -47,7 +47,10 @@ def csv_to_dict(csv_file_path, delimiter=",", dtype=None, header_row=True):
             row = line.strip().split(",")
             for c, value in enumerate(row):
                 if dtype is not None:
-                    value = dtype(value)
+                    try:
+                        value = dtype(value)
+                    except ValueError:
+                        value = np.nan
                 data[keys[c]].append(value)
 
     return data
