@@ -11,6 +11,6 @@ install:
 services:
   - xvfb
 script:
-  coverage run --source=DVHA-Stats setup.py test
+  coverage run --source=dvhastats setup.py test
 after_success:
   - codecov
