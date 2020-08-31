@@ -14,9 +14,12 @@ import numpy as np
 
 
 class Plot:
+    """Generic plotting class with matplotlib"""
+
     def __init__(
         self,
         y,
+        x=None,
         show=True,
         title="Chart",
         xlabel="Independent Variable",
@@ -24,10 +27,41 @@ class Plot:
         line=True,
         line_color=None,
         line_width=1.0,
+        line_style="-",
         scatter=True,
         scatter_color=None,
     ):
-        self.x = np.linspace(1, len(y), len(y))
+        """
+        Initialization of a general Plot class object
+
+        Parameters
+        ----------
+        y : np.ndarray, list
+            The y data to be plotted (1-D only)
+        x : np.ndarray, list, optional
+            Optionally specify the x-axis values. Otherwise index+1 is used.
+        show : bool
+            Automatically plot the data if True
+        title : str
+            Set the plot title
+        xlabel : str
+            Set the x-axis title
+        ylabel : str
+            Set the y-axis title
+        line : bool
+            Plot the data as a line series
+        line_color : str, optional
+            Specify the line color
+        line_width : float, int
+            Specify the line width
+        line_style : str
+            Specify the line style
+        scatter : bool
+            Plot the data as a scatter plot (circles)
+        scatter_color : str, optional
+            Specify the scatter plot circle color
+        """
+        self.x = np.linspace(1, len(y), len(y)) if x is None else x
         self.y = y
         self.show = show
         self.title = title
@@ -37,6 +71,7 @@ class Plot:
         self.line = line
         self.line_color = line_color
         self.line_width = line_width
+        self.line_style = line_style
         self.scatter = scatter
         self.scatter_color = scatter_color
 
@@ -67,13 +102,29 @@ class Plot:
             self.y,
             color=self.line_color,
             linewidth=self.line_width,
-            linestyle="-",
+            linestyle=self.line_style,
         )
 
     @staticmethod
-    def add_line(x, y, line_color=None, line_width=None, line_style=None):
+    def add_line(y, x=None, line_color=None, line_width=None, line_style=None):
+        """Add another line with the provided data
+
+        Parameters
+        ----------
+        y : np.ndarray, list
+            The y data to be plotted (1-D only)
+        x: np.ndarray, list, optional
+            Optionally specify the x-axis values. Otherwise index+1 is used.
+        line_color: str, optional
+            Specify the line color
+        line_width: float, int
+            Specify the line width
+        line_style : str
+            Specify the line style
+        :
+        """
         plt.plot(
-            x,
+            np.linspace(1, len(y), len(y)) if x is None else x,
             y,
             color=line_color,
             linewidth=line_width,
@@ -82,6 +133,8 @@ class Plot:
 
 
 class ControlChart(Plot):
+    """ControlChart class object inherited from Plot"""
+
     def __init__(
         self,
         y,
@@ -94,9 +147,35 @@ class ControlChart(Plot):
         ylabel="Charting Variable",
         line_color="black",
         line_width=0.75,
-        scatter_color=None,
         **kwargs
     ):
+        """Initialization of a ControlChart plot class object
+
+        Parameters
+        ----------
+        y : np.ndarray, list
+            Charting data
+        out_of_control : np.ndarray, list
+            The indices of y that are out-of-control
+        center_line : float, np.ndarray
+            The center line value (e.g., np.mean(y))
+        lcl : float, optional
+            The lower control limit (LCL). Line omitted if lcl is None.
+        ucl : float, optional
+            The upper control limit (UCL). Line omitted if ucl is None.
+        title: str
+            Set the plot title
+        xlabel: str
+            Set the x-axis title
+        ylabel: str
+            Set the y-axis title
+        line_color: str, optional
+            Specify the line color
+        line_width: float, int
+            Specify the line width
+        kwargs : any
+            Any additional keyword arguments applicable to the Plot class
+        """
         self.center_line = center_line
         self.lcl = lcl
         self.ucl = ucl
@@ -106,7 +185,6 @@ class ControlChart(Plot):
         kwargs["ylabel"] = ylabel
         kwargs["line_color"] = line_color
         kwargs["line_width"] = line_width
-        kwargs["scatter_color"] = scatter_color
         Plot.__init__(self, y, **kwargs)
 
         if "line_color" not in list(kwargs):

@@ -1,8 +1,48 @@
-# DVHA-Stats
-Statistics library for DVH Analytics
+# DVHA Stats
+A library of prediction and statistical process control tools. Although based 
+on work in [DVH Analytics](http://dvhanalytics.com), all tools in this library 
+are generic and not specifically applicable to any one field.
 
+What does it do?
+* Read data from CSV or supply as numpy array 
+* Plotting
+    * Simple one-variable plots from data
+    * Control Charts
+    * Multivariate Control Charts
+* Perform Box-Cox transformations
+* Calculate Pearson-R correlation matrices
+* Perform Multi-Variable Linear Regressions
 
-### Intialize and Plot Data
+Coming Soon:
+- [ ] PyPI installation
+- [ ] Multi-Variable Regression plots
+- [ ] Backward-elimination for Multi-Variable Linear Regressions
+- [ ] Risk-Adjusted Control Charts using Multi-Variable Linear Regressions
+- [ ] Machine learning regressions based on scikit-learn
+- [ ] Complete unit testing
+
+**NOTE**: This project is brand new and very much under construction.
+
+Source-Code Installation
+---------
+~~~
+pip install git+https://github.com/cutright/DVHA-Stats.git
+~~~
+Or clone the project and run:
+~~~
+python setup.py install
+~~~
+
+Dependencies
+---------
+* [Python](https://www.python.org) >3.5
+* [SciPy](https://scipy.org)
+* [NumPy](http://numpy.org)
+* [Scikit-learn](http://scikit-learn.org)
+* [regressors](https://pypi.org/project/regressors/)
+* [matplotlib](http://matplotlib.org/)
+
+### Initialize and Plot Data
 ~~~
 >>> from dvhastats.stats import DVHAStats
 >>> s = DVHAStats("tests/testdata/multivariate_data.csv")
@@ -21,7 +61,7 @@ array([56.5, 48.1, 48.3, 65.1, 47.1, 49.9, 49.5, 48.9, 35.5, 44.5, 40.3,
 
 ### Univariate Control Chart
 ~~~
->>> ucc = s.univariate_control_limits()
+>>> ucc = s.univariate_control_charts()
 >>> print(ucc.keys())
 dict_keys(['V1', 'V2', 'V3', 'V4', 'V5', 'V6'])
 

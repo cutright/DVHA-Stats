@@ -23,7 +23,7 @@ from regressors import stats as regressors_stats
 
 
 class DVHAStats:
-    def __init__(self, data, var_names=None):
+    def __init__(self, data, var_names=None, x_axis=None):
         """Class used to calculated various statistics
 
         Parameters
@@ -34,7 +34,9 @@ class DVHAStats:
             for column names.
         var_names : list of str, optional
             If data is a numpy array, optionally provide the column names.
-
+        x_axis : numpy.array, list, optional
+            Specify x_axis for plotting purposes. Default is based on row
+            number in data
         """
         if isinstance(data, np.ndarray):
             self.data = data
@@ -54,13 +56,17 @@ class DVHAStats:
             )
             raise NotImplementedError(msg)
 
+        self.x_axis = x_axis
+
         self.box_cox_data = None
 
     def get_data_by_var_name(self, var_name):
+        """Get the single variable array based on var_name"""
         index = self.get_index_by_var_name(var_name)
         return self.data[:, index]
 
     def get_index_by_var_name(self, var_name):
+        """Get the variable index by var_name"""
         if var_name in self.var_names:
             index = self.var_names.index(var_name)
         else:
@@ -83,19 +89,59 @@ class DVHAStats:
 
     @property
     def pearson_r_matrix(self):
+        """Get a Pearson-R correlation matrix and associated p-value matrix
+
+        Returns
+        ----------
+        np.ndarray, np.ndarray
+            A tuple of symmetric, pxp arrays are returned: PearsonR and its
+            p-values.
+        """
         return pearson_r_matrix(self.data)
 
     @property
     def normality(self):
+        """Calculate the normality and associated p-values for each variable
+
+        Returns
+        ----------
+        np.ndarray, np.ndarray
+            A tuple of 1-D arrays are returned: Normality and its
+            p-values.
+        """
         norm, p = np.zeros(self.variable_count), np.zeros(self.variable_count)
         for i in range(self.variable_count):
             norm[i], p[i] = scipy_stats.normaltest(self.data[:, i])
         return norm, p
 
     def linear_reg(self, y, saved_reg=None):
+        """Initialize a MultiVariableRegression class object
+
+        Parameters
+        ----------
+        y : np.ndarray, list
+            Dependent data based on DVHAStats.data
+        saved_reg : MultiVariableRegression, optional
+            If supplied, predicted values (y-hat) will be calculated with
+            DVHAStats.data and the regression from saved_reg. This is useful
+            if testing a regression model on new data.
+
+        Returns
+        ----------
+        MultiVariableRegression
+            A MultiVariableRegression class object.
+        """
         return MultiVariableRegression(self.data, y, saved_reg)
 
-    def univariate_control_charts(self, std=3, ucl_limit=None, lcl_limit=None):
+    def univariate_control_charts(
+        self,
+        std=3,
+        ucl_limit=None,
+        lcl_limit=None,
+        box_cox=False,
+        box_cox_alpha=None,
+        box_cox_lmbda=None,
+    ):
         """
         Calculate control limits for a standard univariate Control Chart
 
@@ -108,18 +154,37 @@ class DVHAStats:
             Limit the upper control limit to this value
         lcl_limit : float, optional
             Limit the lower control limit to this value
+        box_cox : bool, optional
+            Set to true to perform a Box-Cox transformation on data prior to
+            calculating the control chart statistics
+        box_cox_alpha : float, optional
+            If alpha is not None, return the 100 * (1-alpha)% confidence
+            interval for lmbda as the third output argument. Must be between
+            0.0 and 1.0.
+        box_cox_lmbda : float, optional
+            If lmbda is not None, do the transformation for that value.
+            If lmbda is None, find the lambda that maximizes the log-likelihood
+            function and return it as the second output argument.
 
         Returns
         ----------
         dict
             ControlChartData class objects stored in a dictionary with
-            var_names as keys
+            var_names and indices as keys (can use var_name or index)
         """
         kwargs = {"std": std, "ucl_limit": ucl_limit, "lcl_limit": lcl_limit}
         data = {}
+        if box_cox:
+            if self.box_cox_data is None:
+                self.box_cox(alpha=box_cox_alpha, lmbda=box_cox_lmbda)
+            cc_data = self.box_cox_data
+            plot_title = "Univariate Control Chart with Box-Cox Transformation"
+        else:
+            cc_data = self.data
+            plot_title = None
         for i, key in enumerate(self.var_names):
             data[key] = ControlChartData(
-                self.data[:, i], var_name=key, **kwargs
+                cc_data[:, i], var_name=key, plot_title=plot_title, **kwargs
             )
             data[i] = data[key]
         return data
@@ -127,6 +192,31 @@ class DVHAStats:
     def hotelling_t2(
         self, alpha=0.05, box_cox=False, box_cox_alpha=None, box_cox_lmbda=None
     ):
+        """
+        Calculate control limits for a standard univariate Control Chart
+
+        Parameters
+        ----------
+        alpha : float
+            Significance level used to determine the upper control limit (ucl)
+        box_cox : bool, optional
+            Set to true to perform a Box-Cox transformation on data prior to
+            calculating the control chart statistics
+        box_cox_alpha : float, optional
+            If alpha is not None, return the 100 * (1-alpha)% confidence
+            interval for lmbda as the third output argument. Must be between
+            0.0 and 1.0.
+        box_cox_lmbda : float, optional
+            If lmbda is not None, do the transformation for that value.
+            If lmbda is None, find the lambda that maximizes the log-likelihood
+            function and return it as the second output argument.
+
+        Returns
+        ----------
+        HotellingT2
+            HotellingT2 class object
+        """
+
         if box_cox:
             if self.box_cox_data is None:
                 self.box_cox(alpha=box_cox_alpha, lmbda=box_cox_lmbda)
@@ -174,12 +264,18 @@ class DVHAStats:
             self.box_cox_by_index(i, alpha=alpha, lmbda=lmbda)
 
     def show(self, var_name):
+        """Display a plot of var_name with matplotlib"""
         if isinstance(var_name, int):
             index = var_name
             var_name = self.var_names[index]
         else:
             index = self.get_index_by_var_name(var_name)
-        plot.Plot(self.data[:, index], xlabel="Observation", ylabel=var_name)
+        plot.Plot(
+            self.data[:, index],
+            x=self.x_axis,
+            xlabel="Observation",
+            ylabel=var_name,
+        )
 
 
 def get_lin_reg_p_values(X, y, predictions, y_intercept, slope):
@@ -189,11 +285,11 @@ def get_lin_reg_p_values(X, y, predictions, y_intercept, slope):
 
     Parameters
     ----------
-    X : np.array
+    X : np.ndarray
         Independent data
-    y : np.array, list
+    y : np.ndarray, list
         Dependent data
-    predictions : np.array, list
+    predictions : np.ndarray, list
         Predictions using the linear regression.
         (Output from linear_model.LinearRegression.predict)
     y_intercept : float
@@ -239,9 +335,9 @@ class MultiVariableRegression:
 
         Parameters
         ----------
-        X : np.array
+        X : np.ndarray
             Independent data
-        y : np.array, list
+        y : np.ndarray, list
             Dependent data
         saved_reg : MultiVariableRegression, optional
             Optionally provide a previously calculated regression
@@ -348,13 +444,13 @@ def pearson_r_matrix(X):
 
     Parameters
     ----------
-    X : np.array
+    X : np.ndarray
         Input data (2-D) with N rows of observations and
         p columns of variables.
 
     Returns
     ----------
-    np.array
+    np.ndarray
         A tuple of symmetric, pxp arrays are returned: PearsonR and its
         p-values.
     """
@@ -387,14 +483,21 @@ def pearson_r_matrix(X):
 
 class ControlChartData:
     def __init__(
-        self, y, std=3, ucl_limit=None, lcl_limit=None, var_name=None
+        self,
+        y,
+        std=3,
+        ucl_limit=None,
+        lcl_limit=None,
+        var_name=None,
+        x=None,
+        plot_title=None,
     ):
         """
         Calculate control limits for a standard univariate Control Chart
 
         Parameters
         ----------
-        y : list, np.array
+        y : list, np.ndarray
             Input data (1-D)
         std : int, float, optional
             Number of standard deviations used to calculate if a y-value is
@@ -403,12 +506,8 @@ class ControlChartData:
             Limit the upper control limit to this value
         lcl_limit : float, optional
             Limit the lower control limit to this value
-
-        Returns
-        ----------
-        dict
-            The center line (CL),  upper/lower control limits (LCL, UCL), and
-            sigma (sigma) so control limits can be recalculated.
+        plot_title : str, optional
+            Over-ride the plot title
         """
 
         self.y = np.array(y) if isinstance(y, list) else y
@@ -416,6 +515,10 @@ class ControlChartData:
         self.ucl_limit = ucl_limit
         self.lcl_limit = lcl_limit
         self.var_name = var_name
+        self.x = x
+        self.plot_title = (
+            "Univariate Control Chart" if plot_title is None else plot_title
+        )
 
         # since moving range is calculated based on 2 consecutive points
         self.scalar_d = 1.128
@@ -433,18 +536,28 @@ class ControlChartData:
 
     @property
     def center_line(self):
+        """Center line"""
         return np.mean(self.y)
 
     @property
     def avg_moving_range(self):
+        """Avg moving range based on 2 consecutive points"""
         return np.mean(np.absolute(np.diff(self.y)))
 
     @property
     def sigma(self):
+        """UCL/LCL = center_line +/- sigma * std"""
         return self.avg_moving_range / self.scalar_d
 
     @property
     def control_limits(self):
+        """Calculate the lower and upper control limits
+
+        Returns
+        ----------
+        float, float
+            A tuple is returned: lower control limit and upper control limit
+        """
         cl = self.center_line
         sigma = self.sigma
 
@@ -460,6 +573,14 @@ class ControlChartData:
 
     @property
     def out_of_control(self):
+        """Get the indices of out-of-control observations
+
+        Returns
+        ----------
+        np.ndarray
+            An array of indices that are not between the lower and upper
+            control limits
+        """
         lcl, ucl = self.control_limits
         high = np.argwhere(self.y > ucl)
         low = np.argwhere(self.y < lcl)
@@ -467,21 +588,25 @@ class ControlChartData:
 
     @property
     def out_of_control_high(self):
+        """Get the indices of observations > ucl"""
         _, ucl = self.control_limits
         return np.argwhere(self.y > ucl)
 
     @property
     def out_of_control_low(self):
+        """Get the indices of observations < lcl"""
         lcl, _ = self.control_limits
         return np.argwhere(self.y < lcl)
 
     def show(self):
+        """Display the univariate control chart with matplotlib"""
         lcl, ucl = self.control_limits
         plot.ControlChart(
             self.y,
             self.out_of_control,
             self.center_line,
-            title="Univariate Control Chart",
+            x=self.x,
+            title=self.plot_title,
             lcl=lcl,
             ucl=ucl,
             ylabel=self.var_name,
@@ -496,16 +621,14 @@ class HotellingT2:
 
         Parameters
         ----------
+        data : np.ndarray
+            A 2-D array of data to perform multivariate analysis.
+            (e.g., DVHAStats.data)
         alpha : float
             The significance level used to calculate the
             upper control limit (UCL)
-
-        Returns
-        ----------
-        dict
-            The Hotelling T^2 values (Q), center line (CL),
-            and upper control limit (UCL)
-
+        plot_title : str, optional
+            Over-ride the plot title
         """
 
         self.data = data
@@ -543,7 +666,7 @@ class HotellingT2:
 
         Returns
         -------
-        np.array
+        np.ndarray
             A numpy array of Hotelling T^2 (1-D of length N)
         """
         Q = np.zeros(np.size(self.data, 0))
@@ -596,6 +719,7 @@ class HotellingT2:
         return ((N - 1) ** 2 / N) * beta.ppf(x, a, b)
 
     def show(self):
+        """Display the multivariate control chart with matplotlib"""
         plot.ControlChart(
             self.Q,
             self.out_of_control,
