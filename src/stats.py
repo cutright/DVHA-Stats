@@ -60,42 +60,19 @@ class DVHAStats:
         """Number of variables"""
         return self.data.shape[1]
 
-    def hotelling_t2(self, alpha=0.05):
-        """Calculate Hotelling T^2
+    @property
+    def pearson_r_matrix(self):
+        return pearson_r_matrix(self.data)
 
-        Parameters
-        ----------
-        alpha : float
-            The significance level used to calculate the
-            upper control limit (UCL)
+    @property
+    def normality(self):
+        norm, p = np.zeros(self.variable_count), np.zeros(self.variable_count)
+        for i in range(self.variable_count):
+            norm[i], p[i] = scipy_stats.normaltest(self.data[:, i])
+        return norm, p
 
-        Returns
-        ----------
-        dict
-            The Hotelling T^2 values (Q), center line (CL),
-            and upper control limit (UCL)
-
-        """
-
-        # Hotelling T^2 statistic
-        Q = hotelling_t2(self.data)
-
-        # Center Line
-        x_cl = 0.5
-        cl = hotelling_t2_control_limit(
-            x_cl, self.observations, self.variable_count
-        )
-
-        # Upper Control Limit
-        x_ucl = 1 - alpha / 2
-        ucl = hotelling_t2_control_limit(
-            x_ucl, self.observations, self.variable_count
-        )
-
-        # Out of Control indices
-        ooc = [i for i, Qi in enumerate(Q) if Qi > ucl]
-
-        return {"Q": Q, "CL": cl, "UCL": ucl, "OOC": ooc}
+    def linear_reg(self, y, saved_reg=None):
+        return MultiVariableRegression(self.data, y, saved_reg)
 
     def univariate_control_limits(self, std=3, ucl_limit=None, lcl_limit=None):
         """
@@ -114,18 +91,66 @@ class DVHAStats:
         Returns
         ----------
         dict
-            Output from get_control_limits stored in a dictionary with
+            ControlChartData class objects stored in a dictionary with
             var_names as keys
         """
         kwargs = {"std": std, "ucl_limit": ucl_limit, "lcl_limit": lcl_limit}
         data = {}
         for i, key in enumerate(self.var_names):
-            data[key] = get_control_limits(self.data[:, i], **kwargs)
+            data[key] = ControlChartData(self.data[:, i], **kwargs)
         return data
 
-    @property
-    def pearson_r_matrix(self):
-        return pearson_r_matrix(self.data, self.var_names)
+    def hotelling_t2(self, alpha=0.05):
+        return HotellingT2(self.data, alpha)
+
+
+def get_lin_reg_p_values(X, y, predictions, y_intercept, slope):
+    """
+    Get p-values of a linear regression using sklearn
+    based on https://stackoverflow.com/questions/27928275/find-p-value-significance-in-scikit-learn-linearregression
+
+    Parameters
+    ----------
+    X : np.array
+        Independent data
+    y : np.array, list
+        Dependent data
+    predictions : np.array, list
+        Predictions using the linear regression.
+        (Output from linear_model.LinearRegression.predict)
+    y_intercept : float
+        The y-intercept of the linear regression
+    slope : float
+        The slope of the linear regression
+
+    Returns
+    ----------
+    dict
+        A dictionary of p-values (p), standard errors (std_err),
+        and t-values (t)
+    """
+
+    if isinstance(y, list):
+        y = np.array(y)
+
+    if isinstance(predictions, list):
+        predictions = np.array(predictions)
+
+    newX = np.append(np.ones((len(X), 1)), X, axis=1)
+    mse = (sum((y - predictions) ** 2)) / (len(newX) - len(newX[0]))
+
+    variance = mse * (np.linalg.inv(np.dot(newX.T, newX)).diagonal())
+    std_errs = np.sqrt(variance)
+
+    params = np.append(y_intercept, slope)
+    t_values = np.array(params) / std_errs
+
+    p_value = [
+        2 * (1 - scipy_stats.t.cdf(np.abs(i), (len(newX) - 1)))
+        for i in t_values
+    ]
+
+    return p_value, std_errs, t_values
 
 
 class MultiVariableRegression:
@@ -166,12 +191,9 @@ class MultiVariableRegression:
 
         self.predictions = self.reg.predict(self.X)
 
-        p_values = get_lin_reg_p_values(
+        self.p, self.std_err, self.t = get_lin_reg_p_values(
             self.X, self.y, self.predictions, self.y_intercept, self.slope
         )
-        self.p = p_values["p"]
-        self.std_err = p_values["std_err"]
-        self.t = p_values["t"]
 
         # ------------------------------------------
         # Calculate quantiles for a probability plot
@@ -243,7 +265,7 @@ class MultiVariableRegression:
         return scipy_stats.f.cdf(self.f_stat, self.df_model, self.df_error)
 
 
-def pearson_r_matrix(X, keys=None):
+def pearson_r_matrix(X):
     """Calculate a correlation matrix of Pearson-R values
 
     Parameters
@@ -251,189 +273,198 @@ def pearson_r_matrix(X, keys=None):
     X : np.array
         Input data (2-D) with N rows of observations and
         p columns of variables.
-    keys : list, optional
-        Specify the names of the independent variables
+
+    Returns
+    ----------
+    np.array
+        A tuple of symmetric, pxp arrays are returned: PearsonR and its
+        p-values.
     """
 
-    keys = keys if keys is not None else list(range(len(X[:, 0])))
-
-    data = {'x_key': [],
-            'y_key': [],
-            'r': [],
-            'p': [],
-            'x_norm_p': [],
-            'y_norm_p': []}
+    r = np.ones([X.shape[1], X.shape[1]])  # Pearson R
+    p = np.zeros([X.shape[1], X.shape[1]])  # p-value of Pearson R
 
     for x in range(X.shape[1]):
         for y in range(X.shape[1]):
             if x > y:
-                data['x_key'].append(keys[x])
-                data['y_key'].append(keys[y])
 
+                # Pearson r requires that both sets of data be of the same
+                # length. Remove index if NaN in either variable.
                 valid_x = ~np.isnan(X[:, x])
                 valid_y = ~np.isnan(X[:, y])
                 include = np.full(len(X[:, x]), True)
                 for i in range(len(valid_x)):
                     include[i] = valid_x[i] and valid_y[i]
-
                 x_data = X[include, x]
                 y_data = X[include, y]
 
-                r, p_value = scipy_stats.pearsonr(x_data, y_data)
-                data['r'].append(r)
-                data['p'].append(p_value)
+                r[x, y], p[x, y] = scipy_stats.pearsonr(x_data, y_data)
 
-                x_norm, x_p = scipy_stats.normaltest(X[:, x])
-                y_norm, y_p = scipy_stats.normaltest(X[:, y])
-                data['x_norm_p'].append(x_p)
-                data['y_norm_p'].append(y_p)
+                # These matrices are symmetric
+                r[y, x] = r[x, y]
+                p[y, x] = p[x, y]
 
-    return data
+    return r, p
 
 
-def hotelling_t2(arr):
-    """Calculate Hotelling T^2 from a numpy array
+class ControlChartData:
+    def __init__(self, y, std=3, ucl_limit=None, lcl_limit=None):
+        """
+        Calculate control limits for a standard univariate Control Chart
 
-    Parameters
-    ----------
-    arr : np.array
-        A numpy array with N rows (observations) and p columns (variables)
+        Parameters
+        ----------
+        y : list, np.array
+            Input data (1-D)
+        std : int, float, optional
+            Number of standard deviations used to calculate if a y-value is
+            out-of-control.
+        ucl_limit : float, optional
+            Limit the upper control limit to this value
+        lcl_limit : float, optional
+            Limit the lower control limit to this value
 
-    Returns
-    -------
-    np.array
-        A numpy array of Hotelling T^2 (1-D of length N)
-    """
-    Q = np.zeros(np.size(arr, 0))
-    D_bar = np.mean(arr, axis=0)
-    S = np.cov(arr.T)
-    S_inv = np.linalg.inv(S)
-    observations = np.size(arr, 0)
-    for i in range(observations):
-        spread = arr[i, :] - D_bar
-        Q[i] = np.matmul(np.matmul(spread, S_inv), spread)
-    return Q
+        Returns
+        ----------
+        dict
+            The center line (CL),  upper/lower control limits (LCL, UCL), and
+            sigma (sigma) so control limits can be recalculated.
+        """
 
+        self.y = np.array(y) if isinstance(y, list) else y
+        self.std = std
+        self.ucl_limit = ucl_limit
+        self.lcl_limit = lcl_limit
 
-def hotelling_t2_control_limit(x, observations, variables):
-    """Calculate a Hotelling T^2 control limit using a beta distribution
+        # since moving range is calculated based on 2 consecutive points
+        self.scalar_d = 1.128
 
-    Parameters
-    ----------
-    x : float
-        Value where the beta function is evaluated
-    observations : int
-        Number of observations in the sample
-    variables : int
-        Number of variables observed for each sample
+    @property
+    def center_line(self):
+        return np.mean(self.y)
 
-    Returns
-    -------
-    float
-        The control limit for a beta distribution using the provided parameters
-    """
+    @property
+    def avg_moving_range(self):
+        return np.mean(np.absolute(np.diff(self.y)))
 
-    N = observations
-    a = variables / 2
-    b = (N - variables - 1) / 2
-    return ((N - 1) ** 2 / N) * beta.ppf(x, a, b)
+    @property
+    def signma(self):
+        return self.avg_moving_range / self.scalar_d
 
+    @property
+    def control_limits(self):
+        cl = self.center_line
+        sigma = self.signma
 
-def get_control_limits(y, std=3, ucl_limit=None, lcl_limit=None):
-    """
-    Calculate control limits for a standard univariate Control Chart
+        ucl = cl + self.std * sigma
+        lcl = cl - self.std * sigma
 
-    Parameters
-    ----------
-    y : list, np.array
-        Input data (1-D)
-    std : int, float, optional
-        Number of standard deviations used to calculate if a y-value is
-        out-of-control.
-    ucl_limit : float, optional
-        Limit the upper control limit to this value
-    lcl_limit : float, optional
-        Limit the lower control limit to this value
+        if self.ucl_limit is not None and ucl > self.ucl_limit:
+            ucl = self.ucl_limit
+        if self.lcl_limit is not None and lcl < self.lcl_limit:
+            lcl = self.lcl_limit
 
-    Returns
-    ----------
-    dict
-        The center line (CL),  upper/lower control limits (LCL, UCL), and
-        sigma (sigma) so control limits can be recalculated.
-    """
+        return lcl, ucl
 
-    if isinstance(y, list):
-        y = np.array(y)
+    @property
+    def out_of_control(self):
+        lcl, ucl = self.control_limits
+        high = np.argwhere(self.y > ucl)[0]
+        low = np.argwhere(self.y < lcl)[0]
+        return np.unique(np.concatenate([high, low]))
 
-    center_line = np.mean(y)
-    avg_moving_range = np.mean(np.absolute(np.diff(y)))
+    @property
+    def out_of_control_high(self):
+        _, ucl = self.control_limits
+        return np.argwhere(self.y > ucl)[0]
 
-    # since moving range is calculated based on 2 consecutive points
-    scalar_d = 1.128
-
-    sigma = avg_moving_range / scalar_d
-
-    ucl = center_line + std * sigma
-    lcl = center_line - std * sigma
-
-    ucl = ucl_limit if ucl_limit is not None and ucl > ucl_limit else ucl
-    lcl = lcl_limit if lcl_limit is not None and lcl < lcl_limit else lcl
-
-    return {
-        "CL": center_line,
-        "UCL": ucl,
-        "LCL": lcl,
-        "sigma": sigma,
-        "OOC": [i for i, yi in enumerate(y) if yi > ucl or yi < lcl],
-        "OOC_high": [i for i, yi in enumerate(y) if yi > ucl],
-        "OOC_low": [i for i, yi in enumerate(y) if yi < lcl],
-    }
+    @property
+    def out_of_control_low(self):
+        lcl, _ = self.control_limits
+        return np.argwhere(self.y < lcl)[0]
 
 
-def get_lin_reg_p_values(X, y, predictions, y_intercept, slope):
-    """
-    Get p-values of a linear regression using sklearn
-    based on https://stackoverflow.com/questions/27928275/find-p-value-significance-in-scikit-learn-linearregression
+class HotellingT2:
+    def __init__(self, data, alpha=0.05):
+        """Calculate Hotelling T^2
 
-    Parameters
-    ----------
-    X : np.array
-        Independent data
-    y : np.array, list
-        Dependent data
-    predictions : np.array, list
-        Predictions using the linear regression.
-        (Output from linear_model.LinearRegression.predict)
-    y_intercept : float
-        The y-intercept of the linear regression
-    slope : float
-        The slope of the linear regression
+        Parameters
+        ----------
+        alpha : float
+            The significance level used to calculate the
+            upper control limit (UCL)
 
-    Returns
-    ----------
-    dict
-        A dictionary of p-values (p), standard errors (std_err),
-        and t-values (t)
-    """
+        Returns
+        ----------
+        dict
+            The Hotelling T^2 values (Q), center line (CL),
+            and upper control limit (UCL)
 
-    if isinstance(y, list):
-        y = np.array(y)
+        """
 
-    if isinstance(predictions, list):
-        predictions = np.array(predictions)
+        self.data = data
+        self.alpha = alpha
 
-    newX = np.append(np.ones((len(X), 1)), X, axis=1)
-    mse = (sum((y - predictions) ** 2)) / (len(newX) - len(newX[0]))
+    @property
+    def observations(self):
+        """Number of observations"""
+        return self.data.shape[0]
 
-    variance = mse * (np.linalg.inv(np.dot(newX.T, newX)).diagonal())
-    std_errs = np.sqrt(variance)
+    @property
+    def variable_count(self):
+        """Number of variables"""
+        return self.data.shape[1]
 
-    params = np.append(y_intercept, slope)
-    t_values = np.array(params) / std_errs
+    @property
+    def Q(self):
+        """Calculate Hotelling T^2 from a 2-D numpy array
 
-    p_value = [
-        2 * (1 - scipy_stats.t.cdf(np.abs(i), (len(newX) - 1)))
-        for i in t_values
-    ]
+        Returns
+        -------
+        np.array
+            A numpy array of Hotelling T^2 (1-D of length N)
+        """
+        Q = np.zeros(np.size(self.data, 0))
+        D_bar = np.mean(self.data, axis=0)
+        S = np.cov(self.data.T)
+        S_inv = np.linalg.inv(S)
+        observations = np.size(self.data, 0)
+        for i in range(observations):
+            spread = self.data[i, :] - D_bar
+            Q[i] = np.matmul(np.matmul(spread, S_inv), spread)
+        return Q
 
-    return {"p": p_value, "std_err": std_errs, "t": t_values}
+    @property
+    def center_line(self):
+        return self.get_control_limit(0.5)
+
+    @property
+    def ucl(self):
+        return self.get_control_limit(1 - self.alpha / 2)
+
+    @property
+    def lcl(self):
+        return 0
+
+    @property
+    def out_of_control(self):
+        return np.argwhere(self.Q > self.ucl).T[0]
+
+    def get_control_limit(self, x):
+        """Calculate a Hotelling T^2 control limit using a beta distribution
+
+        Parameters
+        ----------
+        x : float
+            Value where the beta function is evaluated
+
+        Returns
+        -------
+        float
+            The control limit for a beta distribution
+        """
+
+        N = self.observations
+        a = self.variable_count / 2
+        b = (N - self.variable_count - 1) / 2
+        return ((N - 1) ** 2 / N) * beta.ppf(x, a, b)
