@@ -46,5 +46,7 @@ setup(
     classifiers=CLASSIFIERS,
     install_requires=requires,
     long_description=long_description,
-    long_description_content_type="text/markdown"
+    long_description_content_type="text/markdown",
+    test_suite='tests',
+    tests_require=[]
 )

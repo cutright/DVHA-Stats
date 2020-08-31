@@ -186,6 +186,7 @@ class ControlChart(Plot):
         kwargs["line_color"] = line_color
         kwargs["line_width"] = line_width
         Plot.__init__(self, y, **kwargs)
+        self.add_cc_data()
 
         if "line_color" not in list(kwargs):
             self.line_color = "black"
@@ -200,8 +201,7 @@ class ControlChart(Plot):
         self.ic = {"x": self.x[include], "y": self.y[include]}
         self.ooc = {"x": self.x[~include], "y": self.y[~include]}
 
-    def add_data(self):
-        super().add_data()
+    def add_cc_data(self):
         self.add_control_limit_line(self.ucl)
         self.add_control_limit_line(self.lcl)
         self.add_center_line()
