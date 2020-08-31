@@ -59,3 +59,12 @@ out_of_control: [ 3  5 13 23 50 51 57 60 65]
 ~~~
 
 <img src='https://user-images.githubusercontent.com/4778878/91746192-da0fd280-eb81-11ea-8eb0-70eb51a48dd8.png' align='center' width='350' alt="Multivariate Control Chart">
+
+### Hotelling T^2 with Box-Cox Transformation
+Example to calculate the Hotelling T^2 values and apply a Box-Cox transformation
+~~~
+>>> ht2_bc = s.hotelling_t2(box_cox=True)
+>>> ht2_bc.show()
+~~~
+
+<img src='https://user-images.githubusercontent.com/4778878/91755452-c029bc00-eb90-11ea-9033-b55cbdd57bd5.png' align='center' width='350' alt="Multivariate Control Chart with Box-Cox Transformation">

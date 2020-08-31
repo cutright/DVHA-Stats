@@ -54,6 +54,8 @@ class DVHAStats:
             )
             raise NotImplementedError(msg)
 
+        self.box_cox_data = None
+
     def get_data_by_var_name(self, var_name):
         index = self.get_index_by_var_name(var_name)
         return self.data[:, index]
@@ -122,8 +124,54 @@ class DVHAStats:
             data[i] = data[key]
         return data
 
-    def hotelling_t2(self, alpha=0.05):
-        return HotellingT2(self.data, alpha)
+    def hotelling_t2(
+        self, alpha=0.05, box_cox=False, box_cox_alpha=None, box_cox_lmbda=None
+    ):
+        if box_cox:
+            if self.box_cox_data is None:
+                self.box_cox(alpha=box_cox_alpha, lmbda=box_cox_lmbda)
+            data = self.box_cox_data
+            plot_title = (
+                "Multivariate Control Chart with Box-Cox Transformation"
+            )
+        else:
+            data = self.data
+            plot_title = None
+        return HotellingT2(data, alpha, plot_title=plot_title)
+
+    def box_cox_by_index(self, index, alpha=None, lmbda=None):
+        """
+
+        Parameters
+        ----------
+        index : int, str
+            The index corresponding to the variable data to have a box-cox
+            transformation applied.  If index is a string, it will be assumed
+            to be the var_name
+        lmbda : None, scalar, optional
+            If lmbda is not None, do the transformation for that value.
+            If lmbda is None, find the lambda that maximizes the
+            log-likelihood function and return it as the second output
+            argument.
+        alpha : None, float, optional
+            If alpha is not None, return the 100 * (1-alpha)% confidence
+            interval for lmbda as the third output argument. Must be between
+            0.0 and 1.0.
+        """
+        if self.box_cox_data is None:
+            self.box_cox_data = np.zeros_like(self.data)
+
+        if isinstance(index, str):
+            index = self.get_index_by_var_name(index)
+
+        self.box_cox_data[:, index], _ = scipy_stats.boxcox(
+            self.data[:, index], alpha=alpha, lmbda=lmbda
+        )
+
+    def box_cox(self, alpha=None, lmbda=None):
+        """Apply box_cox_by_index for all data"""
+        for i in range(self.variable_count):
+            self.box_cox_by_index(i, alpha=alpha, lmbda=lmbda)
 
     def show(self, var_name):
         if isinstance(var_name, int):
@@ -443,7 +491,7 @@ class ControlChartData:
 class HotellingT2:
     """Hotelling's t-squared statistic for multivariate hypothesis testing"""
 
-    def __init__(self, data, alpha=0.05):
+    def __init__(self, data, alpha=0.05, plot_title=None):
         """Initialize the Hotelling T^2 class
 
         Parameters
@@ -463,6 +511,9 @@ class HotellingT2:
         self.data = data
         self.alpha = alpha
         self.lcl = 0
+        self.plot_title = (
+            "Multivariate Control Chart" if plot_title is None else plot_title
+        )
 
     def __str__(self):
         msg = [
@@ -549,7 +600,7 @@ class HotellingT2:
             self.Q,
             self.out_of_control,
             self.center_line,
-            title="Multivariate Control Chart",
+            title=self.plot_title,
             ucl=self.ucl,
             ylabel="Hottelling T^2",
         )
