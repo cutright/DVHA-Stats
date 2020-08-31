@@ -17,7 +17,7 @@ array([56.5, 48.1, 48.3, 65.1, 47.1, 49.9, 49.5, 48.9, 35.5, 44.5, 40.3,
 
 >>> s.show('V1')  # or s.show(0), can provide index or var_name
 ~~~
-<img src='https://user-images.githubusercontent.com/4778878/91746184-d8460f00-eb81-11ea-84ee-c22c88e90e21.png' align='right' width='350' alt="Data Plot">
+<img src='https://user-images.githubusercontent.com/4778878/91746184-d8460f00-eb81-11ea-84ee-c22c88e90e21.png' align='center' width='350' alt="Data Plot">
 
 ### Univariate Control Chart
 ~~~
@@ -32,7 +32,7 @@ out_of_control: [ 3 41 50 51]
 
 ucc["V1"].show()  # or ucc[0].show(), can provide index or var_name
 ~~~
-<img src='https://user-images.githubusercontent.com/4778878/91746187-d8dea580-eb81-11ea-9c0f-c9e5cb0c51d6.png' align='right' width='350' alt="Univariate Control Chart">
+<img src='https://user-images.githubusercontent.com/4778878/91746187-d8dea580-eb81-11ea-9c0f-c9e5cb0c51d6.png' align='center' width='350' alt="Univariate Control Chart">
 
 ### Hotelling T^2
 Example to calculate the Hotelling T^2 values from a csv file
@@ -58,4 +58,4 @@ out_of_control: [ 3  5 13 23 50 51 57 60 65]
 >>> ht2.show()
 ~~~
 
-<img src='https://user-images.githubusercontent.com/4778878/91746192-da0fd280-eb81-11ea-8eb0-70eb51a48dd8.png' align='right' width='350' alt="Multivariate Control Chart">
+<img src='https://user-images.githubusercontent.com/4778878/91746192-da0fd280-eb81-11ea-8eb0-70eb51a48dd8.png' align='center' width='350' alt="Multivariate Control Chart">
