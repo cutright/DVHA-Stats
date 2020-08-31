@@ -76,8 +76,7 @@ class Plot:
         self.scatter_color = scatter_color
 
         self.__add_labels()
-
-        self.add_data()
+        self.__add_data()
 
         if show:
             plt.show()
@@ -87,7 +86,7 @@ class Plot:
         plt.ylabel(self.ylabel)
         plt.title(self.title)
 
-    def add_data(self):
+    def __add_data(self):
         if self.scatter:
             self.add_scatter()
         if self.line:

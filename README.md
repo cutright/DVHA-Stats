@@ -8,7 +8,7 @@ A library of prediction and statistical process control tools. Although based
 on work in [DVH Analytics](http://dvhanalytics.com), all tools in this library 
 are generic and not specifically applicable to any one field.
 
-<a href="https://pypi.org/project/dvha/">
+<a href="https://pypi.org/project/dvha-stats/">
         <img src="https://img.shields.io/pypi/v/dvha-stats.svg" alt="PyPi Version" /></a>
 <a href="https://lgtm.com/projects/g/cutright/DVHA-Stats/context:python">
         <img src="https://img.shields.io/lgtm/grade/python/g/cutright/DVHA-Stats.svg?logo=lgtm&label=code%20quality" alt="LGTM Code Quality" /></a>
@@ -35,6 +35,10 @@ Coming Soon:
 
 Source-Code Installation
 ---------
+~~~
+pip install dvha-stats
+~~~
+or
 ~~~
 pip install git+https://github.com/cutright/DVHA-Stats.git
 ~~~
