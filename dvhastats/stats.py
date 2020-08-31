@@ -15,6 +15,7 @@ from os.path import isfile, splitext
 import numpy as np
 from scipy.stats import beta
 from dvhastats.utilities import dict_to_array, csv_to_dict
+from dvhastats import plot
 from scipy import stats as scipy_stats
 from sklearn import linear_model
 from sklearn.metrics import mean_squared_error, r2_score
@@ -54,12 +55,19 @@ class DVHAStats:
             raise NotImplementedError(msg)
 
     def get_data_by_var_name(self, var_name):
+        index = self.get_index_by_var_name(var_name)
+        return self.data[:, index]
+
+    def get_index_by_var_name(self, var_name):
         if var_name in self.var_names:
             index = self.var_names.index(var_name)
         else:
-            msg = "%s is not a valid var_name\n%s" % (var_name, ','.join(self.var_names))
+            msg = "%s is not a valid var_name\n%s" % (
+                var_name,
+                ",".join(self.var_names),
+            )
             raise AttributeError(msg)
-        return self.data[:, index]
+        return index
 
     @property
     def observations(self):
@@ -85,7 +93,7 @@ class DVHAStats:
     def linear_reg(self, y, saved_reg=None):
         return MultiVariableRegression(self.data, y, saved_reg)
 
-    def univariate_control_limits(self, std=3, ucl_limit=None, lcl_limit=None):
+    def univariate_control_charts(self, std=3, ucl_limit=None, lcl_limit=None):
         """
         Calculate control limits for a standard univariate Control Chart
 
@@ -108,11 +116,22 @@ class DVHAStats:
         kwargs = {"std": std, "ucl_limit": ucl_limit, "lcl_limit": lcl_limit}
         data = {}
         for i, key in enumerate(self.var_names):
-            data[key] = ControlChartData(self.data[:, i], **kwargs)
+            data[key] = ControlChartData(
+                self.data[:, i], var_name=key, **kwargs
+            )
+            data[i] = data[key]
         return data
 
     def hotelling_t2(self, alpha=0.05):
         return HotellingT2(self.data, alpha)
+
+    def show(self, var_name):
+        if isinstance(var_name, int):
+            index = var_name
+            var_name = self.var_names[index]
+        else:
+            index = self.get_index_by_var_name(var_name)
+        plot.Plot(self.data[:, index], xlabel="Observation", ylabel=var_name)
 
 
 def get_lin_reg_p_values(X, y, predictions, y_intercept, slope):
@@ -319,7 +338,9 @@ def pearson_r_matrix(X):
 
 
 class ControlChartData:
-    def __init__(self, y, std=3, ucl_limit=None, lcl_limit=None):
+    def __init__(
+        self, y, std=3, ucl_limit=None, lcl_limit=None, var_name=None
+    ):
         """
         Calculate control limits for a standard univariate Control Chart
 
@@ -346,14 +367,17 @@ class ControlChartData:
         self.std = std
         self.ucl_limit = ucl_limit
         self.lcl_limit = lcl_limit
+        self.var_name = var_name
 
         # since moving range is calculated based on 2 consecutive points
         self.scalar_d = 1.128
 
     def __str__(self):
-        msg = ["center_line: %0.3f" % self.center_line,
-               "control_limits: %0.3f, %0.3f" % self.control_limits,
-               "out_of_control: %s" % self.out_of_control]
+        msg = [
+            "center_line: %0.3f" % self.center_line,
+            "control_limits: %0.3f, %0.3f" % self.control_limits,
+            "out_of_control: %s" % self.out_of_control,
+        ]
         return "\n".join(msg)
 
     def __repr__(self):
@@ -403,9 +427,22 @@ class ControlChartData:
         lcl, _ = self.control_limits
         return np.argwhere(self.y < lcl)
 
+    def show(self):
+        lcl, ucl = self.control_limits
+        plot.ControlChart(
+            self.y,
+            self.out_of_control,
+            self.center_line,
+            title="Univariate Control Chart",
+            lcl=lcl,
+            ucl=ucl,
+            ylabel=self.var_name,
+        )
+
 
 class HotellingT2:
     """Hotelling's t-squared statistic for multivariate hypothesis testing"""
+
     def __init__(self, data, alpha=0.05):
         """Initialize the Hotelling T^2 class
 
@@ -428,10 +465,12 @@ class HotellingT2:
         self.lcl = 0
 
     def __str__(self):
-        msg = ["Q: %s" % self.Q,
-               "center_line: %0.3f" % self.center_line,
-               "control_limits: %d, %0.3f" % (self.lcl, self.ucl),
-               "out_of_control: %s" % self.out_of_control]
+        msg = [
+            "Q: %s" % self.Q,
+            "center_line: %0.3f" % self.center_line,
+            "control_limits: %d, %0.3f" % (self.lcl, self.ucl),
+            "out_of_control: %s" % self.out_of_control,
+        ]
         return "\n".join(msg)
 
     def __repr__(self):
@@ -504,3 +543,13 @@ class HotellingT2:
         a = self.variable_count / 2
         b = (N - self.variable_count - 1) / 2
         return ((N - 1) ** 2 / N) * beta.ppf(x, a, b)
+
+    def show(self):
+        plot.ControlChart(
+            self.Q,
+            self.out_of_control,
+            self.center_line,
+            title="Multivariate Control Chart",
+            ucl=self.ucl,
+            ylabel="Hottelling T^2",
+        )

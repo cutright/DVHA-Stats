@@ -7,7 +7,7 @@
 #    See the file LICENSE included with this distribution, also
 #    available at https://github.com/cutright/DVHA-Stats
 
-__author__ = 'Dan Cutright'
-__email__ = 'dan.cutright@gmail.com'
-__version__ = '0.1.0'
+__author__ = "Dan Cutright"
+__email__ = "dan.cutright@gmail.com"
+__version__ = "0.1.0"
 __version_info__ = (0, 1, 0)

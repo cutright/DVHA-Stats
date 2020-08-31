@@ -2,20 +2,10 @@
 Statistics library for DVH Analytics
 
 
-### Univariate Control Chart
+### Intialize and Plot Data
 ~~~
 >>> from dvhastats.stats import DVHAStats
 >>> s = DVHAStats("tests/testdata/multivariate_data.csv")
->>> uni_cc = s.univariate_control_limits()
-
->>> print(uni_cc.keys())
-dict_keys(['V1', 'V2', 'V3', 'V4', 'V5', 'V6'])
-
->>> print(uni_cc['V1'])
-center_line: 42.845
-control_limits: 22.210, 63.480
-out_of_control: [ 3 41 50 51]
-
 >>> s.get_data_by_var_name('V1')
 array([56.5, 48.1, 48.3, 65.1, 47.1, 49.9, 49.5, 48.9, 35.5, 44.5, 40.3,
        43.5, 43.7, 47.5, 39.9, 42.9, 37.9, 48.7, 41.3, 47.1, 35.9, 46.5,
@@ -24,7 +14,25 @@ array([56.5, 48.1, 48.3, 65.1, 47.1, 49.9, 49.5, 48.9, 35.5, 44.5, 40.3,
        43.9, 36.5, 45.9, 48.9, 44.7, 38.1,  6.1,  5.5, 45.1, 46.5, 48.9,
        48.1, 45.7, 57.1, 35.1, 46.5, 29.5, 41.5, 53.3, 45.3, 41.9, 45.9,
        43.1, 43.9, 46.1])
+
+>>> s.show('V1')  # or s.show(0), can provide index or var_name
 ~~~
+<img src='https://user-images.githubusercontent.com/4778878/91746184-d8460f00-eb81-11ea-84ee-c22c88e90e21.png' align='right' width='350' alt="Data Plot">
+
+### Univariate Control Chart
+~~~
+>>> ucc = s.univariate_control_limits()
+>>> print(ucc.keys())
+dict_keys(['V1', 'V2', 'V3', 'V4', 'V5', 'V6'])
+
+>>> print(uni_cc['V1'])
+center_line: 42.845
+control_limits: 22.210, 63.480
+out_of_control: [ 3 41 50 51]
+
+ucc["V1"].show()  # or ucc[0].show(), can provide index or var_name
+~~~
+<img src='https://user-images.githubusercontent.com/4778878/91746187-d8dea580-eb81-11ea-9c0f-c9e5cb0c51d6.png' align='right' width='350' alt="Univariate Control Chart">
 
 ### Hotelling T^2
 Example to calculate the Hotelling T^2 values from a csv file
@@ -46,4 +54,8 @@ Q: [ 5.75062092  3.80141786  3.67243782 18.80124504  2.03849294 18.15447155
 center_line: 5.375
 control_limits: 0, 13.555
 out_of_control: [ 3  5 13 23 50 51 57 60 65]
+
+>>> ht2.show()
 ~~~
+
+<img src='https://user-images.githubusercontent.com/4778878/91746192-da0fd280-eb81-11ea-8eb0-70eb51a48dd8.png' align='right' width='350' alt="Multivariate Control Chart">
