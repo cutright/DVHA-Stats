@@ -1,7 +1,17 @@
+<a>
+  <img src="https://user-images.githubusercontent.com/4778878/30754005-b7a7e808-9f86-11e7-8b0f-79d1006babdf.jpg" width='480' alt="DVHA logo"/>
+</a>
+
+---------  
 # DVHA Stats
 A library of prediction and statistical process control tools. Although based 
 on work in [DVH Analytics](http://dvhanalytics.com), all tools in this library 
 are generic and not specifically applicable to any one field.
+
+<a href="https://pypi.org/project/dvha/">
+        <img src="https://img.shields.io/pypi/v/dvha-stats.svg" alt="PyPi Version" /></a>
+<a href="https://lgtm.com/projects/g/cutright/DVHA-Stats/context:python">
+        <img src="https://img.shields.io/lgtm/grade/python/g/cutright/DVHA-Stats.svg?logo=lgtm&label=code%20quality" alt="LGTM Code Quality" /></a>
 
 What does it do?
 * Read data from CSV or supply as numpy array 
