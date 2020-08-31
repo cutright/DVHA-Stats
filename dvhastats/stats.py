@@ -53,6 +53,14 @@ class DVHAStats:
             )
             raise NotImplementedError(msg)
 
+    def get_data_by_var_name(self, var_name):
+        if var_name in self.var_names:
+            index = self.var_names.index(var_name)
+        else:
+            msg = "%s is not a valid var_name\n%s" % (var_name, ','.join(self.var_names))
+            raise AttributeError(msg)
+        return self.data[:, index]
+
     @property
     def observations(self):
         """Number of observations"""
@@ -381,19 +389,19 @@ class ControlChartData:
     @property
     def out_of_control(self):
         lcl, ucl = self.control_limits
-        high = np.argwhere(self.y > ucl)[0]
-        low = np.argwhere(self.y < lcl)[0]
+        high = np.argwhere(self.y > ucl)
+        low = np.argwhere(self.y < lcl)
         return np.unique(np.concatenate([high, low]))
 
     @property
     def out_of_control_high(self):
         _, ucl = self.control_limits
-        return np.argwhere(self.y > ucl)[0]
+        return np.argwhere(self.y > ucl)
 
     @property
     def out_of_control_low(self):
         lcl, _ = self.control_limits
-        return np.argwhere(self.y < lcl)[0]
+        return np.argwhere(self.y < lcl)
 
 
 class HotellingT2:
