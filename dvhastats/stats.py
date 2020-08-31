@@ -1,17 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#
 # stats.py
 """Statistical calculations for DVH Analytics"""
+#
 # Copyright (c) 2020 Dan Cutright
 # Copyright (c) 2020 Arka Roy
-#
-# https://github.com/cutright/DVHA-Stats
+# This file is part of DVHA-Stats, released under a MIT license.
+#    See the file LICENSE included with this distribution, also
+#    available at https://github.com/cutright/DVHA-Stats
 
 
 from os.path import isfile, splitext
 import numpy as np
 from scipy.stats import beta
-from src.utilities import dict_to_array, csv_to_dict
+from dvhastats.utilities import dict_to_array, csv_to_dict
 from scipy import stats as scipy_stats
 from sklearn import linear_model
 from sklearn.metrics import mean_squared_error, r2_score
@@ -339,6 +342,15 @@ class ControlChartData:
         # since moving range is calculated based on 2 consecutive points
         self.scalar_d = 1.128
 
+    def __str__(self):
+        msg = ["center_line: %0.3f" % self.center_line,
+               "control_limits: %0.3f, %0.3f" % self.control_limits,
+               "out_of_control: %s" % self.out_of_control]
+        return "\n".join(msg)
+
+    def __repr__(self):
+        return str(self)
+
     @property
     def center_line(self):
         return np.mean(self.y)
@@ -348,13 +360,13 @@ class ControlChartData:
         return np.mean(np.absolute(np.diff(self.y)))
 
     @property
-    def signma(self):
+    def sigma(self):
         return self.avg_moving_range / self.scalar_d
 
     @property
     def control_limits(self):
         cl = self.center_line
-        sigma = self.signma
+        sigma = self.sigma
 
         ucl = cl + self.std * sigma
         lcl = cl - self.std * sigma
@@ -385,8 +397,9 @@ class ControlChartData:
 
 
 class HotellingT2:
+    """Hotelling's t-squared statistic for multivariate hypothesis testing"""
     def __init__(self, data, alpha=0.05):
-        """Calculate Hotelling T^2
+        """Initialize the Hotelling T^2 class
 
         Parameters
         ----------
@@ -404,6 +417,17 @@ class HotellingT2:
 
         self.data = data
         self.alpha = alpha
+        self.lcl = 0
+
+    def __str__(self):
+        msg = ["Q: %s" % self.Q,
+               "center_line: %0.3f" % self.center_line,
+               "control_limits: %d, %0.3f" % (self.lcl, self.ucl),
+               "out_of_control: %s" % self.out_of_control]
+        return "\n".join(msg)
+
+    def __repr__(self):
+        return str(self)
 
     @property
     def observations(self):
@@ -436,18 +460,22 @@ class HotellingT2:
 
     @property
     def center_line(self):
+        """Center line"""
         return self.get_control_limit(0.5)
 
     @property
+    def control_limits(self):
+        """Lower and Upper control limits"""
+        return self.lcl, self.ucl
+
+    @property
     def ucl(self):
+        """Upper control limit"""
         return self.get_control_limit(1 - self.alpha / 2)
 
     @property
-    def lcl(self):
-        return 0
-
-    @property
     def out_of_control(self):
+        """Indices of out-of-control observations"""
         return np.argwhere(self.Q > self.ucl).T[0]
 
     def get_control_limit(self, x):

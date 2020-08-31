@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#
 # utilities.py
 """Common functions for the DVHA-Stats."""
-# Copyright (c) 2020 Dan Cutright
-# This file is part of DVHA-Stats
 #
-# https://github.com/cutright/DVHA-Stats
+# Copyright (c) 2020 Dan Cutright
+# This file is part of DVHA-Stats, released under a MIT license.
+#    See the file LICENSE included with this distribution, also
+#    available at https://github.com/cutright/DVHA-Stats
 
 import numpy as np
 
