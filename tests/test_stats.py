@@ -20,6 +20,7 @@ import warnings
 basedata_dir = join("tests", "testdata")
 example_data = join(basedata_dir, "multivariate_data_small.csv")
 example_data_no_nan = join(basedata_dir, "multivariate_data_small_no-nan.csv")
+example_data_full = join(basedata_dir, "multivariate_data.csv")
 
 
 class TestStats(unittest.TestCase):
@@ -29,6 +30,7 @@ class TestStats(unittest.TestCase):
         """Setup files and base data for utility testing."""
         self.data_path = example_data
         self.data_path_no_nan = example_data_no_nan
+        self.data_path_full = example_data_full
 
         data = [
             [np.nan, 48.1, 48.3, 65.1, 47.1, 49.9, 49.5, 48.9, 35.5, 44.5],
@@ -66,6 +68,10 @@ class TestStats(unittest.TestCase):
         stats_obj = stats.DVHAStats(self.data_path)
         assert_array_equal(stats_obj.data, self.expected_arr)
         self.assertEqual(stats_obj.var_names, self.expected_var_names)
+
+    def test_invalid_data_import(self):
+        with self.assertRaises(NotImplementedError):
+            stats.DVHAStats("test")
 
     def test_get_index_by_var_name(self):
         """Test data column index look-up by variable name"""
@@ -234,6 +240,16 @@ class TestStats(unittest.TestCase):
         self.assertEqual(round(ucl, 3), 68.89)
         self.assertEqual(len(ucc[0].out_of_control), 0)
 
+    def test_univariate_control_chart_box_cox(self):
+        """Test univariate control chart creation and values with Box-Cox"""
+        stats_obj = stats.DVHAStats(self.data_path_full)
+        ucc = stats_obj.univariate_control_charts(box_cox=True)
+        self.assertEqual(round(ucc[0].center_line, 3), 1835.702)
+        lcl, ucl = ucc[0].control_limits
+        self.assertEqual(round(lcl, 3), 136.258)
+        self.assertEqual(round(ucl, 3), 3535.147)
+        self.assertEqual(len(ucc[0].out_of_control), 3)
+
     def test_hotelling_t2(self):
         """Test multivariate control chart creation and values"""
         ht2 = self.stats_obj.hotelling_t2()
@@ -243,11 +259,21 @@ class TestStats(unittest.TestCase):
         self.assertEqual(round(ucl, 3), 7.834)
         self.assertEqual(len(ht2.out_of_control), 0)
 
+    def test_hotelling_t2_box_cox(self):
+        """Test multivariate control chart creation and values"""
+        stats_obj = stats.DVHAStats(self.data_path_full)
+        ht2 = stats_obj.hotelling_t2(box_cox=True)
+        self.assertEqual(round(ht2.center_line, 3), 5.375)
+        lcl, ucl = ht2.control_limits
+        self.assertEqual(round(lcl, 3), 0)
+        self.assertEqual(round(ucl, 3), 13.555)
+        self.assertEqual(len(ht2.out_of_control), 2)
+
     def test_multi_variable_regression(self):
-        """Test Multi-Variable Regression"""
+        """Test Multi-Variable Linear Regression"""
         y = np.linspace(1, 10, 10)
         stats_obj = stats.DVHAStats(self.data_path_no_nan)
-        mvr = stats.MultiVariableRegression(stats_obj.data, y)
+        mvr = stats_obj.linear_reg(y)
         self.assertEqual(round(mvr.y_intercept, 3), 2.983)
         slope = np.array(
             [
