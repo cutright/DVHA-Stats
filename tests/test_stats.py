@@ -19,6 +19,7 @@ import warnings
 
 basedata_dir = join("tests", "testdata")
 example_data = join(basedata_dir, "multivariate_data_small.csv")
+example_data_no_nan = join(basedata_dir, "multivariate_data_small_no-nan.csv")
 
 
 class TestStats(unittest.TestCase):
@@ -27,26 +28,23 @@ class TestStats(unittest.TestCase):
     def setUp(self):
         """Setup files and base data for utility testing."""
         self.data_path = example_data
+        self.data_path_no_nan = example_data_no_nan
 
-        self.expected_dict = {
-            "V1": [56.5, 48.1, 48.3, 65.1, 47.1, 49.9, 49.5, 48.9, 35.5, 44.5],
-            "V2": [51.9, 44.3, 44.5, 58.7, 41.1, 43.9, 43.9, 44.5, 31.1, 40.5],
-            "V3": [48.5, 38.5, 37.1, 53.9, 27.1, 40.7, 34.5, 41.7, 28.7, 37.7],
-            "V4": [33.9, 21.5, 20.1, 48.7, 12.1, 38.5, 13.9, 33.7, 25.3, 28.1],
-            "V5": [19.1, 10.9, 9.9, 42.3, 4.3, 36.5, 6.1, 16.9, 13.9, 13.3],
-            "V6": [12.7, 4.7, 3.9, 31.3, 3.1, 29.1, 3.7, 4.9, 6.9, 4.7],
-        }
-        self.expected_var_names = sorted(list(self.expected_dict))
-        self.expected_arr = np.array(
-            [
-                [56.5, 48.1, 48.3, 65.1, 47.1, 49.9, 49.5, 48.9, 35.5, 44.5],
-                [51.9, 44.3, 44.5, 58.7, 41.1, 43.9, 43.9, 44.5, 31.1, 40.5],
-                [48.5, 38.5, 37.1, 53.9, 27.1, 40.7, 34.5, 41.7, 28.7, 37.7],
-                [33.9, 21.5, 20.1, 48.7, 12.1, 38.5, 13.9, 33.7, 25.3, 28.1],
-                [19.1, 10.9, 9.9, 42.3, 4.3, 36.5, 6.1, 16.9, 13.9, 13.3],
-                [12.7, 4.7, 3.9, 31.3, 3.1, 29.1, 3.7, 4.9, 6.9, 4.7],
-            ]
-        ).T
+        data = [
+            [np.nan, 48.1, 48.3, 65.1, 47.1, 49.9, 49.5, 48.9, 35.5, 44.5],
+            [51.9, 44.3, 44.5, 58.7, 41.1, 43.9, 43.9, 44.5, 31.1, 40.5],
+            [48.5, 38.5, 37.1, 53.9, 27.1, 40.7, 34.5, 41.7, 28.7, 37.7],
+            [33.9, 21.5, 20.1, 48.7, 12.1, 38.5, 13.9, 33.7, 25.3, 28.1],
+            [19.1, 10.9, 9.9, 42.3, 4.3, 36.5, 6.1, 16.9, 13.9, 13.3],
+            [12.7, 4.7, 3.9, 31.3, 3.1, 29.1, 3.7, 4.9, 6.9, 4.7],
+        ]
+        keys = ["V%s" % (i + 1) for i in range(6)]
+
+        self.expected_dict = {key: data[i] for i, key in enumerate(keys)}
+        self.expected_dict_nh = {i: row for i, row in enumerate(data)}
+        self.expected_arr = np.array(data).T
+        self.expected_var_names = keys
+
         self.stats_obj = stats.DVHAStats(self.data_path)
 
     def test_arr_import(self):
@@ -70,34 +68,39 @@ class TestStats(unittest.TestCase):
         self.assertEqual(stats_obj.var_names, self.expected_var_names)
 
     def test_get_index_by_var_name(self):
+        """Test data column index look-up by variable name"""
         self.assertEqual(0, self.stats_obj.get_index_by_var_name("V1"))
         with self.assertRaises(AttributeError):
             self.stats_obj.get_index_by_var_name("test")
 
     def test_get_data_by_var_name(self):
+        """Test get data of a given var_name"""
         expected = self.expected_arr[:, 0]
         data = self.stats_obj.get_data_by_var_name("V1")
         assert_array_equal(data, expected)
 
     def test_observations(self):
+        """Test DVHAStats.observations property"""
         self.assertEqual(self.stats_obj.observations, 10)
 
     def test_variable_count(self):
+        """Test DVHAStats.variable_count property"""
         self.assertEqual(self.stats_obj.variable_count, 6)
 
     def test_pearson_r_matrix(self):
+        """Test Pearson-R matrix calculation"""
         exp_r = np.array(
             [
                 [
                     1.0,
-                    0.99264939,
-                    0.86011723,
-                    0.58662221,
-                    0.61300906,
-                    0.62923282,
+                    0.99242287,
+                    0.84208524,
+                    0.56410877,
+                    0.63275247,
+                    0.6431104,
                 ],
                 [
-                    0.99264939,
+                    0.99242287,
                     1.0,
                     0.88851061,
                     0.58486366,
@@ -105,7 +108,7 @@ class TestStats(unittest.TestCase):
                     0.5791157,
                 ],
                 [
-                    0.86011723,
+                    0.84208524,
                     0.88851061,
                     1.0,
                     0.83404009,
@@ -113,7 +116,7 @@ class TestStats(unittest.TestCase):
                     0.66846345,
                 ],
                 [
-                    0.58662221,
+                    0.56410877,
                     0.58486366,
                     0.83404009,
                     1.0,
@@ -121,7 +124,7 @@ class TestStats(unittest.TestCase):
                     0.83444095,
                 ],
                 [
-                    0.61300906,
+                    0.63275247,
                     0.58064696,
                     0.74483928,
                     0.93433324,
@@ -129,7 +132,7 @@ class TestStats(unittest.TestCase):
                     0.97058164,
                 ],
                 [
-                    0.62923282,
+                    0.6431104,
                     0.5791157,
                     0.66846345,
                     0.83444095,
@@ -142,14 +145,14 @@ class TestStats(unittest.TestCase):
             [
                 [
                     0.00000000e00,
-                    1.26600528e-08,
-                    1.40996093e-03,
-                    7.46506281e-02,
-                    5.94985157e-02,
-                    5.12738548e-02,
+                    1.23765714e-07,
+                    4.39932805e-03,
+                    1.13622389e-01,
+                    6.74147444e-02,
+                    6.16994726e-02,
                 ],
                 [
-                    1.26600528e-08,
+                    1.23765714e-07,
                     0.00000000e00,
                     5.89647474e-04,
                     7.57410908e-02,
@@ -157,7 +160,7 @@ class TestStats(unittest.TestCase):
                     7.93772216e-02,
                 ],
                 [
-                    1.40996093e-03,
+                    4.39932805e-03,
                     5.89647474e-04,
                     0.00000000e00,
                     2.70253622e-03,
@@ -165,7 +168,7 @@ class TestStats(unittest.TestCase):
                     3.45956064e-02,
                 ],
                 [
-                    7.46506281e-02,
+                    1.13622389e-01,
                     7.57410908e-02,
                     2.70253622e-03,
                     0.00000000e00,
@@ -173,7 +176,7 @@ class TestStats(unittest.TestCase):
                     2.67788998e-03,
                 ],
                 [
-                    5.94985157e-02,
+                    6.74147444e-02,
                     7.83977572e-02,
                     1.34485527e-02,
                     7.51138400e-05,
@@ -181,7 +184,7 @@ class TestStats(unittest.TestCase):
                     3.16254737e-06,
                 ],
                 [
-                    5.12738548e-02,
+                    6.16994726e-02,
                     7.93772216e-02,
                     3.45956064e-02,
                     2.67788998e-03,
@@ -195,9 +198,10 @@ class TestStats(unittest.TestCase):
         assert_array_almost_equal(p, exp_p)
 
     def test_normality(self):
+        """Test normality calculation"""
         expected_norm = np.array(
             [
-                2.85071988,
+                5.560821,
                 2.16842411,
                 0.48490695,
                 0.36635239,
@@ -207,7 +211,7 @@ class TestStats(unittest.TestCase):
         )
         expected_p = np.array(
             [
-                0.24042191,
+                0.062013,
                 0.33816814,
                 0.78470025,
                 0.83262144,
@@ -222,14 +226,16 @@ class TestStats(unittest.TestCase):
         assert_array_almost_equal(p, expected_p)
 
     def test_univariate_control_chart(self):
+        """Test univariate control chart creation and values"""
         ucc = self.stats_obj.univariate_control_charts()
-        self.assertEqual(round(ucc[0].center_line, 3), 49.340)
+        self.assertEqual(round(ucc[0].center_line, 3), 48.544)
         lcl, ucl = ucc[0].control_limits
-        self.assertEqual(round(lcl, 3), 28.773)
-        self.assertEqual(round(ucl, 3), 69.907)
+        self.assertEqual(round(lcl, 3), 28.199)
+        self.assertEqual(round(ucl, 3), 68.89)
         self.assertEqual(len(ucc[0].out_of_control), 0)
 
     def test_hotelling_t2(self):
+        """Test multivariate control chart creation and values"""
         ht2 = self.stats_obj.hotelling_t2()
         self.assertEqual(round(ht2.center_line, 3), 5.614)
         lcl, ucl = ht2.control_limits
@@ -238,8 +244,10 @@ class TestStats(unittest.TestCase):
         self.assertEqual(len(ht2.out_of_control), 0)
 
     def test_multi_variable_regression(self):
+        """Test Multi-Variable Regression"""
         y = np.linspace(1, 10, 10)
-        mvr = stats.MultiVariableRegression(self.expected_arr, y)
+        stats_obj = stats.DVHAStats(self.data_path_no_nan)
+        mvr = stats.MultiVariableRegression(stats_obj.data, y)
         self.assertEqual(round(mvr.y_intercept, 3), 2.983)
         slope = np.array(
             [

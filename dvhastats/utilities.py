@@ -12,6 +12,16 @@
 import numpy as np
 
 
+def apply_dtype(value, dtype):
+    if dtype is None:
+        return value
+    try:
+        value = dtype(value)
+    except ValueError:
+        value = np.nan
+    return value
+
+
 def csv_to_dict(csv_file_path, delimiter=",", dtype=None, header_row=True):
     """Read in a csv file, return data as a dictionary
 
@@ -42,18 +52,13 @@ def csv_to_dict(csv_file_path, delimiter=",", dtype=None, header_row=True):
             data = {key: [] for key in keys}
         else:
             keys = list(range(len(first_row)))
-            data = {key: [first_row[key]] for key in keys}
+            data = {key: [apply_dtype(first_row[key], dtype)] for key in keys}
 
         # Iterate through remaining rows, append values to data
         for r, line in enumerate(fp):
             row = line.strip().split(",")
             for c, value in enumerate(row):
-                if dtype is not None:
-                    try:
-                        value = dtype(value)
-                    except ValueError:
-                        value = np.nan
-                data[keys[c]].append(value)
+                data[keys[c]].append(apply_dtype(value, dtype))
 
     return data
 

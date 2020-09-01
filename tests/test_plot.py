@@ -24,10 +24,12 @@ class TestPlot(unittest.TestCase):
         self.y = random.standard_normal(10)
 
     def test_plot_init(self):
+        """Test Plot initialization"""
         p = plot.Plot(self.y, show=False)
         p.close()
 
     def test_control_chart(self):
+        """Test ControlChart initialization"""
         p = plot.ControlChart(
             self.y, random.randint(5, size=3), 0, lcl=-1, ucl=1, show=False
         )

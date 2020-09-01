@@ -111,7 +111,7 @@ class DVHAStats:
         """
         norm, p = np.zeros(self.variable_count), np.zeros(self.variable_count)
         for i in range(self.variable_count):
-            norm[i], p[i] = scipy_stats.normaltest(self.data[:, i])
+            norm[i], p[i] = scipy_stats.normaltest(self.data[:, i], nan_policy="omit")
         return norm, p
 
     def linear_reg(self, y, saved_reg=None):
@@ -535,14 +535,18 @@ class ControlChartData:
         return str(self)
 
     @property
+    def y_no_nan(self):
+        return self.y[~np.isnan(self.y)]
+
+    @property
     def center_line(self):
         """Center line"""
-        return np.mean(self.y)
+        return np.mean(self.y_no_nan)
 
     @property
     def avg_moving_range(self):
         """Avg moving range based on 2 consecutive points"""
-        return np.mean(np.absolute(np.diff(self.y)))
+        return np.mean(np.absolute(np.diff(self.y_no_nan)))
 
     @property
     def sigma(self):
