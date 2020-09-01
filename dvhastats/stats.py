@@ -60,6 +60,8 @@ class DVHAStats:
 
         self.box_cox_data = None
 
+        self.plots = []
+
     def get_data_by_var_name(self, var_name):
         """Get the single variable array based on var_name"""
         index = self.get_index_by_var_name(var_name)
@@ -69,6 +71,9 @@ class DVHAStats:
         """Get the variable index by var_name"""
         if var_name in self.var_names:
             index = self.var_names.index(var_name)
+        elif isinstance(var_name, int) and \
+                var_name in range(self.variable_count):
+            return var_name
         else:
             msg = "%s is not a valid var_name\n%s" % (
                 var_name,
@@ -258,6 +263,8 @@ class DVHAStats:
             self.data[:, index], alpha=alpha, lmbda=lmbda
         )
 
+        return self.box_cox_data[:, index]
+
     def box_cox(self, alpha=None, lmbda=None):
         """Apply box_cox_by_index for all data"""
         for i in range(self.variable_count):
@@ -265,17 +272,24 @@ class DVHAStats:
 
     def show(self, var_name):
         """Display a plot of var_name with matplotlib"""
-        if isinstance(var_name, int):
-            index = var_name
-            var_name = self.var_names[index]
-        else:
-            index = self.get_index_by_var_name(var_name)
-        plot.Plot(
+        index = self.get_index_by_var_name(var_name)
+        var_name = self.var_names[index]
+        self.plots.append(plot.Plot(
             self.data[:, index],
             x=self.x_axis,
             xlabel="Observation",
             ylabel=var_name,
-        )
+        ))
+        return self.plots[-1].figure.number
+
+    def close(self, figure_number):
+        """Close a plot by figure_number"""
+        for p in self.plots:
+            if p.figure.number == figure_number:
+                p.close()
+                return
+
+
 
 
 def get_lin_reg_p_values(X, y, predictions, y_intercept, slope):

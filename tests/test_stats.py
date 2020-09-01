@@ -239,6 +239,17 @@ class TestStats(unittest.TestCase):
         self.assertEqual(round(lcl, 3), 28.199)
         self.assertEqual(round(ucl, 3), 68.89)
         self.assertEqual(len(ucc[0].out_of_control), 0)
+        str_rep = "center_line: 48.544\ncontrol_limits: " \
+                  "28.199, 68.890\nout_of_control: []"
+        self.assertEqual(str(ucc[0]), str_rep)
+
+    def test_univariate_control_chart_with_limits(self):
+        """Test univariate control chart creation and values"""
+        ucc = self.stats_obj.univariate_control_charts(lcl_limit=30, ucl_limit=50)
+        lcl, ucl = ucc[0].control_limits
+        self.assertEqual(round(lcl, 3), 30)
+        self.assertEqual(round(ucl, 3), 50)
+        self.assertEqual(len(ucc[0].out_of_control), 1)
 
     def test_univariate_control_chart_box_cox(self):
         """Test univariate control chart creation and values with Box-Cox"""
@@ -249,6 +260,8 @@ class TestStats(unittest.TestCase):
         self.assertEqual(round(lcl, 3), 136.258)
         self.assertEqual(round(ucl, 3), 3535.147)
         self.assertEqual(len(ucc[0].out_of_control), 3)
+        self.assertEqual(len(ucc[0].out_of_control_high), 1)
+        self.assertEqual(len(ucc[0].out_of_control_low), 2)
 
     def test_hotelling_t2(self):
         """Test multivariate control chart creation and values"""
@@ -258,6 +271,11 @@ class TestStats(unittest.TestCase):
         self.assertEqual(round(lcl, 3), 0)
         self.assertEqual(round(ucl, 3), 7.834)
         self.assertEqual(len(ht2.out_of_control), 0)
+        str_rep = "Q: [nan nan nan nan nan nan nan nan nan nan]\n" \
+                  "center_line: 5.614\n" \
+                  "control_limits: 0, 7.834\n" \
+                  "out_of_control: []"
+        self.assertEqual(str(ht2), str_rep)
 
     def test_hotelling_t2_box_cox(self):
         """Test multivariate control chart creation and values"""
@@ -307,6 +325,12 @@ class TestStats(unittest.TestCase):
         self.assertEqual(mvr.df_error, 3)
         self.assertEqual(mvr.df_model, 6)
         self.assertEqual(round(mvr.f_p_value, 3), 0.763)
+
+    def test_box_cox_by_index(self):
+        """Test box-cox transformation by index and keyword"""
+        data_by_index = self.stats_obj.box_cox_by_index(0)
+        data_by_key = self.stats_obj.box_cox_by_index("V1")
+        assert_array_equal(data_by_index, data_by_key)
 
 
 if __name__ == "__main__":
