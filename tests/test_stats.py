@@ -237,6 +237,43 @@ class TestStats(unittest.TestCase):
         self.assertEqual(round(ucl, 3), 7.834)
         self.assertEqual(len(ht2.out_of_control), 0)
 
+    def test_multi_variable_regression(self):
+        y = np.linspace(1, 10, 10)
+        mvr = stats.MultiVariableRegression(self.expected_arr, y)
+        self.assertEqual(round(mvr.y_intercept, 3), 2.983)
+        slope = np.array(
+            [
+                3.80907501,
+                -4.68155991,
+                0.67410364,
+                -0.32432575,
+                0.9811169,
+                -1.10516451,
+            ]
+        )
+        assert_array_almost_equal(mvr.slope, slope)
+        self.assertEqual(round(mvr.mse, 3), 1.353)
+        self.assertEqual(round(mvr.r_sq, 3), 0.836)
+        residuals = np.array(
+            [
+                -0.62566871,
+                -1.28605435,
+                0.47511697,
+                0.40490283,
+                -0.11474329,
+                -0.13508221,
+                0.34435215,
+                -1.26302838,
+                -0.76163533,
+                2.96184032,
+            ]
+        )
+        assert_array_almost_equal(mvr.residuals, residuals)
+        self.assertEqual(round(mvr.f_stat, 3), 2.548)
+        self.assertEqual(mvr.df_error, 3)
+        self.assertEqual(mvr.df_model, 6)
+        self.assertEqual(round(mvr.f_p_value, 3), 0.763)
+
 
 if __name__ == "__main__":
     import sys
