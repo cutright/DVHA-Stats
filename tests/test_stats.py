@@ -78,6 +78,7 @@ class TestStats(unittest.TestCase):
         self.assertEqual(0, self.stats_obj.get_index_by_var_name("V1"))
         with self.assertRaises(AttributeError):
             self.stats_obj.get_index_by_var_name("test")
+        self.assertEqual(0, self.stats_obj.get_index_by_var_name(0))
 
     def test_get_data_by_var_name(self):
         """Test get data of a given var_name"""
@@ -242,6 +243,7 @@ class TestStats(unittest.TestCase):
         str_rep = "center_line: 48.544\ncontrol_limits: " \
                   "28.199, 68.890\nout_of_control: []"
         self.assertEqual(str(ucc[0]), str_rep)
+        self.assertEqual(repr(ucc[0]), str_rep)
 
     def test_univariate_control_chart_with_limits(self):
         """Test univariate control chart creation and values"""
@@ -276,6 +278,7 @@ class TestStats(unittest.TestCase):
                   "control_limits: 0, 7.834\n" \
                   "out_of_control: []"
         self.assertEqual(str(ht2), str_rep)
+        self.assertEqual(repr(ht2), str_rep)
 
     def test_hotelling_t2_box_cox(self):
         """Test multivariate control chart creation and values"""
@@ -325,6 +328,9 @@ class TestStats(unittest.TestCase):
         self.assertEqual(mvr.df_error, 3)
         self.assertEqual(mvr.df_model, 6)
         self.assertEqual(round(mvr.f_p_value, 3), 0.763)
+
+        mvr2 = stats_obj.linear_reg(y, saved_reg=mvr)
+        assert_array_equal(mvr.residuals, mvr2.residuals)
 
     def test_box_cox_by_index(self):
         """Test box-cox transformation by index and keyword"""

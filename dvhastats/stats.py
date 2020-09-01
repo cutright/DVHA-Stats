@@ -290,8 +290,6 @@ class DVHAStats:
                 return
 
 
-
-
 def get_lin_reg_p_values(X, y, predictions, y_intercept, slope):
     """
     Get p-values of a linear regression using sklearn
@@ -317,12 +315,6 @@ def get_lin_reg_p_values(X, y, predictions, y_intercept, slope):
         A dictionary of p-values (p), standard errors (std_err),
         and t-values (t)
     """
-
-    if isinstance(y, list):
-        y = np.array(y)
-
-    if isinstance(predictions, list):
-        predictions = np.array(predictions)
 
     newX = np.append(np.ones((len(X), 1)), X, axis=1)
     mse = (sum((y - predictions) ** 2)) / (len(newX) - len(newX[0]))
