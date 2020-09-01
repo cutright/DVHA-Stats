@@ -17,12 +17,12 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 from dvhastats import stats
 import warnings
 import matplotlib
+from copy import deepcopy
 
 matplotlib.use("Template")
 
 basedata_dir = join("tests", "testdata")
 example_data = join(basedata_dir, "multivariate_data_small.csv")
-example_data_no_nan = join(basedata_dir, "multivariate_data_small_no-nan.csv")
 example_data_full = join(basedata_dir, "multivariate_data.csv")
 
 
@@ -32,7 +32,6 @@ class TestStats(unittest.TestCase):
     def setUp(self):
         """Setup files and base data for utility testing."""
         self.data_path = example_data
-        self.data_path_no_nan = example_data_no_nan
         self.data_path_full = example_data_full
 
         data = [
@@ -47,6 +46,8 @@ class TestStats(unittest.TestCase):
 
         self.expected_dict = {key: data[i] for i, key in enumerate(keys)}
         self.expected_dict_nh = {i: row for i, row in enumerate(data)}
+        self.expected_dict_no_nan = deepcopy(self.expected_dict)
+        self.expected_dict_no_nan["V1"][0] = 56.5
         self.expected_arr = np.array(data).T
         self.expected_var_names = keys
 
@@ -302,7 +303,7 @@ class TestStats(unittest.TestCase):
     def test_multi_variable_regression(self):
         """Test Multi-Variable Linear Regression"""
         y = np.linspace(1, 10, 10)
-        stats_obj = stats.DVHAStats(self.data_path_no_nan)
+        stats_obj = stats.DVHAStats(self.expected_dict_no_nan)
         mvr = stats_obj.linear_reg(y)
         self.assertEqual(round(mvr.y_intercept, 3), 2.983)
         slope = np.array(

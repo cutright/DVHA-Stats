@@ -749,6 +749,7 @@ class HotellingT2:
                 self.center_line,
                 title=self.plot_title,
                 ucl=self.ucl,
+                lcl=self.lcl,
                 ylabel="Hottelling T^2",
             )
         )

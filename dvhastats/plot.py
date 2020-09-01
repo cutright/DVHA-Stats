@@ -219,6 +219,7 @@ class ControlChart(Plot):
         kwargs["line_width"] = line_width
         Plot.__init__(self, y, **kwargs)
         self.__add_cc_data()
+        self.__add_table_with_limits()
 
         if self.show:
             plt.show()
@@ -234,6 +235,26 @@ class ControlChart(Plot):
         self.add_control_limit_line(self.ucl)
         self.add_control_limit_line(self.lcl)
         self.add_center_line()
+
+    def __add_table_with_limits(self):
+        self.activate()
+        plt.subplots_adjust(bottom=0.25)
+        plt.table(cellText=self.__table_text, cellLoc="center",
+                  colLabels=["Center Line", "LCL", "UCL"],
+                  loc='bottom', bbox=[0.0, -0.31, 1, 0.12])
+
+    @property
+    def __table_text(self):
+        props = ["center_line", "lcl", "ucl"]
+        text = []
+        for prop in props:
+            value = getattr(self, prop)
+            if isinstance(value, float):
+                formatter = ['E', 'f'][9999 > value > 0.1]
+                text.append(("%%0.3%s" % formatter) % value)
+            else:
+                text.append(str(value))
+        return [text]
 
     def add_scatter(self):
         self.activate()
