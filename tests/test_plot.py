@@ -28,6 +28,11 @@ class TestPlot(unittest.TestCase):
         p = plot.Plot(self.y, show=False)
         p.close()
 
+    def test_plot_add_line(self):
+        p = plot.Plot(self.y, show=False)
+        p.add_line([0, 1])
+        p.close()
+
     def test_control_chart(self):
         """Test ControlChart initialization"""
         p = plot.ControlChart(

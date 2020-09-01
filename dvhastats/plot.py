@@ -220,9 +220,6 @@ class ControlChart(Plot):
         Plot.__init__(self, y, **kwargs)
         self.__add_cc_data()
 
-        if "line_color" not in list(kwargs):
-            self.line_color = "black"
-
         if self.show:
             plt.show()
 

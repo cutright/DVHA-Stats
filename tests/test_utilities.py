@@ -63,6 +63,15 @@ class TestUtilities(unittest.TestCase):
         )
         self.assertEqual(data, self.expected_dict_nh)
 
+    def test_apply_dtype(self):
+        """Test the apply_dtype function"""
+        test = utilities.apply_dtype("2.5", float)
+        self.assertEqual(test, 2.5)
+        test = utilities.apply_dtype(2.5, str)
+        self.assertEqual(test, "2.5")
+        test = utilities.apply_dtype(2.5, None)
+        self.assertEqual(test, 2.5)
+
 
 if __name__ == "__main__":
     import sys
