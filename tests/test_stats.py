@@ -16,6 +16,9 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from dvhastats import stats
 import warnings
+import matplotlib
+
+matplotlib.use("Template")
 
 basedata_dir = join("tests", "testdata")
 example_data = join(basedata_dir, "multivariate_data_small.csv")
@@ -240,14 +243,18 @@ class TestStats(unittest.TestCase):
         self.assertEqual(round(lcl, 3), 28.199)
         self.assertEqual(round(ucl, 3), 68.89)
         self.assertEqual(len(ucc[0].out_of_control), 0)
-        str_rep = "center_line: 48.544\ncontrol_limits: " \
-                  "28.199, 68.890\nout_of_control: []"
+        str_rep = (
+            "center_line: 48.544\ncontrol_limits: "
+            "28.199, 68.890\nout_of_control: []"
+        )
         self.assertEqual(str(ucc[0]), str_rep)
         self.assertEqual(repr(ucc[0]), str_rep)
 
     def test_univariate_control_chart_with_limits(self):
         """Test univariate control chart creation and values"""
-        ucc = self.stats_obj.univariate_control_charts(lcl_limit=30, ucl_limit=50)
+        ucc = self.stats_obj.univariate_control_charts(
+            lcl_limit=30, ucl_limit=50
+        )
         lcl, ucl = ucc[0].control_limits
         self.assertEqual(round(lcl, 3), 30)
         self.assertEqual(round(ucl, 3), 50)
@@ -273,10 +280,12 @@ class TestStats(unittest.TestCase):
         self.assertEqual(round(lcl, 3), 0)
         self.assertEqual(round(ucl, 3), 7.834)
         self.assertEqual(len(ht2.out_of_control), 0)
-        str_rep = "Q: [nan nan nan nan nan nan nan nan nan nan]\n" \
-                  "center_line: 5.614\n" \
-                  "control_limits: 0, 7.834\n" \
-                  "out_of_control: []"
+        str_rep = (
+            "Q: [nan nan nan nan nan nan nan nan nan nan]\n"
+            "center_line: 5.614\n"
+            "control_limits: 0, 7.834\n"
+            "out_of_control: []"
+        )
         self.assertEqual(str(ht2), str_rep)
         self.assertEqual(repr(ht2), str_rep)
 
@@ -337,6 +346,18 @@ class TestStats(unittest.TestCase):
         data_by_index = self.stats_obj.box_cox_by_index(0)
         data_by_key = self.stats_obj.box_cox_by_index("V1")
         assert_array_equal(data_by_index, data_by_key)
+
+    def test_show_calls(self):
+        fig = self.stats_obj.show(0)
+        self.stats_obj.close(fig)
+
+        ucc = self.stats_obj.univariate_control_charts()
+        fig = ucc[0].show()
+        ucc[0].close(fig)
+
+        ht2 = self.stats_obj.hotelling_t2()
+        fig = ht2.show()
+        ht2.close(fig)
 
 
 if __name__ == "__main__":

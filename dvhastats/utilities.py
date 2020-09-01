@@ -82,3 +82,12 @@ def dict_to_array(data, key_order=None):
     var_names = key_order if key_order is not None else list(data.keys())
     arr_data = [data[key] for key in var_names]
     return {"data": np.asarray(arr_data).T, "var_names": var_names}
+
+
+def close_plot(figure_number, plots):
+    """Close a plot by figure_number"""
+    for i, p in enumerate(plots):
+        if p.figure.number == figure_number:
+            p.close()
+            plots.pop(i)
+            return

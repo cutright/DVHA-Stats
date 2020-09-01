@@ -38,7 +38,7 @@ class Plot:
         line_width=1.0,
         line_style="-",
         scatter=True,
-        scatter_color=None
+        scatter_color=None,
     ):
         """
         Initialization of a general Plot class object

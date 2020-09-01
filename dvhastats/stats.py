@@ -14,7 +14,7 @@
 from os.path import isfile, splitext
 import numpy as np
 from scipy.stats import beta
-from dvhastats.utilities import dict_to_array, csv_to_dict
+from dvhastats.utilities import dict_to_array, csv_to_dict, close_plot
 from dvhastats import plot
 from scipy import stats as scipy_stats
 from sklearn import linear_model
@@ -71,8 +71,9 @@ class DVHAStats:
         """Get the variable index by var_name"""
         if var_name in self.var_names:
             index = self.var_names.index(var_name)
-        elif isinstance(var_name, int) and \
-                var_name in range(self.variable_count):
+        elif isinstance(var_name, int) and var_name in range(
+            self.variable_count
+        ):
             return var_name
         else:
             msg = "%s is not a valid var_name\n%s" % (
@@ -116,7 +117,9 @@ class DVHAStats:
         """
         norm, p = np.zeros(self.variable_count), np.zeros(self.variable_count)
         for i in range(self.variable_count):
-            norm[i], p[i] = scipy_stats.normaltest(self.data[:, i], nan_policy="omit")
+            norm[i], p[i] = scipy_stats.normaltest(
+                self.data[:, i], nan_policy="omit"
+            )
         return norm, p
 
     def linear_reg(self, y, saved_reg=None):
@@ -274,20 +277,19 @@ class DVHAStats:
         """Display a plot of var_name with matplotlib"""
         index = self.get_index_by_var_name(var_name)
         var_name = self.var_names[index]
-        self.plots.append(plot.Plot(
-            self.data[:, index],
-            x=self.x_axis,
-            xlabel="Observation",
-            ylabel=var_name,
-        ))
+        self.plots.append(
+            plot.Plot(
+                self.data[:, index],
+                x=self.x_axis,
+                xlabel="Observation",
+                ylabel=var_name,
+            )
+        )
         return self.plots[-1].figure.number
 
     def close(self, figure_number):
         """Close a plot by figure_number"""
-        for p in self.plots:
-            if p.figure.number == figure_number:
-                p.close()
-                return
+        close_plot(figure_number, self.plots)
 
 
 def get_lin_reg_p_values(X, y, predictions, y_intercept, slope):
@@ -529,6 +531,8 @@ class ControlChartData:
         # since moving range is calculated based on 2 consecutive points
         self.scalar_d = 1.128
 
+        self.plots = []
+
     def __str__(self):
         msg = [
             "center_line: %0.3f" % self.center_line,
@@ -611,16 +615,23 @@ class ControlChartData:
     def show(self):
         """Display the univariate control chart with matplotlib"""
         lcl, ucl = self.control_limits
-        plot.ControlChart(
-            self.y,
-            self.out_of_control,
-            self.center_line,
-            x=self.x,
-            title=self.plot_title,
-            lcl=lcl,
-            ucl=ucl,
-            ylabel=self.var_name,
+        self.plots.append(
+            plot.ControlChart(
+                self.y,
+                self.out_of_control,
+                self.center_line,
+                x=self.x,
+                title=self.plot_title,
+                lcl=lcl,
+                ucl=ucl,
+                ylabel=self.var_name,
+            )
         )
+        return self.plots[-1].figure.number
+
+    def close(self, figure_number):
+        """Close a plot by figure_number"""
+        close_plot(figure_number, self.plots)
 
 
 class HotellingT2:
@@ -647,6 +658,7 @@ class HotellingT2:
         self.plot_title = (
             "Multivariate Control Chart" if plot_title is None else plot_title
         )
+        self.plots = []
 
     def __str__(self):
         msg = [
@@ -730,11 +742,18 @@ class HotellingT2:
 
     def show(self):
         """Display the multivariate control chart with matplotlib"""
-        plot.ControlChart(
-            self.Q,
-            self.out_of_control,
-            self.center_line,
-            title=self.plot_title,
-            ucl=self.ucl,
-            ylabel="Hottelling T^2",
+        self.plots.append(
+            plot.ControlChart(
+                self.Q,
+                self.out_of_control,
+                self.center_line,
+                title=self.plot_title,
+                ucl=self.ucl,
+                ylabel="Hottelling T^2",
+            )
         )
+        return self.plots[-1].figure.number
+
+    def close(self, figure_number):
+        """Close a plot by figure_number"""
+        close_plot(figure_number, self.plots)
