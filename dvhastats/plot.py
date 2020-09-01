@@ -9,8 +9,17 @@
 #    See the file LICENSE included with this distribution, also
 #    available at https://github.com/cutright/DVHA-Stats
 
-import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
 import numpy as np
+
+
+FIGURE_COUNT = 1
+
+
+def get_new_figure_num():
+    global FIGURE_COUNT
+    FIGURE_COUNT += 1
+    return FIGURE_COUNT - 1
 
 
 class Plot:
@@ -29,7 +38,7 @@ class Plot:
         line_width=1.0,
         line_style="-",
         scatter=True,
-        scatter_color=None,
+        scatter_color=None
     ):
         """
         Initialization of a general Plot class object
@@ -74,6 +83,8 @@ class Plot:
         self.line_style = line_style
         self.scatter = scatter
         self.scatter_color = scatter_color
+        self.figure = plt.figure(get_new_figure_num())
+        self.activate()
 
         self.__add_labels()
         self.__add_data()
@@ -93,9 +104,11 @@ class Plot:
             self.add_default_line()
 
     def add_scatter(self):
+        self.activate()
         plt.scatter(self.x, self.y, color=self.scatter_color)
 
     def add_default_line(self):
+        self.activate()
         plt.plot(
             self.x,
             self.y,
@@ -104,8 +117,9 @@ class Plot:
             linestyle=self.line_style,
         )
 
-    @staticmethod
-    def add_line(y, x=None, line_color=None, line_width=None, line_style=None):
+    def add_line(
+        self, y, x=None, line_color=None, line_width=None, line_style=None
+    ):
         """Add another line with the provided data
 
         Parameters
@@ -122,6 +136,7 @@ class Plot:
             Specify the line style
         :
         """
+        self.activate()
         plt.plot(
             np.linspace(1, len(y), len(y)) if x is None else x,
             y,
@@ -129,6 +144,12 @@ class Plot:
             linewidth=line_width,
             linestyle=line_style,
         )
+
+    def activate(self):
+        plt.figure(self.figure.number)
+
+    def close(self):
+        plt.close(self.figure.number)
 
 
 class ControlChart(Plot):
@@ -146,6 +167,12 @@ class ControlChart(Plot):
         ylabel="Charting Variable",
         line_color="black",
         line_width=0.75,
+        center_line_color="black",
+        center_line_width=1.0,
+        center_line_style="--",
+        limit_line_color="red",
+        limit_line_width=1.0,
+        limit_line_style="--",
         **kwargs
     ):
         """Initialization of a ControlChart plot class object
@@ -179,13 +206,19 @@ class ControlChart(Plot):
         self.lcl = lcl
         self.ucl = ucl
         self.out_of_control = out_of_control
+        self.center_line_color = center_line_color
+        self.center_line_width = center_line_width
+        self.center_line_style = center_line_style
+        self.limit_line_color = limit_line_color
+        self.limit_line_width = limit_line_width
+        self.limit_line_style = limit_line_style
         kwargs["title"] = title
         kwargs["xlabel"] = xlabel
         kwargs["ylabel"] = ylabel
         kwargs["line_color"] = line_color
         kwargs["line_width"] = line_width
         Plot.__init__(self, y, **kwargs)
-        self.add_cc_data()
+        self.__add_cc_data()
 
         if "line_color" not in list(kwargs):
             self.line_color = "black"
@@ -200,31 +233,50 @@ class ControlChart(Plot):
         self.ic = {"x": self.x[include], "y": self.y[include]}
         self.ooc = {"x": self.x[~include], "y": self.y[~include]}
 
-    def add_cc_data(self):
+    def __add_cc_data(self):
         self.add_control_limit_line(self.ucl)
         self.add_control_limit_line(self.lcl)
         self.add_center_line()
 
     def add_scatter(self):
+        self.activate()
         self.__set_y_scatter_data()
         plt.scatter(self.ic["x"], self.ic["y"], color=self.scatter_color)
         plt.scatter(self.ooc["x"], self.ooc["y"], color="red")
 
-    def add_control_limit_line(self, limit):
+    def add_control_limit_line(
+        self, limit, color=None, line_width=None, line_style=None
+    ):
+        self.activate()
+        color = self.limit_line_color if color is None else color
+        line_width = (
+            self.limit_line_width if line_width is None else line_width
+        )
+        line_style = (
+            self.limit_line_style if line_style is None else line_style
+        )
         if limit is not None:
             plt.plot(
                 [1, len(self.x)],
                 [limit] * 2,
-                color="red",
-                linewidth=1.0,
-                linestyle="--",
+                color=color,
+                linewidth=line_width,
+                linestyle=line_style,
             )
 
-    def add_center_line(self):
+    def add_center_line(self, color=None, line_width=None, line_style=None):
+        self.activate()
+        color = self.center_line_color if color is None else color
+        line_width = (
+            self.center_line_width if line_width is None else line_width
+        )
+        line_style = (
+            self.center_line_style if line_style is None else line_style
+        )
         plt.plot(
             [1, len(self.x)],
             [self.center_line] * 2,
-            color="black",
-            linewidth=1.0,
-            linestyle="--",
+            color=color,
+            linewidth=line_width,
+            linestyle=line_style,
         )
