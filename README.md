@@ -8,12 +8,16 @@ A library of prediction and statistical process control tools. Although based
 on work in [DVH Analytics](http://dvhanalytics.com), all tools in this library 
 are generic and not specifically applicable to any one field.
 
+[![build](https://github.com/cutright/DVHA-Stats/workflows/build/badge.svg)](https://github.com/cutright/DVHA-Stats/actions)
 <a href="https://pypi.org/project/dvha-stats/">
-        <img src="https://img.shields.io/pypi/v/dvha-stats.svg" alt="PyPi Version" /></a>
+  <img src="https://img.shields.io/pypi/v/dvha-stats.svg" alt="PyPi Version" /></a>
 <a href="https://lgtm.com/projects/g/cutright/DVHA-Stats/context:python">
-        <img src="https://img.shields.io/lgtm/grade/python/g/cutright/DVHA-Stats.svg?logo=lgtm&label=code%20quality" alt="LGTM Code Quality" /></a>
+  <img src="https://img.shields.io/lgtm/grade/python/g/cutright/DVHA-Stats.svg?logo=lgtm&label=code%20quality" alt="LGTM Code Quality" /></a>
+<a href="https://codecov.io/gh/cutright/DVHA-Stats">
+  <img src="https://codecov.io/gh/cutright/DVHA-Stats/branch/master/graph/badge.svg" />
+</a>
 
-What does it do?
+### What does it do?
 * Read data from CSV or supply as numpy array 
 * Plotting
     * Simple one-variable plots from data
@@ -23,7 +27,7 @@ What does it do?
 * Calculate Pearson-R correlation matrices
 * Perform Multi-Variable Linear Regressions
 
-Coming Soon:
+### Coming Soon:
 - [ ] PyPI installation
 - [ ] Multi-Variable Regression plots
 - [ ] Backward-elimination for Multi-Variable Linear Regressions
