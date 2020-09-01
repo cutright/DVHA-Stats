@@ -91,3 +91,35 @@ def close_plot(figure_number, plots):
             p.close()
             plots.pop(i)
             return
+
+
+def moving_avg(y, avg_len, x=None, weight=None):
+    """Calculate the moving (rolling) average of a set of data
+
+    Parameters
+    ----------
+    y : np.ndarray, list
+        data (1-D) to be averaged
+    avg_len : int
+        Data is averaged over this many points (current value and avg_len - 1
+        prior points)
+    x : np.ndarray, list, optional
+        Optionally specify the x-axis values. Otherwise index+1 is used.
+    weight : np.ndarray, list, optional
+        A weighted moving average is calculated based on the provided weights.
+        weight must be of same length as y. Weights of one are assumed by
+        default.
+    """
+    x = np.linspace(1, len(y), len(y)) if x is None else x
+    weight = np.ones_like(y) if weight is None else weight
+
+    cumsum, moving_aves, x_final = [0], [], []
+
+    for i, yi in enumerate(y, 1):
+        cumsum.append(cumsum[i - 1] + yi / weight[i - 1])
+        if i >= avg_len:
+            moving_ave = (cumsum[i] - cumsum[i - avg_len]) / avg_len
+            moving_aves.append(moving_ave)
+    x_final = [x[i] for i in range(avg_len - 1, len(x))]
+
+    return np.array(x_final), np.array(moving_aves)

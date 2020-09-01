@@ -14,7 +14,12 @@
 from os.path import isfile, splitext
 import numpy as np
 from scipy.stats import beta
-from dvhastats.utilities import dict_to_array, csv_to_dict, close_plot
+from dvhastats.utilities import (
+    dict_to_array,
+    csv_to_dict,
+    close_plot,
+    moving_avg,
+)
 from dvhastats import plot
 from scipy import stats as scipy_stats
 from sklearn import linear_model
@@ -23,7 +28,7 @@ from regressors import stats as regressors_stats
 
 
 class DVHAStats:
-    def __init__(self, data, var_names=None, x_axis=None):
+    def __init__(self, data, var_names=None, x_axis=None, avg_len=5):
         """Class used to calculated various statistics
 
         Parameters
@@ -37,6 +42,10 @@ class DVHAStats:
         x_axis : numpy.array, list, optional
             Specify x_axis for plotting purposes. Default is based on row
             number in data
+        avg_len : int
+            When plotting raw data, a trend line will be plotted using this
+            value as an averaging length. If N < avg_len + 1 will not
+            plot a trend line
         """
         if isinstance(data, np.ndarray):
             self.data = data
@@ -61,6 +70,8 @@ class DVHAStats:
         self.box_cox_data = None
 
         self.plots = []
+
+        self.avg_len = avg_len
 
     def get_data_by_var_name(self, var_name):
         """Get the single variable array based on var_name"""
@@ -273,6 +284,14 @@ class DVHAStats:
         for i in range(self.variable_count):
             self.box_cox_by_index(i, alpha=alpha, lmbda=lmbda)
 
+    def add_tend_line(self, var_name, plot_index):
+        trend_x, trend_y = moving_avg(
+            self.get_data_by_var_name(var_name), self.avg_len
+        )
+        self.plots[plot_index].add_line(
+            trend_y, x=trend_x, line_color="black", line_width=0.75
+        )
+
     def show(self, var_name):
         """Display a plot of var_name with matplotlib"""
         index = self.get_index_by_var_name(var_name)
@@ -285,6 +304,7 @@ class DVHAStats:
                 ylabel=var_name,
             )
         )
+        self.add_tend_line(var_name, -1)
         return self.plots[-1].figure.number
 
     def close(self, figure_number):

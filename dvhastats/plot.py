@@ -239,9 +239,13 @@ class ControlChart(Plot):
     def __add_table_with_limits(self):
         self.activate()
         plt.subplots_adjust(bottom=0.25)
-        plt.table(cellText=self.__table_text, cellLoc="center",
-                  colLabels=["Center Line", "LCL", "UCL"],
-                  loc='bottom', bbox=[0.0, -0.31, 1, 0.12])
+        plt.table(
+            cellText=self.__table_text,
+            cellLoc="center",
+            colLabels=["Center Line", "LCL", "UCL"],
+            loc="bottom",
+            bbox=[0.0, -0.31, 1, 0.12],
+        )
 
     @property
     def __table_text(self):
@@ -250,7 +254,7 @@ class ControlChart(Plot):
         for prop in props:
             value = getattr(self, prop)
             if isinstance(value, float):
-                formatter = ['E', 'f'][9999 > value > 0.1]
+                formatter = ["E", "f"][9999 > float(value) > 0.1]
                 text.append(("%%0.3%s" % formatter) % value)
             else:
                 text.append(str(value))
