@@ -70,6 +70,14 @@ Dependencies
 ~~~
 <img src='https://user-images.githubusercontent.com/4778878/91908372-0c4c2d80-ec71-11ea-9dfc-7c4f6c209542.png' align='center' width='350' alt="Data Plot">
 
+### Pearson-R Correlation Matrix
+~~~
+>>> corr_mat = s.pearson_r_matrix()
+>>> corr_mat.show()
+~~~
+<img src='https://user-images.githubusercontent.com/4778878/92064453-1ea69400-ed63-11ea-8f72-5034c577c1e3.png' align='center' width='350' alt="Pearson-R Correlation Matrix">
+
+
 ### Univariate Control Chart
 ~~~
 >>> ucc = s.univariate_control_charts()

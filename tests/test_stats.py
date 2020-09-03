@@ -204,9 +204,9 @@ class TestStats(unittest.TestCase):
                 ],
             ]
         )
-        r, p = self.stats_obj.pearson_r_matrix
-        assert_array_almost_equal(r, exp_r)
-        assert_array_almost_equal(p, exp_p)
+        corr_mat = self.stats_obj.pearson_r_matrix
+        assert_array_almost_equal(corr_mat.r, exp_r)
+        assert_array_almost_equal(corr_mat.p, exp_p)
 
     def test_normality(self):
         """Test normality calculation"""
