@@ -353,6 +353,10 @@ class TestStats(unittest.TestCase):
         fig = self.stats_obj.show(0)
         self.stats_obj.close(fig)
 
+        corr_mat = self.stats_obj.pearson_r_matrix
+        fig = corr_mat.show()
+        corr_mat.close(fig)
+
         ucc = self.stats_obj.univariate_control_charts()
         fig = ucc[0].show()
         ucc[0].close(fig)

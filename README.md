@@ -86,7 +86,7 @@ Dependencies
 <img src='https://user-images.githubusercontent.com/4778878/91908380-0fdfb480-ec71-11ea-9394-d029a8a6727e.png' align='center' width='350' alt="Univariate Control Chart">
 
 ### Hotelling T^2
-Example to calculate the Hotelling T^2 values from a csv file
+Example to calculate a Multivariate Control Chart with Hotelling T^2 values
 ~~~
 >>> ht2 = s.hotelling_t2()
 >>> ht2.show()
