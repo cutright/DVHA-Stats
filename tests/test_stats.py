@@ -98,6 +98,11 @@ class TestStats(unittest.TestCase):
         """Test DVHAStats.variable_count property"""
         self.assertEqual(self.stats_obj.variable_count, 6)
 
+    def test_correlation_matrix_type_failure(self):
+        """Check that error is raised if corr_type Spearman or Pearson"""
+        with self.assertRaises(NotImplementedError):
+            self.stats_obj.correlation_matrix(corr_type="test")
+
     def test_pearson_r_matrix(self):
         """Test Pearson-R matrix calculation"""
         exp_r = np.array(
