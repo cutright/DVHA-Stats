@@ -98,6 +98,11 @@ class TestStats(unittest.TestCase):
         """Test DVHAStats.variable_count property"""
         self.assertEqual(self.stats_obj.variable_count, 6)
 
+    def test_correlation_matrix_type_failure(self):
+        """Check that error is raised if corr_type Spearman or Pearson"""
+        with self.assertRaises(NotImplementedError):
+            self.stats_obj.correlation_matrix(corr_type="test")
+
     def test_pearson_r_matrix(self):
         """Test Pearson-R matrix calculation"""
         exp_r = np.array(
@@ -204,8 +209,8 @@ class TestStats(unittest.TestCase):
                 ],
             ]
         )
-        corr_mat = self.stats_obj.pearson_r_matrix
-        assert_array_almost_equal(corr_mat.r, exp_r)
+        corr_mat = self.stats_obj.correlation_matrix()
+        assert_array_almost_equal(corr_mat.corr, exp_r)
         assert_array_almost_equal(corr_mat.p, exp_p)
 
     def test_normality(self):
@@ -353,7 +358,7 @@ class TestStats(unittest.TestCase):
         fig = self.stats_obj.show(0)
         self.stats_obj.close(fig)
 
-        corr_mat = self.stats_obj.pearson_r_matrix
+        corr_mat = self.stats_obj.correlation_matrix(corr_type="Spearman")
         fig = corr_mat.show()
         corr_mat.close(fig)
 

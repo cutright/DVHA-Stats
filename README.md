@@ -5,8 +5,8 @@
 ---------  
 # DVHA Stats
 A library of prediction and statistical process control tools. Although based 
-on work in [DVH Analytics](http://dvhanalytics.com), all tools in this library 
-are generic and not specifically applicable to any one field.
+on work in [DVH Analytics](http://dvhanalytics.com), all statistical tools in 
+this library are generic and not radiation oncology.
 
 [![build](https://github.com/cutright/DVHA-Stats/workflows/build/badge.svg)](https://github.com/cutright/DVHA-Stats/actions)
 <a href="https://pypi.org/project/dvha-stats/">
@@ -21,15 +21,15 @@ are generic and not specifically applicable to any one field.
 * Read data from CSV or supply as numpy array 
 * Plotting
     * Simple one-variable plots from data
-    * Control Charts
-    * Multivariate Control Charts
+    * Control Charts (Univariate and Multivariate)
+    * Heat Maps (correlations, PCA, etc.)
 * Perform Box-Cox transformations
-* Calculate Pearson-R correlation matrices
+* Calculate Correlation matrices
 * Perform Multi-Variable Linear Regressions
 * Perform Principal Component Analysis (PCA)
 
 ### Coming Soon:
-- [ ] Multi-Variable Regression plots
+- [ ] Multi-Variable Regression residual and quantile plots
 - [ ] Backward-elimination for Multi-Variable Linear Regressions
 - [ ] Risk-Adjusted Control Charts using Multi-Variable Linear Regressions
 - [ ] Machine learning regressions based on scikit-learn
@@ -70,12 +70,19 @@ Dependencies
 ~~~
 <img src='https://user-images.githubusercontent.com/4778878/91908372-0c4c2d80-ec71-11ea-9dfc-7c4f6c209542.png' align='center' width='350' alt="Data Plot">
 
-### Pearson-R Correlation Matrix
+### Correlation Matrix
 ~~~
->>> corr_mat = s.pearson_r_matrix()
->>> corr_mat.show()
+>>> pearson_mat = s.correlation_matrix()
+>>> pearson_mat.show()
 ~~~
 <img src='https://user-images.githubusercontent.com/4778878/92064453-1ea69400-ed63-11ea-8f72-5034c577c1e3.png' align='center' width='350' alt="Pearson-R Correlation Matrix">
+
+Like-wise, a Spearman correlation matrix:
+~~~
+>>> spearman_mat = s.correlation_matrix("Spearman")
+>>> spearman_mat.show()
+~~~
+<img src='https://user-images.githubusercontent.com/4778878/92177010-4a7a5600-ee05-11ea-91b9-2a0128eafe5b.png' align='center' width='350' alt="Spearman Correlation Matrix">
 
 
 ### Univariate Control Chart

@@ -115,10 +115,22 @@ class DVHAStats(DVHAStatsBaseClass):
         """Number of variables"""
         return self.data.shape[1]
 
-    @property
-    def pearson_r_matrix(self):
-        """Get a Pearson-R correlation matrix and associated p-value matrix"""
-        return CorrelationMatrix(self.data, self.var_names)
+    def correlation_matrix(self, corr_type="Pearson"):
+        """Get a Pearson-R and Spearman correlation matrices
+
+        Parameters
+        ----------
+        corr_type : str
+            Either "Pearson" or "Spearman"
+
+        Returns
+        ----------
+        CorrelationMatrix
+            A CorrelationMatrix class object
+        """
+        return CorrelationMatrix(
+            self.data, self.var_names, corr_type=corr_type
+        )
 
     @property
     def normality(self):
@@ -779,7 +791,9 @@ class PCA(sklearnPCA, DVHAStatsBaseClass):
 class CorrelationMatrix(DVHAStatsBaseClass):
     """Pearson-R correlation matrix"""
 
-    def __init__(self, X, var_names=None, cmap="coolwarm"):
+    def __init__(
+        self, X, var_names=None, corr_type="Pearson", cmap="coolwarm"
+    ):
         """Initialization of CorrelationMatrix object
 
         Parameters
@@ -787,44 +801,41 @@ class CorrelationMatrix(DVHAStatsBaseClass):
         X : np.ndarray
             Input data (2-D) with N rows of observations and
             p columns of variables.
+        corr_type : str
+            Either "Pearson" or "Spearman"
+        cmap : str
+            matplotlib compatible color map
         """
         DVHAStatsBaseClass.__init__(self)
         self.X = X
         self.var_names = range(X.shape[1]) if var_names is None else var_names
+        self.corr_type = corr_type.lower()
         self.cmap = cmap
-        self.__calculate_matrix()
 
-    def __calculate_matrix(self):
-        """Calculate a correlation matrix of Pearson-R values"""
+        if self.corr_type not in {"pearson", "spearman"}:
+            msg = "Invalid corr_type: must be either 'Pearson' or 'Spearman'"
+            raise NotImplementedError(msg)
 
-        X = self.X
-        r = np.ones([X.shape[1], X.shape[1]])  # Pearson R
-        p = np.zeros([X.shape[1], X.shape[1]])  # p-value of Pearson R
+        func_map = {
+            "pearson": pearson_correlation_matrix,
+            "spearman": spearman_correlation_matrix,
+        }
+        if self.corr_type in list(func_map):
+            self.corr, self.p = func_map[self.corr_type](self.X)
 
-        for x in range(X.shape[1]):
-            for y in range(X.shape[1]):
-                if x > y:
+    def __title(self, is_corr=True):
+        """Get plot title
 
-                    # Pearson r requires that both sets of data be of the same
-                    # length. Remove index if NaN in either variable.
-                    valid_x = ~np.isnan(X[:, x])
-                    valid_y = ~np.isnan(X[:, y])
-                    include = np.full(len(X[:, x]), True)
-                    for i in range(len(valid_x)):
-                        include[i] = valid_x[i] and valid_y[i]
-                    x_data = X[include, x]
-                    y_data = X[include, y]
+        Parameters
+        ----------
+        is_corr : bool
+            Set to True if plot data type is correlation, False if p-value
+        """
+        mat_type = "Pearson-R" if self.corr_type == "pearson" else "Spearman"
+        value_type = ["p-value", "Correlation"][is_corr]
+        return "%s %s Matrix" % (mat_type, value_type)
 
-                    r[x, y], p[x, y] = scipy_stats.pearsonr(x_data, y_data)
-
-                    # These matrices are symmetric
-                    r[y, x] = r[x, y]
-                    p[y, x] = p[x, y]
-
-        self.r = r
-        self.p = p
-
-    def show(self, absolute=False):
+    def show(self, absolute=False, corr=True):
         """Create a heat map of self.pca.components_
 
         Parameters
@@ -832,16 +843,19 @@ class CorrelationMatrix(DVHAStatsBaseClass):
         absolute : bool
             Heat map will display the absolute values in self.pca.components_
             if True
+        corr : bool
+            Plot a p-value matrix if False, correlation matrix if True.
         """
 
-        data = abs(self.r) if absolute else self.r
+        data = self.corr if corr else self.p
+        data = abs(data) if absolute else data
         self.plots.append(
             plot.HeatMap(
                 data,
                 xlabels=self.var_names,
                 ylabels=self.var_names,
                 cmap=self.cmap,
-                title="Pearson-R Correlation Matrix",
+                title=self.__title(corr),
             )
         )
         return self.plots[-1].figure.number
@@ -868,9 +882,8 @@ def get_lin_reg_p_values(X, y, predictions, y_intercept, slope):
 
     Returns
     ----------
-    dict
-        A dictionary of p-values (p), standard errors (std_err),
-        and t-values (t)
+    np.ndarray, np.ndarray, np.ndarray
+         A tuple of arrays: p-values, standard errors, and t-values
     """
 
     newX = np.append(np.ones((len(X), 1)), X, axis=1)
@@ -882,9 +895,67 @@ def get_lin_reg_p_values(X, y, predictions, y_intercept, slope):
     params = np.append(y_intercept, slope)
     t_values = np.array(params) / std_errs
 
-    p_value = [
-        2 * (1 - scipy_stats.t.cdf(np.abs(i), (len(newX) - 1)))
-        for i in t_values
-    ]
+    p_value = np.array(
+        [
+            2 * (1 - scipy_stats.t.cdf(np.abs(i), (len(newX) - 1)))
+            for i in t_values
+        ]
+    )
 
     return p_value, std_errs, t_values
+
+
+def pearson_correlation_matrix(X):
+    """Calculate a correlation matrix of Pearson-R values
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples and
+            n_features is the number of features.
+
+    """
+
+    r = np.ones([X.shape[1], X.shape[1]])  # Pearson R
+    p = np.zeros([X.shape[1], X.shape[1]])  # p-value of Pearson R
+
+    for x in range(X.shape[1]):
+        for y in range(X.shape[1]):
+            if x > y:
+
+                # Pearson r requires that both sets of data be of the same
+                # length. Remove index if NaN in either variable.
+                valid_x = ~np.isnan(X[:, x])
+                valid_y = ~np.isnan(X[:, y])
+                include = np.full(len(X[:, x]), True)
+                for i in range(len(valid_x)):
+                    include[i] = valid_x[i] and valid_y[i]
+                x_data = X[include, x]
+                y_data = X[include, y]
+
+                r[x, y], p[x, y] = scipy_stats.pearsonr(x_data, y_data)
+
+                # These matrices are symmetric
+                r[y, x] = r[x, y]
+                p[y, x] = p[x, y]
+
+    return r, p
+
+
+def spearman_correlation_matrix(X, nan_policy="omit"):
+    """Calculate a Spearman correlation matrix
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples and
+            n_features is the number of features.
+    nan_policy : str
+        Value must be one of the following: ‘propagate’, ‘raise’, ‘omit’
+        Defines how to handle when input contains nan. The following options
+        are available (default is ‘omit’):
+            ‘propagate’: returns nan
+            ‘raise’: throws an error
+            ‘omit’: performs the calculations ignoring nan values
+    """
+    return scipy_stats.spearmanr(X, nan_policy=nan_policy)
