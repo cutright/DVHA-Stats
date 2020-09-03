@@ -365,9 +365,14 @@ class TestStats(unittest.TestCase):
         """Test PCA initialization and plot"""
         stats_obj = stats.DVHAStats(self.expected_dict_no_nan)
         pca = stats_obj.pca()
-        pca.show()
-        pca = stats.PCA(stats_obj.data)
-        pca.show()
+        fig = pca.show()
+        pca.close(fig)
+
+        # Test no transform
+        stats_obj.pca(transform=False)
+
+        # Test var_names=None
+        stats.PCA(stats_obj.data, var_names=None)
 
 
 if __name__ == "__main__":

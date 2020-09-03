@@ -26,14 +26,14 @@ are generic and not specifically applicable to any one field.
 * Perform Box-Cox transformations
 * Calculate Pearson-R correlation matrices
 * Perform Multi-Variable Linear Regressions
+* Perform Principal Component Analysis (PCA)
 
 ### Coming Soon:
-- [X] PyPI installation
 - [ ] Multi-Variable Regression plots
 - [ ] Backward-elimination for Multi-Variable Linear Regressions
 - [ ] Risk-Adjusted Control Charts using Multi-Variable Linear Regressions
 - [ ] Machine learning regressions based on scikit-learn
-- [X] Complete unit testing
+
 
 **NOTE**: This project is brand new and very much under construction.
 
