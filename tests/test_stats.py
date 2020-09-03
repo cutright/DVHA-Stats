@@ -204,8 +204,8 @@ class TestStats(unittest.TestCase):
                 ],
             ]
         )
-        corr_mat = self.stats_obj.pearson_r_matrix
-        assert_array_almost_equal(corr_mat.r, exp_r)
+        corr_mat = self.stats_obj.correlation_matrix()
+        assert_array_almost_equal(corr_mat.corr, exp_r)
         assert_array_almost_equal(corr_mat.p, exp_p)
 
     def test_normality(self):
@@ -353,7 +353,7 @@ class TestStats(unittest.TestCase):
         fig = self.stats_obj.show(0)
         self.stats_obj.close(fig)
 
-        corr_mat = self.stats_obj.pearson_r_matrix
+        corr_mat = self.stats_obj.correlation_matrix(corr_type="Spearman")
         fig = corr_mat.show()
         corr_mat.close(fig)
 
