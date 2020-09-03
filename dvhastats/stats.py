@@ -24,7 +24,7 @@ from dvhastats import plot
 from scipy import stats as scipy_stats
 from sklearn import linear_model
 from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA as sklearnPCA
 from regressors import stats as regressors_stats
 
 
@@ -69,7 +69,6 @@ class DVHAStats:
         self.x_axis = x_axis
 
         self.box_cox_data = None
-        self.pca = None
 
         self.plots = []
 
@@ -294,6 +293,16 @@ class DVHAStats:
             trend_y, x=trend_x, line_color="black", line_width=0.75
         )
 
+    def pca(self, n_components=0.95, transform=True, **kwargs):
+        """Return an sklearn PCA-like object, see PCA object for details"""
+        return PCA(
+            self.data,
+            self.var_names,
+            n_components=n_components,
+            transform=transform,
+            **kwargs
+        )
+
     def show(self, var_name):
         """Display a plot of var_name with matplotlib"""
         index = self.get_index_by_var_name(var_name)
@@ -313,54 +322,6 @@ class DVHAStats:
     def close(self, figure_number):
         """Close a plot by figure_number"""
         close_plot(figure_number, self.plots)
-
-    def do_pca(self, n_components=3, transform=True, **kwargs):
-        """Initialize PCA and perform fit
-
-        Parameters
-        ----------
-        n_components : int, float, None or str
-            Number of components to keep. if n_components is not set all
-            components are kept:
-                n_components == min(n_samples, n_features)
-
-                If n_components == 'mle' and svd_solver == 'full', Minka’s MLE
-                is used to guess the dimension. Use of n_components == 'mle'
-                will interpret svd_solver == 'auto' as svd_solver == 'full'.
-
-                If 0 < n_components < 1 and svd_solver == 'full', select the
-                number of components such that the amount of variance that
-                needs to be explained is greater than the percentage specified
-                by n_components.
-
-                If svd_solver == 'arpack', the number of components must be
-                strictly less than the minimum of n_features and n_samples.
-        transform : bool
-            Fit the model and apply the dimensionality reduction
-        kwargs : any
-            Provide any keyword arguments for sklearn.decomposition.PCA:
-            https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
-        """
-        self.pca = PCA(n_components=n_components, **kwargs)
-
-        if transform:
-            self.pca.fit_transform(self.data)
-        else:
-            self.pca.fit(self.data)
-
-    def show_pca_feature_map(self, absolute=True):
-        """Create a heat map of self.pca.components_
-
-        Parameters
-        ----------
-        absolute : bool
-            Heat map will display the absolute values in self.pca.components_
-            if True
-        """
-        if self.pca is None:
-            self.do_pca()
-        data = abs(self.pca.components_) if absolute else self.pca.components_
-        self.plots.append(plot.PCAFeatureMap(data, self.var_names))
 
 
 class MultiVariableRegression:
@@ -745,6 +706,72 @@ class HotellingT2:
             )
         )
         return self.plots[-1].figure.number
+
+    def close(self, figure_number):
+        """Close a plot by figure_number"""
+        close_plot(figure_number, self.plots)
+
+
+class PCA(sklearnPCA):
+    def __init__(
+        self, X, var_names=None, n_components=0.95, transform=True, **kwargs
+    ):
+        """Initialize PCA and perform fit. Inherits sklearn.decomposition.PCA
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples and
+            n_features is the number of features.
+        var_names : str, optional
+            Names of the independent variables in X
+        n_components : int, float, None or str
+            Number of components to keep. if n_components is not set all
+            components are kept:
+                n_components == min(n_samples, n_features)
+
+                If n_components == 'mle' and svd_solver == 'full', Minka’s MLE
+                is used to guess the dimension. Use of n_components == 'mle'
+                will interpret svd_solver == 'auto' as svd_solver == 'full'.
+
+                If 0 < n_components < 1 and svd_solver == 'full', select the
+                number of components such that the amount of variance that
+                needs to be explained is greater than the percentage specified
+                by n_components.
+
+                If svd_solver == 'arpack', the number of components must be
+                strictly less than the minimum of n_features and n_samples.
+        transform : bool
+            Fit the model and apply the dimensionality reduction
+        kwargs : any
+            Provide any keyword arguments for sklearn.decomposition.PCA:
+            https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
+        """
+        self.X = X
+        self.var_names = range(X.shape[1]) if var_names is None else var_names
+        self.plots = []
+        sklearnPCA.__init__(self, n_components=n_components, **kwargs)
+
+        if transform:
+            self.fit_transform(self.X)
+        else:
+            self.fit(self.X)
+
+    def show(self, plot_type="feature_map", absolute=True):
+        """Create a heat map of self.pca.components_
+
+        Parameters
+        ----------
+        plot_type : str
+            Select a plot type to display. Options include: feature_map.
+        absolute : bool
+            Heat map will display the absolute values in self.pca.components_
+            if True
+        """
+        if plot_type == "feature_map":
+            data = abs(self.components_) if absolute else self.components_
+            self.plots.append(plot.PCAFeatureMap(data, self.var_names))
+            return self.plots[-1].figure.number
 
     def close(self, figure_number):
         """Close a plot by figure_number"""

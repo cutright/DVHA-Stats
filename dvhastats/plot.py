@@ -316,7 +316,15 @@ class ControlChart(Plot):
 
 
 class HeatMap(Chart):
-    def __init__(self, X, xlabels=None, ylabels=None, title=None, cmap='viridis', show=True):
+    def __init__(
+        self,
+        X,
+        xlabels=None,
+        ylabels=None,
+        title=None,
+        cmap="viridis",
+        show=True,
+    ):
         Chart.__init__(self, title=title)
         self.X = X
         self.x_labels = range(X.shape[1]) if xlabels is None else xlabels
@@ -330,18 +338,40 @@ class HeatMap(Chart):
             self.show()
 
     def __set_ticks(self):
-        plt.xticks(range(self.X.shape[1]), self.x_labels, rotation=65, ha='left')
+        plt.xticks(
+            range(self.X.shape[1]), self.x_labels, rotation=65, ha="left"
+        )
         plt.yticks(range(self.X.shape[0]), self.y_labels, rotation=30)
 
 
 class PCAFeatureMap(HeatMap):
-    def __init__(self, X, features=None, cmap='viridis', show=True, title="PCA Feature Heat Map"):
+    def __init__(
+        self,
+        X,
+        features=None,
+        cmap="viridis",
+        show=True,
+        title="PCA Feature Heat Map",
+    ):
         y_labels = self.get_comp_labels(X.shape[0])
-        HeatMap.__init__(self, X, xlabels=features, ylabels=y_labels, cmap=cmap, show=show, title=title)
+        HeatMap.__init__(
+            self,
+            X,
+            xlabels=features,
+            ylabels=y_labels,
+            cmap=cmap,
+            show=show,
+            title=title,
+        )
 
     def get_comp_labels(self, n_components):
-        return ["%s Comp" % (self.get_ordinal(n+1)) for n in range(n_components)]
+        return [
+            "%s Comp" % (self.get_ordinal(n + 1)) for n in range(n_components)
+        ]
 
     @staticmethod
     def get_ordinal(n):
-        return "%d%s" % (n,"tsnrhtdd"[(n//10%10!=1)*(n%10<4)*n%10::4])
+        return "%d%s" % (
+            n,
+            "tsnrhtdd"[(n // 10 % 10 != 1) * (n % 10 < 4) * n % 10 :: 4],
+        )
