@@ -126,3 +126,9 @@ Example to calculate the Hotelling T^2 values and apply a Box-Cox transformation
 ~~~
 
 <img src='https://user-images.githubusercontent.com/4778878/91908394-179f5900-ec71-11ea-88a0-9c95d714fb4c.png' align='center' width='350' alt="Multivariate Control Chart with Box-Cox Transformation">
+
+### Principal Component Analysis (PCA)
+~~~
+>>> s.show_pca_feature_map()
+~~~
+<img src='https://user-images.githubusercontent.com/4778878/92050205-16922880-ed52-11ea-9967-d390577380b6.png' align='center' width='350' alt="PCA Feature Heat Map">

@@ -349,6 +349,7 @@ class TestStats(unittest.TestCase):
         assert_array_equal(data_by_index, data_by_key)
 
     def test_show_calls(self):
+        """Test matplotlib show calls"""
         fig = self.stats_obj.show(0)
         self.stats_obj.close(fig)
 
@@ -359,6 +360,12 @@ class TestStats(unittest.TestCase):
         ht2 = self.stats_obj.hotelling_t2()
         fig = ht2.show()
         ht2.close(fig)
+
+    def test_pca(self):
+        """Test PCA initialization and plot"""
+        stats_obj = stats.DVHAStats(self.expected_dict_no_nan)
+        stats_obj.show_pca_feature_map()
+        stats_obj.do_pca(transform=False)
 
 
 if __name__ == "__main__":

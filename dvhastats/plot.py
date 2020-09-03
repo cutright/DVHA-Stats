@@ -22,7 +22,26 @@ def get_new_figure_num():
     return FIGURE_COUNT - 1
 
 
-class Plot:
+class Chart:
+    def __init__(self, title=None):
+        self.title = title
+        self.figure = plt.figure(get_new_figure_num())
+
+        if title:
+            self.figure.suptitle(title, fontsize=16)
+
+    def show(self):
+        self.activate()
+        plt.show()
+
+    def activate(self):
+        plt.figure(self.figure.number)
+
+    def close(self):
+        plt.close(self.figure.number)
+
+
+class Plot(Chart):
     """Generic plotting class with matplotlib"""
 
     def __init__(
@@ -70,10 +89,10 @@ class Plot:
         scatter_color : str, optional
             Specify the scatter plot circle color
         """
+        Chart.__init__(self, title=title)
         self.x = np.linspace(1, len(y), len(y)) if x is None else x
         self.y = y
         self.show = show
-        self.title = title
         self.xlabel = xlabel
         self.ylabel = ylabel
 
@@ -83,7 +102,6 @@ class Plot:
         self.line_style = line_style
         self.scatter = scatter
         self.scatter_color = scatter_color
-        self.figure = plt.figure(get_new_figure_num())
         self.activate()
 
         self.__add_labels()
@@ -95,7 +113,6 @@ class Plot:
     def __add_labels(self):
         plt.xlabel(self.xlabel)
         plt.ylabel(self.ylabel)
-        plt.title(self.title)
 
     def __add_data(self):
         if self.scatter:
@@ -144,12 +161,6 @@ class Plot:
             linewidth=line_width,
             linestyle=line_style,
         )
-
-    def activate(self):
-        plt.figure(self.figure.number)
-
-    def close(self):
-        plt.close(self.figure.number)
 
 
 class ControlChart(Plot):
@@ -302,3 +313,35 @@ class ControlChart(Plot):
             linewidth=line_width,
             linestyle=line_style,
         )
+
+
+class HeatMap(Chart):
+    def __init__(self, X, xlabels=None, ylabels=None, title=None, cmap='viridis', show=True):
+        Chart.__init__(self, title=title)
+        self.X = X
+        self.x_labels = range(X.shape[1]) if xlabels is None else xlabels
+        self.y_labels = range(X.shape[0]) if ylabels is None else ylabels
+
+        plt.matshow(X, cmap=cmap, fignum=self.figure.number)
+        plt.colorbar()
+        self.__set_ticks()
+
+        if show:
+            self.show()
+
+    def __set_ticks(self):
+        plt.xticks(range(self.X.shape[1]), self.x_labels, rotation=65, ha='left')
+        plt.yticks(range(self.X.shape[0]), self.y_labels, rotation=30)
+
+
+class PCAFeatureMap(HeatMap):
+    def __init__(self, X, features=None, cmap='viridis', show=True, title="PCA Feature Heat Map"):
+        y_labels = self.get_comp_labels(X.shape[0])
+        HeatMap.__init__(self, X, xlabels=features, ylabels=y_labels, cmap=cmap, show=show, title=title)
+
+    def get_comp_labels(self, n_components):
+        return ["%s Comp" % (self.get_ordinal(n+1)) for n in range(n_components)]
+
+    @staticmethod
+    def get_ordinal(n):
+        return "%d%s" % (n,"tsnrhtdd"[(n//10%10!=1)*(n%10<4)*n%10::4])

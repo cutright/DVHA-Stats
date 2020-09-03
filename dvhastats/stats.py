@@ -24,6 +24,7 @@ from dvhastats import plot
 from scipy import stats as scipy_stats
 from sklearn import linear_model
 from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.decomposition import PCA
 from regressors import stats as regressors_stats
 
 
@@ -68,6 +69,7 @@ class DVHAStats:
         self.x_axis = x_axis
 
         self.box_cox_data = None
+        self.pca = None
 
         self.plots = []
 
@@ -302,6 +304,7 @@ class DVHAStats:
                 x=self.x_axis,
                 xlabel="Observation",
                 ylabel=var_name,
+                title="",
             )
         )
         self.add_tend_line(var_name, -1)
@@ -311,48 +314,53 @@ class DVHAStats:
         """Close a plot by figure_number"""
         close_plot(figure_number, self.plots)
 
+    def do_pca(self, n_components=3, transform=True, **kwargs):
+        """Initialize PCA and perform fit
 
-def get_lin_reg_p_values(X, y, predictions, y_intercept, slope):
-    """
-    Get p-values of a linear regression using sklearn
-    based on https://stackoverflow.com/questions/27928275/find-p-value-significance-in-scikit-learn-linearregression
+        Parameters
+        ----------
+        n_components : int, float, None or str
+            Number of components to keep. if n_components is not set all
+            components are kept:
+                n_components == min(n_samples, n_features)
 
-    Parameters
-    ----------
-    X : np.ndarray
-        Independent data
-    y : np.ndarray, list
-        Dependent data
-    predictions : np.ndarray, list
-        Predictions using the linear regression.
-        (Output from linear_model.LinearRegression.predict)
-    y_intercept : float
-        The y-intercept of the linear regression
-    slope : float
-        The slope of the linear regression
+                If n_components == 'mle' and svd_solver == 'full', Minka’s MLE
+                is used to guess the dimension. Use of n_components == 'mle'
+                will interpret svd_solver == 'auto' as svd_solver == 'full'.
 
-    Returns
-    ----------
-    dict
-        A dictionary of p-values (p), standard errors (std_err),
-        and t-values (t)
-    """
+                If 0 < n_components < 1 and svd_solver == 'full', select the
+                number of components such that the amount of variance that
+                needs to be explained is greater than the percentage specified
+                by n_components.
 
-    newX = np.append(np.ones((len(X), 1)), X, axis=1)
-    mse = (sum((y - predictions) ** 2)) / (len(newX) - len(newX[0]))
+                If svd_solver == 'arpack', the number of components must be
+                strictly less than the minimum of n_features and n_samples.
+        transform : bool
+            Fit the model and apply the dimensionality reduction
+        kwargs : any
+            Provide any keyword arguments for sklearn.decomposition.PCA:
+            https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
+        """
+        self.pca = PCA(n_components=n_components, **kwargs)
 
-    variance = mse * (np.linalg.inv(np.dot(newX.T, newX)).diagonal())
-    std_errs = np.sqrt(variance)
+        if transform:
+            self.pca.fit_transform(self.data)
+        else:
+            self.pca.fit(self.data)
 
-    params = np.append(y_intercept, slope)
-    t_values = np.array(params) / std_errs
+    def show_pca_feature_map(self, absolute=True):
+        """Create a heat map of self.pca.components_
 
-    p_value = [
-        2 * (1 - scipy_stats.t.cdf(np.abs(i), (len(newX) - 1)))
-        for i in t_values
-    ]
-
-    return p_value, std_errs, t_values
+        Parameters
+        ----------
+        absolute : bool
+            Heat map will display the absolute values in self.pca.components_
+            if True
+        """
+        if self.pca is None:
+            self.do_pca()
+        data = abs(self.pca.components_) if absolute else self.pca.components_
+        self.plots.append(plot.PCAFeatureMap(data, self.var_names))
 
 
 class MultiVariableRegression:
@@ -467,48 +475,6 @@ class MultiVariableRegression:
         return scipy_stats.f.cdf(self.f_stat, self.df_model, self.df_error)
 
 
-def pearson_r_matrix(X):
-    """Calculate a correlation matrix of Pearson-R values
-
-    Parameters
-    ----------
-    X : np.ndarray
-        Input data (2-D) with N rows of observations and
-        p columns of variables.
-
-    Returns
-    ----------
-    np.ndarray
-        A tuple of symmetric, pxp arrays are returned: PearsonR and its
-        p-values.
-    """
-
-    r = np.ones([X.shape[1], X.shape[1]])  # Pearson R
-    p = np.zeros([X.shape[1], X.shape[1]])  # p-value of Pearson R
-
-    for x in range(X.shape[1]):
-        for y in range(X.shape[1]):
-            if x > y:
-
-                # Pearson r requires that both sets of data be of the same
-                # length. Remove index if NaN in either variable.
-                valid_x = ~np.isnan(X[:, x])
-                valid_y = ~np.isnan(X[:, y])
-                include = np.full(len(X[:, x]), True)
-                for i in range(len(valid_x)):
-                    include[i] = valid_x[i] and valid_y[i]
-                x_data = X[include, x]
-                y_data = X[include, y]
-
-                r[x, y], p[x, y] = scipy_stats.pearsonr(x_data, y_data)
-
-                # These matrices are symmetric
-                r[y, x] = r[x, y]
-                p[y, x] = p[x, y]
-
-    return r, p
-
-
 class ControlChartData:
     def __init__(
         self,
@@ -554,6 +520,7 @@ class ControlChartData:
         self.plots = []
 
     def __str__(self):
+        """String representation of ControlChartData object"""
         msg = [
             "center_line: %0.3f" % self.center_line,
             "control_limits: %0.3f, %0.3f" % self.control_limits,
@@ -562,10 +529,12 @@ class ControlChartData:
         return "\n".join(msg)
 
     def __repr__(self):
+        """Return the string representation"""
         return str(self)
 
     @property
     def y_no_nan(self):
+        """Remove indices with values of np.nan"""
         return self.y[~np.isnan(self.y)]
 
     @property
@@ -681,6 +650,7 @@ class HotellingT2:
         self.plots = []
 
     def __str__(self):
+        """String representation of HotellingT2 object"""
         msg = [
             "Q: %s" % self.Q,
             "center_line: %0.3f" % self.center_line,
@@ -690,6 +660,7 @@ class HotellingT2:
         return "\n".join(msg)
 
     def __repr__(self):
+        """Return the string representation"""
         return str(self)
 
     @property
@@ -778,3 +749,88 @@ class HotellingT2:
     def close(self, figure_number):
         """Close a plot by figure_number"""
         close_plot(figure_number, self.plots)
+
+
+def get_lin_reg_p_values(X, y, predictions, y_intercept, slope):
+    """
+    Get p-values of a linear regression using sklearn
+    based on https://stackoverflow.com/questions/27928275/find-p-value-significance-in-scikit-learn-linearregression
+
+    Parameters
+    ----------
+    X : np.ndarray
+        Independent data
+    y : np.ndarray, list
+        Dependent data
+    predictions : np.ndarray, list
+        Predictions using the linear regression.
+        (Output from linear_model.LinearRegression.predict)
+    y_intercept : float
+        The y-intercept of the linear regression
+    slope : float
+        The slope of the linear regression
+
+    Returns
+    ----------
+    dict
+        A dictionary of p-values (p), standard errors (std_err),
+        and t-values (t)
+    """
+
+    newX = np.append(np.ones((len(X), 1)), X, axis=1)
+    mse = (sum((y - predictions) ** 2)) / (len(newX) - len(newX[0]))
+
+    variance = mse * (np.linalg.inv(np.dot(newX.T, newX)).diagonal())
+    std_errs = np.sqrt(variance)
+
+    params = np.append(y_intercept, slope)
+    t_values = np.array(params) / std_errs
+
+    p_value = [
+        2 * (1 - scipy_stats.t.cdf(np.abs(i), (len(newX) - 1)))
+        for i in t_values
+    ]
+
+    return p_value, std_errs, t_values
+
+
+def pearson_r_matrix(X):
+    """Calculate a correlation matrix of Pearson-R values
+
+    Parameters
+    ----------
+    X : np.ndarray
+        Input data (2-D) with N rows of observations and
+        p columns of variables.
+
+    Returns
+    ----------
+    np.ndarray
+        A tuple of symmetric, pxp arrays are returned: PearsonR and its
+        p-values.
+    """
+
+    r = np.ones([X.shape[1], X.shape[1]])  # Pearson R
+    p = np.zeros([X.shape[1], X.shape[1]])  # p-value of Pearson R
+
+    for x in range(X.shape[1]):
+        for y in range(X.shape[1]):
+            if x > y:
+
+                # Pearson r requires that both sets of data be of the same
+                # length. Remove index if NaN in either variable.
+                valid_x = ~np.isnan(X[:, x])
+                valid_y = ~np.isnan(X[:, y])
+                include = np.full(len(X[:, x]), True)
+                for i in range(len(valid_x)):
+                    include[i] = valid_x[i] and valid_y[i]
+                x_data = X[include, x]
+                y_data = X[include, y]
+
+                r[x, y], p[x, y] = scipy_stats.pearsonr(x_data, y_data)
+
+                # These matrices are symmetric
+                r[y, x] = r[x, y]
+                p[y, x] = p[x, y]
+
+    return r, p
