@@ -14,20 +14,32 @@
 from os.path import isfile, splitext
 import numpy as np
 from scipy.stats import beta
-from dvhastats.utilities import (
-    dict_to_array,
-    csv_to_dict,
-    close_plot,
-    moving_avg,
-)
+from dvhastats.utilities import dict_to_array, csv_to_dict, moving_avg
 from dvhastats import plot
 from scipy import stats as scipy_stats
 from sklearn import linear_model
 from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.decomposition import PCA as sklearnPCA
 from regressors import stats as regressors_stats
 
 
-class DVHAStats:
+class DVHAStatsBaseClass:
+    """Base Class for DVHAStats objects and child objects"""
+
+    def __init__(self):
+        """Initialization of DVHAStatsBaseClass for common attr/methods"""
+        self.plots = []
+
+    def close(self, figure_number):
+        """Close a plot by figure_number"""
+        for i, p in enumerate(self.plots):
+            if p.figure.number == figure_number:
+                p.close()
+                self.plots.pop(i)
+                return
+
+
+class DVHAStats(DVHAStatsBaseClass):
     def __init__(self, data, var_names=None, x_axis=None, avg_len=5):
         """Class used to calculated various statistics
 
@@ -47,6 +59,7 @@ class DVHAStats:
             value as an averaging length. If N < avg_len + 1 will not
             plot a trend line
         """
+        DVHAStatsBaseClass.__init__(self)
         if isinstance(data, np.ndarray):
             self.data = data
             self.var_names = var_names
@@ -68,8 +81,6 @@ class DVHAStats:
         self.x_axis = x_axis
 
         self.box_cox_data = None
-
-        self.plots = []
 
         self.avg_len = avg_len
 
@@ -106,15 +117,8 @@ class DVHAStats:
 
     @property
     def pearson_r_matrix(self):
-        """Get a Pearson-R correlation matrix and associated p-value matrix
-
-        Returns
-        ----------
-        np.ndarray, np.ndarray
-            A tuple of symmetric, pxp arrays are returned: PearsonR and its
-            p-values.
-        """
-        return pearson_r_matrix(self.data)
+        """Get a Pearson-R correlation matrix and associated p-value matrix"""
+        return CorrelationMatrix(self.data, self.var_names)
 
     @property
     def normality(self):
@@ -292,6 +296,16 @@ class DVHAStats:
             trend_y, x=trend_x, line_color="black", line_width=0.75
         )
 
+    def pca(self, n_components=0.95, transform=True, **kwargs):
+        """Return an sklearn PCA-like object, see PCA object for details"""
+        return PCA(
+            self.data,
+            self.var_names,
+            n_components=n_components,
+            transform=transform,
+            **kwargs
+        )
+
     def show(self, var_name):
         """Display a plot of var_name with matplotlib"""
         index = self.get_index_by_var_name(var_name)
@@ -302,57 +316,11 @@ class DVHAStats:
                 x=self.x_axis,
                 xlabel="Observation",
                 ylabel=var_name,
+                title="",
             )
         )
         self.add_tend_line(var_name, -1)
         return self.plots[-1].figure.number
-
-    def close(self, figure_number):
-        """Close a plot by figure_number"""
-        close_plot(figure_number, self.plots)
-
-
-def get_lin_reg_p_values(X, y, predictions, y_intercept, slope):
-    """
-    Get p-values of a linear regression using sklearn
-    based on https://stackoverflow.com/questions/27928275/find-p-value-significance-in-scikit-learn-linearregression
-
-    Parameters
-    ----------
-    X : np.ndarray
-        Independent data
-    y : np.ndarray, list
-        Dependent data
-    predictions : np.ndarray, list
-        Predictions using the linear regression.
-        (Output from linear_model.LinearRegression.predict)
-    y_intercept : float
-        The y-intercept of the linear regression
-    slope : float
-        The slope of the linear regression
-
-    Returns
-    ----------
-    dict
-        A dictionary of p-values (p), standard errors (std_err),
-        and t-values (t)
-    """
-
-    newX = np.append(np.ones((len(X), 1)), X, axis=1)
-    mse = (sum((y - predictions) ** 2)) / (len(newX) - len(newX[0]))
-
-    variance = mse * (np.linalg.inv(np.dot(newX.T, newX)).diagonal())
-    std_errs = np.sqrt(variance)
-
-    params = np.append(y_intercept, slope)
-    t_values = np.array(params) / std_errs
-
-    p_value = [
-        2 * (1 - scipy_stats.t.cdf(np.abs(i), (len(newX) - 1)))
-        for i in t_values
-    ]
-
-    return p_value, std_errs, t_values
 
 
 class MultiVariableRegression:
@@ -467,49 +435,7 @@ class MultiVariableRegression:
         return scipy_stats.f.cdf(self.f_stat, self.df_model, self.df_error)
 
 
-def pearson_r_matrix(X):
-    """Calculate a correlation matrix of Pearson-R values
-
-    Parameters
-    ----------
-    X : np.ndarray
-        Input data (2-D) with N rows of observations and
-        p columns of variables.
-
-    Returns
-    ----------
-    np.ndarray
-        A tuple of symmetric, pxp arrays are returned: PearsonR and its
-        p-values.
-    """
-
-    r = np.ones([X.shape[1], X.shape[1]])  # Pearson R
-    p = np.zeros([X.shape[1], X.shape[1]])  # p-value of Pearson R
-
-    for x in range(X.shape[1]):
-        for y in range(X.shape[1]):
-            if x > y:
-
-                # Pearson r requires that both sets of data be of the same
-                # length. Remove index if NaN in either variable.
-                valid_x = ~np.isnan(X[:, x])
-                valid_y = ~np.isnan(X[:, y])
-                include = np.full(len(X[:, x]), True)
-                for i in range(len(valid_x)):
-                    include[i] = valid_x[i] and valid_y[i]
-                x_data = X[include, x]
-                y_data = X[include, y]
-
-                r[x, y], p[x, y] = scipy_stats.pearsonr(x_data, y_data)
-
-                # These matrices are symmetric
-                r[y, x] = r[x, y]
-                p[y, x] = p[x, y]
-
-    return r, p
-
-
-class ControlChartData:
+class ControlChartData(DVHAStatsBaseClass):
     def __init__(
         self,
         y,
@@ -537,6 +463,7 @@ class ControlChartData:
         plot_title : str, optional
             Over-ride the plot title
         """
+        DVHAStatsBaseClass.__init__(self)
 
         self.y = np.array(y) if isinstance(y, list) else y
         self.std = std
@@ -554,6 +481,7 @@ class ControlChartData:
         self.plots = []
 
     def __str__(self):
+        """String representation of ControlChartData object"""
         msg = [
             "center_line: %0.3f" % self.center_line,
             "control_limits: %0.3f, %0.3f" % self.control_limits,
@@ -562,10 +490,12 @@ class ControlChartData:
         return "\n".join(msg)
 
     def __repr__(self):
+        """Return the string representation"""
         return str(self)
 
     @property
     def y_no_nan(self):
+        """Remove indices with values of np.nan"""
         return self.y[~np.isnan(self.y)]
 
     @property
@@ -649,12 +579,8 @@ class ControlChartData:
         )
         return self.plots[-1].figure.number
 
-    def close(self, figure_number):
-        """Close a plot by figure_number"""
-        close_plot(figure_number, self.plots)
 
-
-class HotellingT2:
+class HotellingT2(DVHAStatsBaseClass):
     """Hotelling's t-squared statistic for multivariate hypothesis testing"""
 
     def __init__(self, data, alpha=0.05, plot_title=None):
@@ -671,6 +597,7 @@ class HotellingT2:
         plot_title : str, optional
             Over-ride the plot title
         """
+        DVHAStatsBaseClass.__init__(self)
 
         self.data = data
         self.alpha = alpha
@@ -681,6 +608,7 @@ class HotellingT2:
         self.plots = []
 
     def __str__(self):
+        """String representation of HotellingT2 object"""
         msg = [
             "Q: %s" % self.Q,
             "center_line: %0.3f" % self.center_line,
@@ -690,6 +618,7 @@ class HotellingT2:
         return "\n".join(msg)
 
     def __repr__(self):
+        """Return the string representation"""
         return str(self)
 
     @property
@@ -775,6 +704,187 @@ class HotellingT2:
         )
         return self.plots[-1].figure.number
 
-    def close(self, figure_number):
-        """Close a plot by figure_number"""
-        close_plot(figure_number, self.plots)
+
+class PCA(sklearnPCA, DVHAStatsBaseClass):
+    """Hotelling's t-squared statistic for multivariate hypothesis testing"""
+
+    def __init__(
+        self, X, var_names=None, n_components=0.95, transform=True, **kwargs
+    ):
+        """Initialize PCA and perform fit. Inherits sklearn.decomposition.PCA
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples and
+            n_features is the number of features.
+        var_names : str, optional
+            Names of the independent variables in X
+        n_components : int, float, None or str
+            Number of components to keep. if n_components is not set all
+            components are kept:
+                n_components == min(n_samples, n_features)
+
+                If n_components == 'mle' and svd_solver == 'full', Minka’s MLE
+                is used to guess the dimension. Use of n_components == 'mle'
+                will interpret svd_solver == 'auto' as svd_solver == 'full'.
+
+                If 0 < n_components < 1 and svd_solver == 'full', select the
+                number of components such that the amount of variance that
+                needs to be explained is greater than the percentage specified
+                by n_components.
+
+                If svd_solver == 'arpack', the number of components must be
+                strictly less than the minimum of n_features and n_samples.
+        transform : bool
+            Fit the model and apply the dimensionality reduction
+        kwargs : any
+            Provide any keyword arguments for sklearn.decomposition.PCA:
+            https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
+        """
+        DVHAStatsBaseClass.__init__(self)
+        self.X = X
+        self.var_names = range(X.shape[1]) if var_names is None else var_names
+        self.plots = []
+        sklearnPCA.__init__(self, n_components=n_components, **kwargs)
+
+        if transform:
+            self.fit_transform(self.X)
+        else:
+            self.fit(self.X)
+
+    @property
+    def feature_map_data(self):
+        return self.components_
+
+    def show(self, plot_type="feature_map", absolute=True):
+        """Create a heat map of self.pca.components_
+
+        Parameters
+        ----------
+        plot_type : str
+            Select a plot type to display. Options include: feature_map.
+        absolute : bool
+            Heat map will display the absolute values in self.pca.components_
+            if True
+        """
+        if plot_type == "feature_map":
+            data = self.feature_map_data
+            if absolute:
+                data = abs(data)
+            self.plots.append(plot.PCAFeatureMap(data, self.var_names))
+            return self.plots[-1].figure.number
+
+
+class CorrelationMatrix(DVHAStatsBaseClass):
+    """Pearson-R correlation matrix"""
+
+    def __init__(self, X, var_names=None, cmap="coolwarm"):
+        """Initialization of CorrelationMatrix object
+
+        Parameters
+        ----------
+        X : np.ndarray
+            Input data (2-D) with N rows of observations and
+            p columns of variables.
+        """
+        DVHAStatsBaseClass.__init__(self)
+        self.X = X
+        self.var_names = range(X.shape[1]) if var_names is None else var_names
+        self.cmap = cmap
+        self.__calculate_matrix()
+
+    def __calculate_matrix(self):
+        """Calculate a correlation matrix of Pearson-R values"""
+
+        X = self.X
+        r = np.ones([X.shape[1], X.shape[1]])  # Pearson R
+        p = np.zeros([X.shape[1], X.shape[1]])  # p-value of Pearson R
+
+        for x in range(X.shape[1]):
+            for y in range(X.shape[1]):
+                if x > y:
+
+                    # Pearson r requires that both sets of data be of the same
+                    # length. Remove index if NaN in either variable.
+                    valid_x = ~np.isnan(X[:, x])
+                    valid_y = ~np.isnan(X[:, y])
+                    include = np.full(len(X[:, x]), True)
+                    for i in range(len(valid_x)):
+                        include[i] = valid_x[i] and valid_y[i]
+                    x_data = X[include, x]
+                    y_data = X[include, y]
+
+                    r[x, y], p[x, y] = scipy_stats.pearsonr(x_data, y_data)
+
+                    # These matrices are symmetric
+                    r[y, x] = r[x, y]
+                    p[y, x] = p[x, y]
+
+        self.r = r
+        self.p = p
+
+    def show(self, absolute=False):
+        """Create a heat map of self.pca.components_
+
+        Parameters
+        ----------
+        absolute : bool
+            Heat map will display the absolute values in self.pca.components_
+            if True
+        """
+
+        data = abs(self.r) if absolute else self.r
+        self.plots.append(
+            plot.HeatMap(
+                data,
+                xlabels=self.var_names,
+                ylabels=self.var_names,
+                cmap=self.cmap,
+                title="Pearson-R Correlation Matrix",
+            )
+        )
+        return self.plots[-1].figure.number
+
+
+def get_lin_reg_p_values(X, y, predictions, y_intercept, slope):
+    """
+    Get p-values of a linear regression using sklearn
+    based on https://stackoverflow.com/questions/27928275/find-p-value-significance-in-scikit-learn-linearregression
+
+    Parameters
+    ----------
+    X : np.ndarray
+        Independent data
+    y : np.ndarray, list
+        Dependent data
+    predictions : np.ndarray, list
+        Predictions using the linear regression.
+        (Output from linear_model.LinearRegression.predict)
+    y_intercept : float
+        The y-intercept of the linear regression
+    slope : float
+        The slope of the linear regression
+
+    Returns
+    ----------
+    dict
+        A dictionary of p-values (p), standard errors (std_err),
+        and t-values (t)
+    """
+
+    newX = np.append(np.ones((len(X), 1)), X, axis=1)
+    mse = (sum((y - predictions) ** 2)) / (len(newX) - len(newX[0]))
+
+    variance = mse * (np.linalg.inv(np.dot(newX.T, newX)).diagonal())
+    std_errs = np.sqrt(variance)
+
+    params = np.append(y_intercept, slope)
+    t_values = np.array(params) / std_errs
+
+    p_value = [
+        2 * (1 - scipy_stats.t.cdf(np.abs(i), (len(newX) - 1)))
+        for i in t_values
+    ]
+
+    return p_value, std_errs, t_values

@@ -84,15 +84,6 @@ def dict_to_array(data, key_order=None):
     return {"data": np.asarray(arr_data).T, "var_names": var_names}
 
 
-def close_plot(figure_number, plots):
-    """Close a plot by figure_number"""
-    for i, p in enumerate(plots):
-        if p.figure.number == figure_number:
-            p.close()
-            plots.pop(i)
-            return
-
-
 def moving_avg(y, avg_len, x=None, weight=None):
     """Calculate the moving (rolling) average of a set of data
 

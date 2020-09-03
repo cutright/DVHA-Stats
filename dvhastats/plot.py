@@ -22,7 +22,26 @@ def get_new_figure_num():
     return FIGURE_COUNT - 1
 
 
-class Plot:
+class Chart:
+    def __init__(self, title=None):
+        self.title = title
+        self.figure = plt.figure(get_new_figure_num())
+
+        if title:
+            self.figure.suptitle(title, fontsize=16)
+
+    def show(self):
+        self.activate()
+        plt.show()
+
+    def activate(self):
+        plt.figure(self.figure.number)
+
+    def close(self):
+        plt.close(self.figure.number)
+
+
+class Plot(Chart):
     """Generic plotting class with matplotlib"""
 
     def __init__(
@@ -70,10 +89,10 @@ class Plot:
         scatter_color : str, optional
             Specify the scatter plot circle color
         """
+        Chart.__init__(self, title=title)
         self.x = np.linspace(1, len(y), len(y)) if x is None else x
         self.y = y
         self.show = show
-        self.title = title
         self.xlabel = xlabel
         self.ylabel = ylabel
 
@@ -83,7 +102,6 @@ class Plot:
         self.line_style = line_style
         self.scatter = scatter
         self.scatter_color = scatter_color
-        self.figure = plt.figure(get_new_figure_num())
         self.activate()
 
         self.__add_labels()
@@ -95,7 +113,6 @@ class Plot:
     def __add_labels(self):
         plt.xlabel(self.xlabel)
         plt.ylabel(self.ylabel)
-        plt.title(self.title)
 
     def __add_data(self):
         if self.scatter:
@@ -144,12 +161,6 @@ class Plot:
             linewidth=line_width,
             linestyle=line_style,
         )
-
-    def activate(self):
-        plt.figure(self.figure.number)
-
-    def close(self):
-        plt.close(self.figure.number)
 
 
 class ControlChart(Plot):
@@ -225,6 +236,7 @@ class ControlChart(Plot):
             plt.show()
 
     def __set_y_scatter_data(self):
+        """Add circles colored by out-of-control status"""
         include = np.full(len(self.y), True)
         for i in self.out_of_control:
             include[i] = False
@@ -232,11 +244,13 @@ class ControlChart(Plot):
         self.ooc = {"x": self.x[~include], "y": self.y[~include]}
 
     def __add_cc_data(self):
+        """Add center line and upper/lower control limit lines"""
         self.add_control_limit_line(self.ucl)
         self.add_control_limit_line(self.lcl)
         self.add_center_line()
 
     def __add_table_with_limits(self):
+        """Add tables with center line and upper/lower control limit values"""
         self.activate()
         plt.subplots_adjust(bottom=0.25)
         plt.table(
@@ -249,6 +263,7 @@ class ControlChart(Plot):
 
     @property
     def __table_text(self):
+        """Get text to pass into matplotlib table creation"""
         props = ["center_line", "lcl", "ucl"]
         text = []
         for prop in props:
@@ -261,6 +276,7 @@ class ControlChart(Plot):
         return [text]
 
     def add_scatter(self):
+        """Set scatter data, add in- and out-of-control circles"""
         self.activate()
         self.__set_y_scatter_data()
         plt.scatter(self.ic["x"], self.ic["y"], color=self.scatter_color)
@@ -269,6 +285,7 @@ class ControlChart(Plot):
     def add_control_limit_line(
         self, limit, color=None, line_width=None, line_style=None
     ):
+        """Add a control limit line to plot"""
         self.activate()
         color = self.limit_line_color if color is None else color
         line_width = (
@@ -287,6 +304,7 @@ class ControlChart(Plot):
             )
 
     def add_center_line(self, color=None, line_width=None, line_style=None):
+        """Add the center line to the plot"""
         self.activate()
         color = self.center_line_color if color is None else color
         line_width = (
@@ -301,4 +319,74 @@ class ControlChart(Plot):
             color=color,
             linewidth=line_width,
             linestyle=line_style,
+        )
+
+
+class HeatMap(Chart):
+    """Create a heat map using matplotlib.pyplot.matshow"""
+
+    def __init__(
+        self,
+        X,
+        xlabels=None,
+        ylabels=None,
+        title=None,
+        cmap="viridis",
+        show=True,
+    ):
+        """Initialization of a HeatMap Chart object"""
+        Chart.__init__(self, title=title)
+        self.X = X
+        self.x_labels = range(X.shape[1]) if xlabels is None else xlabels
+        self.y_labels = range(X.shape[0]) if ylabels is None else ylabels
+
+        plt.matshow(X, cmap=cmap, fignum=self.figure.number)
+        plt.colorbar()
+        self.__set_ticks()
+
+        if show:
+            self.show()
+
+    def __set_ticks(self):
+        """Set tick labels based on x and y labels"""
+        plt.xticks(
+            range(self.X.shape[1]), self.x_labels, rotation=30, ha="left"
+        )
+        plt.yticks(range(self.X.shape[0]), self.y_labels, rotation=30)
+
+
+class PCAFeatureMap(HeatMap):
+    """Specialized Heat Map for PCA feature evaluation"""
+
+    def __init__(
+        self,
+        X,
+        features=None,
+        cmap="viridis",
+        show=True,
+        title="PCA Feature Heat Map",
+    ):
+        """Initialization of a HeatMap Chart object"""
+        HeatMap.__init__(
+            self,
+            X,
+            xlabels=features,
+            ylabels=self.get_comp_labels(X.shape[0]),
+            cmap=cmap,
+            show=show,
+            title=title,
+        )
+
+    def get_comp_labels(self, n_components):
+        """Get ylabels for HeatMap"""
+        return [
+            "%s Comp" % (self.get_ordinal(n + 1)) for n in range(n_components)
+        ]
+
+    @staticmethod
+    def get_ordinal(n):
+        """Convert 1, 2, 3, 4, etc. to 1st, 2nd, 3rd, 4th, etc."""
+        return "%d%s" % (
+            n,
+            "tsnrhtdd"[(n // 10 % 10 != 1) * (n % 10 < 4) * n % 10 :: 4],
         )

@@ -204,9 +204,9 @@ class TestStats(unittest.TestCase):
                 ],
             ]
         )
-        r, p = self.stats_obj.pearson_r_matrix
-        assert_array_almost_equal(r, exp_r)
-        assert_array_almost_equal(p, exp_p)
+        corr_mat = self.stats_obj.pearson_r_matrix
+        assert_array_almost_equal(corr_mat.r, exp_r)
+        assert_array_almost_equal(corr_mat.p, exp_p)
 
     def test_normality(self):
         """Test normality calculation"""
@@ -349,8 +349,13 @@ class TestStats(unittest.TestCase):
         assert_array_equal(data_by_index, data_by_key)
 
     def test_show_calls(self):
+        """Test matplotlib show calls"""
         fig = self.stats_obj.show(0)
         self.stats_obj.close(fig)
+
+        corr_mat = self.stats_obj.pearson_r_matrix
+        fig = corr_mat.show()
+        corr_mat.close(fig)
 
         ucc = self.stats_obj.univariate_control_charts()
         fig = ucc[0].show()
@@ -359,6 +364,19 @@ class TestStats(unittest.TestCase):
         ht2 = self.stats_obj.hotelling_t2()
         fig = ht2.show()
         ht2.close(fig)
+
+    def test_pca(self):
+        """Test PCA initialization and plot"""
+        stats_obj = stats.DVHAStats(self.expected_dict_no_nan)
+        pca = stats_obj.pca()
+        fig = pca.show()
+        pca.close(fig)
+
+        # Test no transform
+        stats_obj.pca(transform=False)
+
+        # Test var_names=None
+        stats.PCA(stats_obj.data, var_names=None)
 
 
 if __name__ == "__main__":
