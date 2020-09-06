@@ -91,7 +91,7 @@ class DVHAStats(DVHAStatsBaseClass):
 
         self.x_axis = x_axis
 
-        self.excluded_vars = []
+        self.deleted_vars = []
 
         self.box_cox_data = None
 
@@ -133,7 +133,7 @@ class DVHAStats(DVHAStatsBaseClass):
 
     def del_const_vars(self):
         """Permanently remove constant variables"""
-        self.excluded_vars = self.constant_vars
+        self.deleted_vars = self.constant_vars
         self.data = self.non_const_data
 
     def correlation_matrix(self, corr_type="Pearson"):
