@@ -399,6 +399,7 @@ class TestStats(unittest.TestCase):
         )
 
     def test_control_chart_if_const_data(self):
+        """Test that const data does not crash control chart"""
         stats_obj = stats.DVHAStats(self.const_data)
         ucc = stats_obj.univariate_control_charts(box_cox=True)
         ucc[0].show()
@@ -406,6 +407,12 @@ class TestStats(unittest.TestCase):
             ucc[0].plot_title,
             "Cannot calculate control chart with const data!",
         )
+
+    def test_box_cox_const_policy_raise_(self):
+        """Test const_policy='raise' results in ValueError with const data"""
+        stats_obj = stats.DVHAStats(self.const_data)
+        with self.assertRaises(ValueError):
+            stats_obj.box_cox_by_index(0, const_policy="raise")
 
 
 if __name__ == "__main__":
