@@ -40,7 +40,14 @@ class DVHAStatsBaseClass:
 
 
 class DVHAStats(DVHAStatsBaseClass):
-    def __init__(self, data, var_names=None, x_axis=None, avg_len=5):
+    def __init__(
+        self,
+        data,
+        var_names=None,
+        x_axis=None,
+        avg_len=5,
+        del_const_vars=False,
+    ):
         """Class used to calculated various statistics
 
         Parameters
@@ -58,11 +65,19 @@ class DVHAStats(DVHAStatsBaseClass):
             When plotting raw data, a trend line will be plotted using this
             value as an averaging length. If N < avg_len + 1 will not
             plot a trend line
+        del_const_vars : bool
+            Automatically delete any variables that have constant data. The
+            names of these variables are stored in the excluded_vars attr.
+            Default value is False.
         """
         DVHAStatsBaseClass.__init__(self)
         if isinstance(data, np.ndarray):
             self.data = data
-            self.var_names = var_names
+            self.var_names = (
+                var_names
+                if var_names is not None
+                else list(range(data.shape[1]))
+            )
         elif isinstance(data, dict):
             data = dict_to_array(data)
             self.data = data["data"]
@@ -80,9 +95,14 @@ class DVHAStats(DVHAStatsBaseClass):
 
         self.x_axis = x_axis
 
+        self.deleted_vars = []
+
         self.box_cox_data = None
 
         self.avg_len = avg_len
+
+        if del_const_vars:
+            self.del_const_vars()
 
     def get_data_by_var_name(self, var_name):
         """Get the single variable array based on var_name"""
@@ -114,6 +134,11 @@ class DVHAStats(DVHAStatsBaseClass):
     def variable_count(self):
         """Number of variables"""
         return self.data.shape[1]
+
+    def del_const_vars(self):
+        """Permanently remove constant variables"""
+        self.deleted_vars = self.constant_vars
+        self.data = self.non_const_data
 
     def correlation_matrix(self, corr_type="Pearson"):
         """Get a Pearson-R and Spearman correlation matrices
@@ -149,6 +174,37 @@ class DVHAStats(DVHAStatsBaseClass):
             )
         return norm, p
 
+    def is_constant(self, var_name):
+        """Determine if data by var_name is constant
+
+        Parameters
+        ----------
+        var_name : int, str
+            The var_name to check (or index of variable)
+
+        Returns
+        ----------
+        bool
+            True if all values of var_name are the same (i.e., no variation)
+        """
+        data = self.get_data_by_var_name(var_name)
+        return np.all(data == data[0])
+
+    @property
+    def constant_vars(self):
+        """Get a list of all constant variables"""
+        return [v for v in self.var_names if self.is_constant(v)]
+
+    @property
+    def constant_var_indices(self):
+        """Get a list of all constant variable indices"""
+        return [i for i, v in enumerate(self.var_names) if self.is_constant(v)]
+
+    @property
+    def non_const_data(self):
+        """Return self.data excluding any constant variables"""
+        return np.delete(self.data, self.constant_var_indices, axis=1)
+
     def linear_reg(self, y, saved_reg=None):
         """Initialize a MultiVariableRegression class object
 
@@ -176,6 +232,7 @@ class DVHAStats(DVHAStatsBaseClass):
         box_cox=False,
         box_cox_alpha=None,
         box_cox_lmbda=None,
+        const_policy="propagate",
     ):
         """
         Calculate control limits for a standard univariate Control Chart
@@ -200,6 +257,12 @@ class DVHAStats(DVHAStatsBaseClass):
             If lmbda is not None, do the transformation for that value.
             If lmbda is None, find the lambda that maximizes the log-likelihood
             function and return it as the second output argument.
+        const_policy : str
+            {‘propagate’, ‘raise’}
+            Defines how to handle when data is constant. The following
+            options are available (default is ‘propagate’):
+            ‘propagate’: returns nan
+            ‘raise’: throws an error
 
         Returns
         ----------
@@ -211,13 +274,19 @@ class DVHAStats(DVHAStatsBaseClass):
         data = {}
         if box_cox:
             if self.box_cox_data is None:
-                self.box_cox(alpha=box_cox_alpha, lmbda=box_cox_lmbda)
+                self.box_cox(
+                    alpha=box_cox_alpha,
+                    lmbda=box_cox_lmbda,
+                    const_policy=const_policy,
+                )
             cc_data = self.box_cox_data
             plot_title = "Univariate Control Chart with Box-Cox Transformation"
         else:
             cc_data = self.data
             plot_title = None
         for i, key in enumerate(self.var_names):
+            if const_policy == "propagate" and np.all(np.isnan(cc_data[:, i])):
+                plot_title = "Cannot calculate control chart with const data!"
             data[key] = ControlChartData(
                 cc_data[:, i], var_name=key, plot_title=plot_title, **kwargs
             )
@@ -225,7 +294,12 @@ class DVHAStats(DVHAStatsBaseClass):
         return data
 
     def hotelling_t2(
-        self, alpha=0.05, box_cox=False, box_cox_alpha=None, box_cox_lmbda=None
+        self,
+        alpha=0.05,
+        box_cox=False,
+        box_cox_alpha=None,
+        box_cox_lmbda=None,
+        const_policy="omit",
     ):
         """
         Calculate control limits for a standard univariate Control Chart
@@ -245,6 +319,12 @@ class DVHAStats(DVHAStatsBaseClass):
             If lmbda is not None, do the transformation for that value.
             If lmbda is None, find the lambda that maximizes the log-likelihood
             function and return it as the second output argument.
+        const_policy : str
+            {‘raise’, 'omit'}
+            Defines how to handle when data is constant. The following
+            options are available (default is ‘raise’):
+            ‘raise’: throws an error
+            'omit': exclude constant variables from calculation
 
         Returns
         ----------
@@ -254,17 +334,25 @@ class DVHAStats(DVHAStatsBaseClass):
 
         if box_cox:
             if self.box_cox_data is None:
-                self.box_cox(alpha=box_cox_alpha, lmbda=box_cox_lmbda)
+                p = "propagate" if const_policy == "omit" else const_policy
+                self.box_cox(
+                    alpha=box_cox_alpha, lmbda=box_cox_lmbda, const_policy=p
+                )
             data = self.box_cox_data
+            if const_policy == "omit":
+                data = data[:, ~np.all(np.isnan(data), axis=0)]
             plot_title = (
                 "Multivariate Control Chart with Box-Cox Transformation"
             )
         else:
-            data = self.data
+            data = self.non_const_data if const_policy == "omit" else self.data
             plot_title = None
+
         return HotellingT2(data, alpha, plot_title=plot_title)
 
-    def box_cox_by_index(self, index, alpha=None, lmbda=None):
+    def box_cox_by_index(
+        self, index, alpha=None, lmbda=None, const_policy="propagate"
+    ):
         """
 
         Parameters
@@ -282,6 +370,12 @@ class DVHAStats(DVHAStatsBaseClass):
             If alpha is not None, return the 100 * (1-alpha)% confidence
             interval for lmbda as the third output argument. Must be between
             0.0 and 1.0.
+        const_policy : str
+            {‘propagate’, ‘raise’}
+            Defines how to handle when data is constant. The following
+            options are available (default is ‘propagate’):
+            ‘propagate’: returns nan
+            ‘raise’: throws an error
         """
         if self.box_cox_data is None:
             self.box_cox_data = np.zeros_like(self.data)
@@ -289,18 +383,34 @@ class DVHAStats(DVHAStatsBaseClass):
         if isinstance(index, str):
             index = self.get_index_by_var_name(index)
 
-        self.box_cox_data[:, index], _ = scipy_stats.boxcox(
-            self.data[:, index], alpha=alpha, lmbda=lmbda
-        )
+        if const_policy == "omit":
+            pass
+
+        try:
+            result, _ = scipy_stats.boxcox(
+                self.data[:, index], alpha=alpha, lmbda=lmbda
+            )
+        except ValueError as e:
+            if const_policy == "propagate":
+                self.box_cox_data[:, index] = np.array(
+                    [np.nan] * self.observations
+                )
+                return np.nan
+            raise e
+
+        self.box_cox_data[:, index] = result
 
         return self.box_cox_data[:, index]
 
-    def box_cox(self, alpha=None, lmbda=None):
+    def box_cox(self, alpha=None, lmbda=None, const_policy="propagate"):
         """Apply box_cox_by_index for all data"""
         for i in range(self.variable_count):
-            self.box_cox_by_index(i, alpha=alpha, lmbda=lmbda)
+            self.box_cox_by_index(
+                i, alpha=alpha, lmbda=lmbda, const_policy=const_policy
+            )
 
     def add_tend_line(self, var_name, plot_index):
+        """Add trend line based on moving average"""
         trend_x, trend_y = moving_avg(
             self.get_data_by_var_name(var_name), self.avg_len
         )
@@ -513,12 +623,18 @@ class ControlChartData(DVHAStatsBaseClass):
     @property
     def center_line(self):
         """Center line"""
-        return np.mean(self.y_no_nan)
+        data = self.y_no_nan
+        if len(data):
+            return np.mean(self.y_no_nan)
+        return np.nan
 
     @property
     def avg_moving_range(self):
         """Avg moving range based on 2 consecutive points"""
-        return np.mean(np.absolute(np.diff(self.y_no_nan)))
+        data = self.y_no_nan
+        if len(data):
+            return np.mean(np.absolute(np.diff(self.y_no_nan)))
+        return np.nan
 
     @property
     def sigma(self):
@@ -770,14 +886,14 @@ class PCA(sklearnPCA, DVHAStatsBaseClass):
         return self.components_
 
     def show(self, plot_type="feature_map", absolute=True):
-        """Create a heat map of self.pca.components_
+        """Create a heat map of PCA components
 
         Parameters
         ----------
         plot_type : str
             Select a plot type to display. Options include: feature_map.
         absolute : bool
-            Heat map will display the absolute values in self.pca.components_
+            Heat map will display the absolute values in PCA components
             if True
         """
         if plot_type == "feature_map":
@@ -836,12 +952,12 @@ class CorrelationMatrix(DVHAStatsBaseClass):
         return "%s %s Matrix" % (mat_type, value_type)
 
     def show(self, absolute=False, corr=True):
-        """Create a heat map of self.pca.components_
+        """Create a heat map of PCA components
 
         Parameters
         ----------
         absolute : bool
-            Heat map will display the absolute values in self.pca.components_
+            Heat map will display the absolute values in PCA components
             if True
         corr : bool
             Plot a p-value matrix if False, correlation matrix if True.
@@ -954,8 +1070,8 @@ def spearman_correlation_matrix(X, nan_policy="omit"):
         Value must be one of the following: ‘propagate’, ‘raise’, ‘omit’
         Defines how to handle when input contains nan. The following options
         are available (default is ‘omit’):
-            ‘propagate’: returns nan
-            ‘raise’: throws an error
-            ‘omit’: performs the calculations ignoring nan values
+        ‘propagate’: returns nan
+        ‘raise’: throws an error
+        ‘omit’: performs the calculations ignoring nan values
     """
     return scipy_stats.spearmanr(X, nan_policy=nan_policy)
