@@ -73,7 +73,11 @@ class DVHAStats(DVHAStatsBaseClass):
         DVHAStatsBaseClass.__init__(self)
         if isinstance(data, np.ndarray):
             self.data = data
-            self.var_names = var_names
+            self.var_names = (
+                var_names
+                if var_names is not None
+                else list(range(data.shape[1]))
+            )
         elif isinstance(data, dict):
             data = dict_to_array(data)
             self.data = data["data"]
@@ -257,8 +261,8 @@ class DVHAStats(DVHAStatsBaseClass):
             {‘propagate’, ‘raise’}
             Defines how to handle when data is constant. The following
             options are available (default is ‘propagate’):
-                ‘propagate’: returns nan
-                ‘raise’: throws an error
+            ‘propagate’: returns nan
+            ‘raise’: throws an error
 
         Returns
         ----------
@@ -319,8 +323,8 @@ class DVHAStats(DVHAStatsBaseClass):
             {‘raise’, 'omit'}
             Defines how to handle when data is constant. The following
             options are available (default is ‘raise’):
-                ‘raise’: throws an error
-                'omit': exclude constant variables from calculation
+            ‘raise’: throws an error
+            'omit': exclude constant variables from calculation
 
         Returns
         ----------
@@ -370,8 +374,8 @@ class DVHAStats(DVHAStatsBaseClass):
             {‘propagate’, ‘raise’}
             Defines how to handle when data is constant. The following
             options are available (default is ‘propagate’):
-                ‘propagate’: returns nan
-                ‘raise’: throws an error
+            ‘propagate’: returns nan
+            ‘raise’: throws an error
         """
         if self.box_cox_data is None:
             self.box_cox_data = np.zeros_like(self.data)
@@ -882,14 +886,14 @@ class PCA(sklearnPCA, DVHAStatsBaseClass):
         return self.components_
 
     def show(self, plot_type="feature_map", absolute=True):
-        """Create a heat map of self.pca.components_
+        """Create a heat map of PCA components
 
         Parameters
         ----------
         plot_type : str
             Select a plot type to display. Options include: feature_map.
         absolute : bool
-            Heat map will display the absolute values in self.pca.components_
+            Heat map will display the absolute values in PCA components
             if True
         """
         if plot_type == "feature_map":
@@ -948,12 +952,12 @@ class CorrelationMatrix(DVHAStatsBaseClass):
         return "%s %s Matrix" % (mat_type, value_type)
 
     def show(self, absolute=False, corr=True):
-        """Create a heat map of self.pca.components_
+        """Create a heat map of PCA components
 
         Parameters
         ----------
         absolute : bool
-            Heat map will display the absolute values in self.pca.components_
+            Heat map will display the absolute values in PCA components
             if True
         corr : bool
             Plot a p-value matrix if False, correlation matrix if True.
@@ -1066,8 +1070,8 @@ def spearman_correlation_matrix(X, nan_policy="omit"):
         Value must be one of the following: ‘propagate’, ‘raise’, ‘omit’
         Defines how to handle when input contains nan. The following options
         are available (default is ‘omit’):
-            ‘propagate’: returns nan
-            ‘raise’: throws an error
-            ‘omit’: performs the calculations ignoring nan values
+        ‘propagate’: returns nan
+        ‘raise’: throws an error
+        ‘omit’: performs the calculations ignoring nan values
     """
     return scipy_stats.spearmanr(X, nan_policy=nan_policy)

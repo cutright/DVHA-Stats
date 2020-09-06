@@ -51,6 +51,9 @@ class TestStats(unittest.TestCase):
         self.expected_arr = np.array(data).T
         self.expected_var_names = keys
 
+        self.const_data = deepcopy(self.expected_arr)
+        self.const_data[:, 0] = np.ones_like(self.expected_arr[:, 0])
+
         self.stats_obj = stats.DVHAStats(self.data_path)
 
     def test_arr_import(self):
@@ -382,6 +385,27 @@ class TestStats(unittest.TestCase):
 
         # Test var_names=None
         stats.PCA(stats_obj.data, var_names=None)
+
+    def test_del_const_var(self):
+        """Test init deletes constant variables if del_const_vars is True"""
+        stats_obj = stats.DVHAStats(
+            self.const_data,
+            var_names=self.expected_var_names,
+            del_const_vars=True,
+        )
+        self.assertEqual(stats_obj.deleted_vars, ["V1"])
+        assert_array_equal(
+            stats_obj.data, np.delete(self.const_data, 0, axis=1)
+        )
+
+    def test_control_chart_if_const_data(self):
+        stats_obj = stats.DVHAStats(self.const_data)
+        ucc = stats_obj.univariate_control_charts(box_cox=True)
+        ucc[0].show()
+        self.assertEqual(
+            ucc[0].plot_title,
+            "Cannot calculate control chart with const data!",
+        )
 
 
 if __name__ == "__main__":
