@@ -10,4 +10,5 @@
 __author__ = "Dan Cutright"
 __email__ = "dan.cutright@gmail.com"
 __version__ = "0.1.4"
+__release__ = "0.1.4"
 __version_info__ = (0, 1, 4)
