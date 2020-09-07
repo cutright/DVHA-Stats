@@ -13,7 +13,7 @@ import numpy as np
 
 
 def apply_dtype(value, dtype):
-    """Convert value with the provided type
+    """Convert value with the provided data type
 
     Parameters
     ----------

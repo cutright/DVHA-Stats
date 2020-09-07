@@ -64,7 +64,7 @@ Dependencies
 
 ### Initialize and Plot Data
 ~~~
->>> from dvhastats.stats import DVHAStats
+>>> from dvhastats.ui import DVHAStats
 >>> s = DVHAStats("tests/testdata/multivariate_data.csv")
 >>> s.var_names
 ['V1', 'V2', 'V3', 'V4', 'V5', 'V6']

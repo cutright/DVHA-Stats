@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # plot.py
-"""Plotting for DVHA-Stats."""
+"""Basic plotting class objects for DVHA-Stats based on matplotlib"""
 #
 # Copyright (c) 2020 Dan Cutright
 # This file is part of DVHA-Stats, released under a MIT license.
@@ -31,6 +31,7 @@ def get_new_figure_num():
 
 class Chart:
     """Base class for charts"""
+
     def __init__(self, title=None):
         """Initialization of Chart base class"""
         self.title = title
@@ -40,16 +41,16 @@ class Chart:
             self.figure.suptitle(title, fontsize=16)
 
     def show(self):
-        """Display this matplotlib figure"""
+        """Display this figure"""
         self.activate()
         plt.show()
 
     def activate(self):
-        """Activate this matplotlib figure"""
+        """Activate this figure"""
         plt.figure(self.figure.number)
 
     def close(self):
-        """Close this matplotlib figure"""
+        """Close this figure"""
         plt.close(self.figure.number)
 
 
@@ -179,7 +180,7 @@ class Plot(Chart):
 
 
 class ControlChart(Plot):
-    """ControlChart class object inherited from Plot"""
+    """ControlChart class object"""
 
     def __init__(
         self,

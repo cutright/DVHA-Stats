@@ -47,7 +47,7 @@ Basic Usage
 
 .. code-block:: python
 
-    from dvhastats.stats import DVHAStats
+    from dvhastats.ui import DVHAStats
     s = DVHAStats("tests/testdata/multivariate_data.csv")
 
     >>> s.var_names

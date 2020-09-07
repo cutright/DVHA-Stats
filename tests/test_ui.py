@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# test_stats.py
-"""unittest cases for stats."""
+# test_ui.py
+"""unittest cases for chart."""
 #
 # Copyright (c) 2020 Dan Cutright
 # This file is part of DVHA-Stats, released under a MIT license.
@@ -14,7 +14,7 @@ import unittest
 from os.path import join
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
-from dvhastats import stats
+from dvhastats import stats, ui
 import warnings
 import matplotlib
 from copy import deepcopy
@@ -54,11 +54,11 @@ class TestStats(unittest.TestCase):
         self.const_data = deepcopy(self.expected_arr)
         self.const_data[:, 0] = np.ones_like(self.expected_arr[:, 0])
 
-        self.stats_obj = stats.DVHAStats(self.data_path)
+        self.stats_obj = ui.DVHAStats(self.data_path)
 
     def test_arr_import(self):
         """Test array importing"""
-        stats_obj = stats.DVHAStats(
+        stats_obj = ui.DVHAStats(
             self.expected_arr, var_names=self.expected_var_names
         )
         assert_array_equal(stats_obj.data, self.expected_arr)
@@ -66,19 +66,19 @@ class TestStats(unittest.TestCase):
 
     def test_dict_import(self):
         """Test dict importing"""
-        stats_obj = stats.DVHAStats(self.expected_dict)
+        stats_obj = ui.DVHAStats(self.expected_dict)
         assert_array_equal(stats_obj.data, self.expected_arr)
         self.assertEqual(stats_obj.var_names, self.expected_var_names)
 
     def test_csv_import(self):
         """Test csv importing"""
-        stats_obj = stats.DVHAStats(self.data_path)
+        stats_obj = ui.DVHAStats(self.data_path)
         assert_array_equal(stats_obj.data, self.expected_arr)
         self.assertEqual(stats_obj.var_names, self.expected_var_names)
 
     def test_invalid_data_import(self):
         with self.assertRaises(NotImplementedError):
-            stats.DVHAStats("test")
+            ui.DVHAStats("test")
 
     def test_get_index_by_var_name(self):
         """Test data column index look-up by variable name"""
@@ -262,7 +262,8 @@ class TestStats(unittest.TestCase):
     def test_univariate_control_chart_with_limits(self):
         """Test univariate control chart creation and values"""
         ucc = self.stats_obj.univariate_control_charts(
-            lcl_limit=30, ucl_limit=50
+            lcl_limit=30,
+            ucl_limit=50,
         )
         lcl, ucl = ucc[0].control_limits
         self.assertEqual(round(lcl, 3), 30)
@@ -271,8 +272,10 @@ class TestStats(unittest.TestCase):
 
     def test_univariate_control_chart_box_cox(self):
         """Test univariate control chart creation and values with Box-Cox"""
-        stats_obj = stats.DVHAStats(self.data_path_full)
-        ucc = stats_obj.univariate_control_charts(box_cox=True)
+        stats_obj = ui.DVHAStats(self.data_path_full)
+        ucc = stats_obj.univariate_control_charts(
+            box_cox=True, const_policy="omit"
+        )
         self.assertEqual(round(ucc[0].center_line, 3), 1835.702)
         lcl, ucl = ucc[0].control_limits
         self.assertEqual(round(lcl, 3), 136.258)
@@ -283,7 +286,7 @@ class TestStats(unittest.TestCase):
 
     def test_hotelling_t2(self):
         """Test multivariate control chart creation and values"""
-        ht2 = self.stats_obj.hotelling_t2()
+        ht2 = self.stats_obj.hotelling_t2(const_policy="omit")
         self.assertEqual(round(ht2.center_line, 3), 5.614)
         lcl, ucl = ht2.control_limits
         self.assertEqual(round(lcl, 3), 0)
@@ -300,8 +303,8 @@ class TestStats(unittest.TestCase):
 
     def test_hotelling_t2_box_cox(self):
         """Test multivariate control chart creation and values"""
-        stats_obj = stats.DVHAStats(self.data_path_full)
-        ht2 = stats_obj.hotelling_t2(box_cox=True)
+        stats_obj = ui.DVHAStats(self.data_path_full)
+        ht2 = stats_obj.hotelling_t2(box_cox=True, const_policy="omit")
         self.assertEqual(round(ht2.center_line, 3), 5.375)
         lcl, ucl = ht2.control_limits
         self.assertEqual(round(lcl, 3), 0)
@@ -311,7 +314,7 @@ class TestStats(unittest.TestCase):
     def test_multi_variable_regression(self):
         """Test Multi-Variable Linear Regression"""
         y = np.linspace(1, 10, 10)
-        stats_obj = stats.DVHAStats(self.expected_dict_no_nan)
+        stats_obj = ui.DVHAStats(self.expected_dict_no_nan)
         mvr = stats_obj.linear_reg(y)
         self.assertEqual(round(mvr.y_intercept, 3), 2.983)
         slope = np.array(
@@ -375,7 +378,7 @@ class TestStats(unittest.TestCase):
 
     def test_pca(self):
         """Test PCA initialization and plot"""
-        stats_obj = stats.DVHAStats(self.expected_dict_no_nan)
+        stats_obj = ui.DVHAStats(self.expected_dict_no_nan)
         pca = stats_obj.pca()
         fig = pca.show()
         pca.close(fig)
@@ -384,11 +387,11 @@ class TestStats(unittest.TestCase):
         stats_obj.pca(transform=False)
 
         # Test var_names=None
-        stats.PCA(stats_obj.data, var_names=None)
+        stats.PCA(stats_obj.data)
 
     def test_del_const_var(self):
         """Test init deletes constant variables if del_const_vars is True"""
-        stats_obj = stats.DVHAStats(
+        stats_obj = ui.DVHAStats(
             self.const_data,
             var_names=self.expected_var_names,
             del_const_vars=True,
@@ -400,7 +403,7 @@ class TestStats(unittest.TestCase):
 
     def test_control_chart_if_const_data(self):
         """Test that const data does not crash control chart"""
-        stats_obj = stats.DVHAStats(self.const_data)
+        stats_obj = ui.DVHAStats(self.const_data)
         ucc = stats_obj.univariate_control_charts(box_cox=True)
         ucc[0].show()
         self.assertEqual(
@@ -410,7 +413,7 @@ class TestStats(unittest.TestCase):
 
     def test_box_cox_const_policy_raise_(self):
         """Test const_policy='raise' results in ValueError with const data"""
-        stats_obj = stats.DVHAStats(self.const_data)
+        stats_obj = ui.DVHAStats(self.const_data)
         with self.assertRaises(ValueError):
             stats_obj.box_cox_by_index(0, const_policy="raise")
 
