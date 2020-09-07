@@ -11,9 +11,8 @@
 #    available at https://github.com/cutright/DVHA-Stats
 
 
-from os.path import isfile, splitext
 import numpy as np
-from dvhastats.utilities import dict_to_array, csv_to_dict
+from dvhastats.utilities import import_data
 from dvhastats import plot
 from dvhastats import stats
 
@@ -68,27 +67,8 @@ class DVHAStats(DVHAStatsBaseClass):
             Default value is False.
         """
         DVHAStatsBaseClass.__init__(self)
-        if isinstance(data, np.ndarray):
-            self.data = data
-            self.var_names = (
-                var_names
-                if var_names is not None
-                else list(range(data.shape[1]))
-            )
-        elif isinstance(data, dict):
-            data = dict_to_array(data)
-            self.data = data["data"]
-            self.var_names = data["var_names"]
-        elif isfile(data) and splitext(data)[1] == ".csv":
-            data = dict_to_array(csv_to_dict(data, dtype=float))
-            self.data = data["data"]
-            self.var_names = data["var_names"]
-        else:
-            msg = (
-                "Invalid data provided - "
-                "must be a numpy array, dict, or .csv file"
-            )
-            raise NotImplementedError(msg)
+
+        self.data, self.var_names = import_data(data, var_names)
 
         self.x_axis = x_axis
 
@@ -279,7 +259,7 @@ class DVHAStats(DVHAStatsBaseClass):
             cc_data = self.data
             plot_title = None
         for i, key in enumerate(self.var_names):
-            if const_policy == "propagate" and np.all(np.isnan(cc_data[:, i])):
+            if const_policy == "propagate" and stats.is_nan_arr(cc_data[:, i]):
                 plot_title = "Cannot calculate control chart with const data!"
             data[key] = ControlChart(
                 cc_data[:, i], var_name=key, plot_title=plot_title, **kwargs
@@ -475,17 +455,11 @@ class ControlChart(DVHAStatsBaseClass, stats.ControlChartData):
 
     def show(self):
         """Display the univariate control chart with matplotlib"""
-        lcl, ucl = self.control_limits
         self.plots.append(
             plot.ControlChart(
-                self.y,
-                self.out_of_control,
-                self.center_line,
-                x=self.x,
                 title=self.plot_title,
-                lcl=lcl,
-                ucl=ucl,
                 ylabel=self.var_name,
+                **self.chart_data
             )
         )
         return self.plots[-1].figure.number
@@ -520,19 +494,15 @@ class HotellingT2(DVHAStatsBaseClass, stats.HotellingT2Data):
         """Display the multivariate control chart with matplotlib"""
         self.plots.append(
             plot.ControlChart(
-                self.Q,
-                self.out_of_control,
-                self.center_line,
                 title=self.plot_title,
-                ucl=self.ucl,
-                lcl=self.lcl,
                 ylabel="Hottelling T^2",
+                **self.chart_data
             )
         )
         return self.plots[-1].figure.number
 
 
-class PCA(DVHAStatsBaseClass, stats.PCA):
+class PCA(DVHAStatsBaseClass, stats.PCAData):
     """Hotelling's t-squared statistic for multivariate hypothesis testing"""
 
     def __init__(
@@ -571,7 +541,7 @@ class PCA(DVHAStatsBaseClass, stats.PCA):
         """
         # print(kwargs)
         DVHAStatsBaseClass.__init__(self)
-        stats.PCA.__init__(
+        stats.PCAData.__init__(
             self, X, n_components=n_components, transform=transform, **kwargs
         )
         self.var_names = range(X.shape[1]) if var_names is None else var_names

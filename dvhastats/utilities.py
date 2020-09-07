@@ -10,6 +10,7 @@
 #    available at https://github.com/cutright/DVHA-Stats
 
 import numpy as np
+from os.path import isfile, splitext
 
 
 def apply_dtype(value, dtype):
@@ -97,3 +98,41 @@ def dict_to_array(data, key_order=None):
     var_names = key_order if key_order is not None else list(data.keys())
     arr_data = [data[key] for key in var_names]
     return {"data": np.asarray(arr_data).T, "var_names": var_names}
+
+
+def import_data(data, var_names):
+    """Generalized data importer for np.ndarray, dict, and csv file
+
+    Parameters
+    ----------
+    data : numpy.array, dict, str
+        Input data (2-D) with N rows of observations and
+        p columns of variables.  The CSV file must have a header row
+        for column names.
+    var_names : list of str, optional
+        If data is a numpy array, optionally provide the column names.
+
+    Returns
+    ----------
+    np.ndarray, list
+        A tuple: data as an array and variable names as a list
+    """
+    if isinstance(data, np.ndarray):
+        var_names = (
+            var_names
+            if var_names is not None
+            else list(range(data.shape[1]))
+        )
+        return data, var_names
+    if isinstance(data, dict):
+        data = dict_to_array(data)
+        return data["data"], data["var_names"]
+    if isfile(data):
+        if splitext(data)[1] == ".csv":
+            data = dict_to_array(csv_to_dict(data, dtype=float))
+            return data["data"], data["var_names"]
+
+    msg = (
+        "Invalid data provided - must be a numpy array, dict, or .csv file"
+    )
+    raise NotImplementedError(msg)
