@@ -10,3 +10,4 @@ omit =
     setup.py
     dvhastats/_version.py
     tests/*
+    docs/*
