@@ -7,7 +7,7 @@ dvhastats
    :align: center
    :alt: DVH Analytics logo
 
-|build| |pypi| |lgtm| |Codecov|
+|build| |pypi| |Docs| |lgtm| |Codecov|
 
 A library of prediction and statistical process control tools. Although based
 on work in `DVH Analytics <http://www.dvhanalytics.com>`__, all statistical tools in
@@ -113,12 +113,19 @@ Principal Component Analysis (PCA)
 
 .. |build| image:: https://github.com/cutright/DVHA-Stats/workflows/build/badge.svg
    :target: https://github.com/cutright/DVHA-Stats/actions
+   :alt: build
 .. |pypi| image:: https://img.shields.io/pypi/v/dvha-stats.svg
    :target: https://pypi.org/project/dvha-stats
+   :alt: PyPI
 .. |lgtm| image:: https://img.shields.io/lgtm/grade/python/g/cutright/DVHA-Stats.svg?logo=lgtm&label=code%20quality
    :target: https://lgtm.com/projects/g/cutright/DVHA-Stats/context:python
+   :alt: lgtm
 .. |Codecov| image:: https://codecov.io/gh/cutright/DVHA-Stats/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/cutright/DVHA-Stats
+   :alt: Codecov
+.. |Docs| image:: https://readthedocs.org/projects/dvha-stats/badge/?version=latest
+   :target: https://dvha-stats.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
 
 .. |plot| image:: https://user-images.githubusercontent.com/4778878/91908372-0c4c2d80-ec71-11ea-9dfc-7c4f6c209542.png
 .. |pearson| image:: https://user-images.githubusercontent.com/4778878/92064453-1ea69400-ed63-11ea-8f72-5034c577c1e3.png

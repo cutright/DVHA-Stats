@@ -8,14 +8,16 @@ A library of prediction and statistical process control tools. Although based
 on work in [DVH Analytics](http://dvhanalytics.com), all statistical tools in 
 this library are generic and not radiation oncology.
 
-[![build](https://github.com/cutright/DVHA-Stats/workflows/build/badge.svg)](https://github.com/cutright/DVHA-Stats/actions)
+<a href="https://github.com/cutright/DVHA-Stats/actions">
+  <img src="https://github.com/cutright/DVHA-Stats/workflows/build/badge.svg" alt="build" /></a>
 <a href="https://pypi.org/project/dvha-stats/">
   <img src="https://img.shields.io/pypi/v/dvha-stats.svg" alt="PyPi Version" /></a>
+<a href='https://dvha-stats.readthedocs.io/en/latest/?badge=latest'>
+  <img src='https://readthedocs.org/projects/dvha-stats/badge/?version=latest' alt='Documentation Status' /></a>
 <a href="https://lgtm.com/projects/g/cutright/DVHA-Stats/context:python">
   <img src="https://img.shields.io/lgtm/grade/python/g/cutright/DVHA-Stats.svg?logo=lgtm&label=code%20quality" alt="LGTM Code Quality" /></a>
 <a href="https://codecov.io/gh/cutright/DVHA-Stats">
-  <img src="https://codecov.io/gh/cutright/DVHA-Stats/branch/master/graph/badge.svg" />
-</a>
+  <img src="https://codecov.io/gh/cutright/DVHA-Stats/branch/master/graph/badge.svg" /></a>
 
 ### What does it do?
 * Read data from CSV or supply as numpy array 
