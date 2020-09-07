@@ -558,6 +558,7 @@ class MultiVariableRegression:
 
 
 class ControlChartData(DVHAStatsBaseClass):
+    """Univariate Control Chart"""
     def __init__(
         self,
         y,
