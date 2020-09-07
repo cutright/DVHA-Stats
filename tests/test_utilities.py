@@ -72,25 +72,6 @@ class TestUtilities(unittest.TestCase):
         test = utilities.apply_dtype(2.5, None)
         self.assertEqual(test, 2.5)
 
-    def test_moving_avg(self):
-        avg_len = 5
-        y = np.array([4, 23, 1, 4, -18, 2.2, 100, 34, 9, 8])
-        x = np.linspace(1, len(y), len(y))
-        x_avg, y_avg = utilities.moving_avg(y, avg_len)
-        assert_array_equal(x_avg, x[avg_len - 1 : :])
-        y_avg_exp = np.array([2.8, 2.44, 17.84, 24.44, 25.44, 30.64])
-        assert_array_almost_equal(y_avg, y_avg_exp)
-
-        avg_len = 3
-        x += 10
-        w = np.array([1, 2, 1, 1, 5, 2, 1, 1, 1, 1])
-        x_avg, y_avg = utilities.moving_avg(y, avg_len, x=x, weight=w)
-        assert_array_equal(x_avg, x[avg_len - 1 : :])
-        y_avg_exp = np.array(
-            [5.5, 5.5, 0.466667, 0.5, 32.5, 45.033333, 47.666667, 17.0]
-        )
-        assert_array_almost_equal(y_avg, y_avg_exp)
-
 
 if __name__ == "__main__":
     import sys
