@@ -128,9 +128,16 @@ Principal Component Analysis (PCA)
    :alt: Documentation Status
 
 .. |plot| image:: https://user-images.githubusercontent.com/4778878/91908372-0c4c2d80-ec71-11ea-9dfc-7c4f6c209542.png
+   :width: 350
 .. |pearson| image:: https://user-images.githubusercontent.com/4778878/92064453-1ea69400-ed63-11ea-8f72-5034c577c1e3.png
+   :width: 350
 .. |spearman| image:: https://user-images.githubusercontent.com/4778878/92177010-4a7a5600-ee05-11ea-91b9-2a0128eafe5b.png
+   :width: 310
 .. |control-chart| image:: https://user-images.githubusercontent.com/4778878/91908380-0fdfb480-ec71-11ea-9394-d029a8a6727e.png
+   :width: 350
 .. |hotelling-t2| image:: https://user-images.githubusercontent.com/4778878/91908391-166e2c00-ec71-11ea-941b-321e01f56542.png
+   :width: 350
 .. |hotelling-t2-bc| image:: https://user-images.githubusercontent.com/4778878/91908394-179f5900-ec71-11ea-88a0-9c95d714fb4c.png
+   :width: 350
 .. |pca| image:: https://user-images.githubusercontent.com/4778878/92050205-16922880-ed52-11ea-9967-d390577380b6.png
+   :width: 350
