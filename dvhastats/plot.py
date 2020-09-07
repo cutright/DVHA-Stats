@@ -17,13 +17,22 @@ FIGURE_COUNT = 1
 
 
 def get_new_figure_num():
+    """Get a number for a new matplotlib figure
+
+    Returns
+    ----------
+    int
+        Figure number
+    """
     global FIGURE_COUNT
     FIGURE_COUNT += 1
     return FIGURE_COUNT - 1
 
 
 class Chart:
+    """Base class for charts"""
     def __init__(self, title=None):
+        """Initialization of Chart base class"""
         self.title = title
         self.figure = plt.figure(get_new_figure_num())
 
@@ -31,13 +40,16 @@ class Chart:
             self.figure.suptitle(title, fontsize=16)
 
     def show(self):
+        """Display this matplotlib figure"""
         self.activate()
         plt.show()
 
     def activate(self):
+        """Activate this matplotlib figure"""
         plt.figure(self.figure.number)
 
     def close(self):
+        """Close this matplotlib figure"""
         plt.close(self.figure.number)
 
 
@@ -111,20 +123,24 @@ class Plot(Chart):
             plt.show()
 
     def __add_labels(self):
+        """Set the x and y axes labels to figure"""
         plt.xlabel(self.xlabel)
         plt.ylabel(self.ylabel)
 
     def __add_data(self):
+        """Add scatter and/or line data to figure"""
         if self.scatter:
             self.add_scatter()
         if self.line:
             self.add_default_line()
 
     def add_scatter(self):
+        """Add scatter data to figure"""
         self.activate()
         plt.scatter(self.x, self.y, color=self.scatter_color)
 
     def add_default_line(self):
+        """Add line data to figure"""
         self.activate()
         plt.plot(
             self.x,
@@ -151,7 +167,6 @@ class Plot(Chart):
             Specify the line width
         line_style : str
             Specify the line style
-        :
         """
         self.activate()
         plt.plot(
@@ -385,7 +400,18 @@ class PCAFeatureMap(HeatMap):
 
     @staticmethod
     def get_ordinal(n):
-        """Convert 1, 2, 3, 4, etc. to 1st, 2nd, 3rd, 4th, etc."""
+        """Convert number to its ordinal (e.g., 1 to 1st)
+
+        Parameters
+        ----------
+        n : int
+            Number to be converted to ordinal
+
+        Returns
+        ----------
+        str
+            the ordinal of n
+        """
         return "%d%s" % (
             n,
             "tsnrhtdd"[(n // 10 % 10 != 1) * (n % 10 < 4) * n % 10 :: 4],

@@ -1080,9 +1080,10 @@ def spearman_correlation_matrix(X, nan_policy="omit"):
 
 def moving_avg(y, avg_len, x=None, weight=None):
     """Calculate the moving (rolling) average of a set of data
+
     Parameters
     ----------
-    y : np.ndarray, list
+    y : array-like
         data (1-D) to be averaged
     avg_len : int
         Data is averaged over this many points (current value and avg_len - 1
@@ -1093,6 +1094,11 @@ def moving_avg(y, avg_len, x=None, weight=None):
         A weighted moving average is calculated based on the provided weights.
         weight must be of same length as y. Weights of one are assumed by
         default.
+
+    Returns
+    ----------
+    array-like
+        x-values, moving average values
     """
     x = np.linspace(1, len(y), len(y)) if x is None else x
     weight = np.ones_like(y) if weight is None else weight
