@@ -1,5 +1,14 @@
-============
-Authors
-============
+=======
+Credits
+=======
 
-.. include:: ../../AUTHORS.rst
+Development Lead
+----------------
+
+* Dan Cutright
+
+Contributors
+------------
+
+* Arkajyoti Roy
+* Aditya Panchal
