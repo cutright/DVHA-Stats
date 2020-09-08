@@ -32,12 +32,12 @@ def get_new_figure_num():
 class Chart:
     """Base class for charts"""
 
-    def __init__(self, title=None):
+    def __init__(self, title=None, fig_init=True):
         """Initialization of Chart base class"""
         self.title = title
-        self.figure = plt.figure(get_new_figure_num())
+        self.figure = plt.figure(get_new_figure_num()) if fig_init else None
 
-        if title:
+        if title and fig_init:
             self.figure.suptitle(title, fontsize=16)
 
     def show(self):
@@ -417,3 +417,71 @@ class PCAFeatureMap(HeatMap):
             n,
             "tsnrhtdd"[(n // 10 % 10 != 1) * (n % 10 < 4) * n % 10 :: 4],
         )
+
+
+class Histogram(Chart):
+    """Histogram plotting class object"""
+
+    def __init__(
+        self,
+        data,
+        bins=10,
+        title="Histogram",
+        xlabel="Bins",
+        ylabel="Counts",
+        **kwargs
+    ):
+        """Initialization of Histogram class
+
+        Parameters
+        ----------
+        data : array-like
+            Input array (1-D)
+        bins : int, sequence, str
+            default: rcParams["hist.bins"] (default: 10)
+            If bins is an integer, it defines the number of equal-width
+            bins in the range.
+
+            If bins is a sequence, it defines the bin edges, including the
+            left edge of the first bin and the right edge of the last bin;
+            in this case, bins may be unequally spaced. All but the last
+            (righthand-most) bin is half-open. In other words, if bins is:
+            [1, 2, 3, 4]
+            then the first bin is [1, 2) (including 1, but excluding 2) and
+            the second [2, 3). The last bin, however, is [3, 4], which
+            includes 4.
+
+            If bins is a string, it is one of the binning strategies supported
+            by numpy.histogram_bin_edges: 'auto', 'fd', 'doane', 'scott',
+            'stone', 'rice', 'sturges', or 'sqrt'.
+        kwargs : any
+            Any keyword argument may be set per matplotlib histogram:
+            https://matplotlib.org/3.3.1/api/_as_gen/matplotlib.pyplot.hist.html
+
+        """
+        self.title = title
+        Chart.__init__(self, title=self.title, fig_init=False)
+
+        self.data = data
+        self.bins = bins
+        self.xlabel = xlabel
+        self.ylabel = ylabel
+        self.hist_kwargs = kwargs
+
+        self.__set_hist_data()
+        self.__set_title()
+        self.__add_labels()
+
+    def __set_hist_data(self):
+        """Generate histogram data and add to figure"""
+        self.figure, self.axes = plt.subplots()
+        self.axes.hist(self.data, bins=self.bins, **self.hist_kwargs)
+
+    def __set_title(self):
+        """Set the figure title"""
+        self.figure.suptitle(self.title, fontsize=16)
+
+    def __add_labels(self):
+        """Set the x and y axes labels to figure"""
+        plt.xlabel(self.xlabel)
+        plt.ylabel(self.ylabel)

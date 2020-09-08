@@ -82,12 +82,34 @@ class DVHAStats(DVHAStatsBaseClass):
             self.del_const_vars()
 
     def get_data_by_var_name(self, var_name):
-        """Get the single variable array based on var_name"""
+        """Get the single variable array based on var_name
+
+        Parameters
+        ----------
+        var_name : int, str
+            The name (str) or index (int) of the variable of interest
+
+        Returns
+        ----------
+        np.ndarray
+            The column of data for the given var_name
+        """
         index = self.get_index_by_var_name(var_name)
         return self.data[:, index]
 
     def get_index_by_var_name(self, var_name):
-        """Get the variable index by var_name"""
+        """Get the variable index by var_name
+
+        Parameters
+        ----------
+        var_name : int, str
+            The name (str) or index (int) of the variable of interest
+
+        Returns
+        ----------
+        int
+            The column index for the given var_name
+        """
         if var_name in self.var_names:
             index = self.var_names.index(var_name)
         elif isinstance(var_name, int) and var_name in range(
@@ -104,16 +126,27 @@ class DVHAStats(DVHAStatsBaseClass):
 
     @property
     def observations(self):
-        """Number of observations in data"""
+        """Number of observations in data
+
+        Returns
+        ----------
+        int
+            Number of rows in data
+        """
         return self.data.shape[0]
 
     @property
     def variable_count(self):
-        """Number of variables in data"""
+        """Number of variables in data
+
+        Returns
+        ----------
+        int
+            Number of columns in data"""
         return self.data.shape[1]
 
     def del_const_vars(self):
-        """Permanently remove constant variables"""
+        """Permanently remove variables with no variation"""
         self.deleted_vars = self.constant_vars
         self.data = self.non_const_data
 
@@ -134,19 +167,6 @@ class DVHAStats(DVHAStatsBaseClass):
             self.data, self.var_names, corr_type=corr_type
         )
 
-    @property
-    def normality(self):
-        """Calculate the normality and associated p-values for each variable
-
-        Returns
-        ----------
-        np.ndarray, np.ndarray
-            A tuple of 1-D arrays are returned: Normality and its
-            p-values.
-        """
-
-        return stats.normality(self.data)
-
     def is_constant(self, var_name):
         """Determine if data by var_name is constant
 
@@ -165,17 +185,36 @@ class DVHAStats(DVHAStatsBaseClass):
 
     @property
     def constant_vars(self):
-        """Get a list of all constant variables"""
+        """Get a list of all constant variables
+
+        Returns
+        ----------
+        list
+            Names of variables with no variation
+        """
         return [v for v in self.var_names if self.is_constant(v)]
 
     @property
     def constant_var_indices(self):
-        """Get a list of all constant variable indices"""
+        """Get a list of all constant variable indices
+
+        Returns
+        ----------
+        list
+            Indices of variables with no variation
+        """
         return [i for i, v in enumerate(self.var_names) if self.is_constant(v)]
 
     @property
     def non_const_data(self):
-        """Return self.data excluding any constant variables"""
+        """Return self.data excluding any constant variables
+
+        Returns
+        ----------
+        np.ndarray
+            Data with constant variables removed. This does not alter the data
+            property.
+        """
         return np.delete(self.data, self.constant_var_indices, axis=1)
 
     def linear_reg(self, y, saved_reg=None):
@@ -352,6 +391,11 @@ class DVHAStats(DVHAStatsBaseClass):
             ‘propagate’: returns nan
             ‘raise’: throws an error
             'omit': remove
+
+        Returns
+        ----------
+        np.ndarray
+            Results from stats.box_cox
         """
         if self.box_cox_data is None:
             self.box_cox_data = np.zeros_like(self.data)
@@ -375,17 +419,39 @@ class DVHAStats(DVHAStatsBaseClass):
                 i, alpha=alpha, lmbda=lmbda, const_policy=const_policy
             )
 
-    def add_tend_line(self, var_name, plot_index):
-        """Add trend line based on moving average"""
-        trend_x, trend_y = stats.moving_avg(
-            self.get_data_by_var_name(var_name), self.avg_len
-        )
-        self.plots[plot_index].add_line(
-            trend_y, x=trend_x, line_color="black", line_width=0.75
-        )
-
     def pca(self, n_components=0.95, transform=True, **kwargs):
-        """Return an sklearn PCA-like object, see PCA object for details"""
+        """Return an sklearn PCA-like object, see PCA object for details
+
+        Parameters
+        ----------
+        n_components : int, float, None or str
+            Number of components to keep. if n_components is not set all
+            components are kept:
+            n_components == min(n_samples, n_features)
+
+            If n_components == 'mle' and svd_solver == 'full', Minka’s MLE
+            is used to guess the dimension. Use of n_components == 'mle'
+            will interpret svd_solver == 'auto' as svd_solver == 'full'.
+
+            If 0 < n_components < 1 and svd_solver == 'full', select the
+            number of components such that the amount of variance that
+            needs to be explained is greater than the percentage specified
+            by n_components.
+
+            If svd_solver == 'arpack', the number of components must be
+            strictly less than the minimum of n_features and n_samples.
+        transform : bool
+            Fit the model and apply the dimensionality reduction
+        kwargs : any
+            Provide any keyword arguments for sklearn.decomposition.PCA:
+            https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
+
+        Returns
+        ----------
+        stats.PCA
+            A principal component analysis object inherited from
+            sklearn.decomposition.PCA
+        """
         return PCAUI(
             self.data,
             var_names=self.var_names,
@@ -394,20 +460,50 @@ class DVHAStats(DVHAStatsBaseClass):
             **kwargs
         )
 
-    def show(self, var_name):
-        """Display a plot of var_name with matplotlib"""
+    def __add_tend_line(self, var_name, plot_index):
+        """Add trend line based on moving average"""
+        trend_x, trend_y = stats.moving_avg(
+            self.get_data_by_var_name(var_name), self.avg_len
+        )
+        self.plots[plot_index].add_line(
+            trend_y, x=trend_x, line_color="black", line_width=0.75
+        )
+
+    def show(self, var_name, plot_type="trend", **kwargs):
+        """Display a plot of var_name with matplotlib
+
+        Parameters
+        ----------
+        var_name : str, int
+            The name (str) or index (int) of teh variable to plot
+        plot_type : str
+            Either "trend" or "hist"
+        kwargs : any
+            If plot_type is "hist", pass any of the matplotlib hist key word
+            arguments
+
+        Returns
+        ----------
+        int
+            The number of the newly created matplotlib figure
+        """
         index = self.get_index_by_var_name(var_name)
         var_name = self.var_names[index]
-        self.plots.append(
-            plot.Plot(
-                self.data[:, index],
-                x=self.x_axis,
-                xlabel="Observation",
-                ylabel=var_name,
-                title="",
+        if plot_type == "trend":
+            self.plots.append(
+                plot.Plot(
+                    self.data[:, index],
+                    x=self.x_axis,
+                    xlabel="Observation",
+                    ylabel=var_name,
+                    title="",
+                )
             )
-        )
-        self.add_tend_line(var_name, -1)
+            self.__add_tend_line(var_name, -1)
+        elif plot_type == "hist":
+            self.plots.append(
+                plot.Histogram(self.data[:, index], xlabel=var_name, **kwargs)
+            )
         return self.plots[-1].figure.number
 
 
@@ -454,7 +550,13 @@ class ControlChartUI(DVHAStatsBaseClass, stats.ControlChart):
         self.plots = []
 
     def show(self):
-        """Display the univariate control chart with matplotlib"""
+        """Display the univariate control chart with matplotlib
+
+        Returns
+        ----------
+        int
+            The number of the newly created matplotlib figure
+        """
         self.plots.append(
             plot.ControlChart(
                 title=self.plot_title, ylabel=self.var_name, **self.chart_data
@@ -489,7 +591,13 @@ class HotellingT2UI(DVHAStatsBaseClass, stats.HotellingT2):
         self.plots = []
 
     def show(self):
-        """Display the multivariate control chart with matplotlib"""
+        """Display the multivariate control chart with matplotlib
+
+        Returns
+        ----------
+        int
+            The number of the newly created matplotlib figure
+        """
         self.plots.append(
             plot.ControlChart(
                 title=self.plot_title,
@@ -555,6 +663,11 @@ class PCAUI(DVHAStatsBaseClass, stats.PCA):
         absolute : bool
             Heat map will display the absolute values in PCA components
             if True
+
+        Returns
+        ----------
+        int
+            The number of the newly created matplotlib figure
         """
         if plot_type == "feature_map":
             data = self.feature_map_data
@@ -596,6 +709,11 @@ class CorrelationMatrixUI(DVHAStatsBaseClass, stats.CorrelationMatrix):
         ----------
         is_corr : bool
             Set to True if plot data type is correlation, False if p-value
+
+        Returns
+        ----------
+        str
+            Plot title
         """
         mat_type = "Pearson-R" if self.corr_type == "pearson" else "Spearman"
         value_type = ["p-value", "Correlation"][is_corr]
@@ -611,6 +729,11 @@ class CorrelationMatrixUI(DVHAStatsBaseClass, stats.CorrelationMatrix):
             if True
         corr : bool
             Plot a p-value matrix if False, correlation matrix if True.
+
+        Returns
+        ----------
+        int
+            The number of the newly created matplotlib figure
         """
 
         data = self.corr if corr else self.p

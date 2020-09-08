@@ -226,34 +226,6 @@ class TestStats(unittest.TestCase):
         corr_mat = stats.CorrelationMatrix(self.data, corr_type="Spearman")
         self.assertEqual(corr_mat.corr_type, "spearman")
 
-    def test_normality(self):
-        """Test normality calculation"""
-        expected_norm = np.array(
-            [
-                5.560821,
-                2.16842411,
-                0.48490695,
-                0.36635239,
-                3.99716349,
-                5.49795211,
-            ]
-        )
-        expected_p = np.array(
-            [
-                0.062013,
-                0.33816814,
-                0.78470025,
-                0.83262144,
-                0.13552736,
-                0.06399335,
-            ]
-        )
-        warnings.filterwarnings("ignore")
-        norm, p = stats.normality(self.data, nan_policy="omit")
-        warnings.filterwarnings("default")
-        assert_array_almost_equal(norm, expected_norm)
-        assert_array_almost_equal(p, expected_p)
-
     def test_control_chart(self):
         """Test univariate control chart creation and values"""
         ucc = stats.ControlChart(self.data[:, 0])

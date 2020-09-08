@@ -216,34 +216,6 @@ class TestStats(unittest.TestCase):
         assert_array_almost_equal(corr_mat.corr, exp_r)
         assert_array_almost_equal(corr_mat.p, exp_p)
 
-    def test_normality(self):
-        """Test normality calculation"""
-        expected_norm = np.array(
-            [
-                5.560821,
-                2.16842411,
-                0.48490695,
-                0.36635239,
-                3.99716349,
-                5.49795211,
-            ]
-        )
-        expected_p = np.array(
-            [
-                0.062013,
-                0.33816814,
-                0.78470025,
-                0.83262144,
-                0.13552736,
-                0.06399335,
-            ]
-        )
-        warnings.filterwarnings("ignore")
-        norm, p = self.stats_obj.normality
-        warnings.filterwarnings("default")
-        assert_array_almost_equal(norm, expected_norm)
-        assert_array_almost_equal(p, expected_p)
-
     def test_univariate_control_chart(self):
         """Test univariate control chart creation and values"""
         ucc = self.stats_obj.univariate_control_charts()
@@ -362,6 +334,9 @@ class TestStats(unittest.TestCase):
     def test_show_calls(self):
         """Test matplotlib show calls"""
         fig = self.stats_obj.show(0)
+        self.stats_obj.close(fig)
+
+        fig = self.stats_obj.show(0, plot_type="hist")
         self.stats_obj.close(fig)
 
         corr_mat = self.stats_obj.correlation_matrix(corr_type="Spearman")

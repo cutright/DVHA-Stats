@@ -20,9 +20,11 @@ from regressors import stats as regressors_stats
 
 
 class Histogram:
+    """Basic histogram plot using matplotlib histogram calculation"""
+
     def __init__(self, y, bins, nan_policy="omit"):
         """
-
+        Initialization of Histogram class object
 
         y: array-like
             Input array.
@@ -41,27 +43,60 @@ class Histogram:
 
     @property
     def mean(self):
-        """The mean value of the input array"""
+        """The mean value of the input array
+
+        Returns
+        ----------
+        np.ndarray
+            Mean value of y with np.mean()
+        """
         return np.mean(self.y)
 
     @property
     def median(self):
-        """The median value of the input array"""
+        """The median value of the input array
+
+        Returns
+        ----------
+        np.ndarray
+            Median value of y with np.median()
+        """
         return np.median(self.y)
 
     @property
     def std(self):
-        """The standard deviation of the input array"""
+        """The standard deviation of the input array
+
+        Returns
+        ----------
+        np.ndarray
+            Standard deviation of y with np.std()
+        """
         return np.std(self.y)
 
     @property
     def normality(self):
-        """The normality and normality p-value of the input array"""
+        """The normality and normality p-value of the input array
+
+        Returns
+        ----------
+        statistic : float
+            Normality calculated with scipy.stats.normaltest
+        p-value : float
+            A 2-sided chi squared probability for the hypothesis test.
+        """
         return scipy_stats.normaltest(self.y, nan_policy=self.nan_policy)
 
     @property
     def chart_data(self):
-        """JSON compatible dict for chart generation"""
+        """JSON compatible dict for chart generation
+
+        Returns
+        ----------
+        dict
+            Data used for Histogram visuals. Keys include 'x', 'y', 'mean',
+            'median', 'std', 'normality', 'normality_p'
+        """
         hist, bins = np.histogram(self.y, bins=self.bins)
         center = (bins[:-1] + bins[1:]) / 2.0
         norm, norm_p = self.normality
@@ -145,47 +180,105 @@ class MultiVariableRegression:
 
     @property
     def y_intercept(self):
-        """The y-intercept of the linear regression"""
+        """The y-intercept of the linear regression
+
+        Returns
+        ----------
+        float
+            Independent term in the linear model.
+        """
         return self.reg.intercept_ if self.reg is not None else None
 
     @property
     def slope(self):
-        """The slope of the linear regression"""
+        """The slope of the linear regression
+
+        Returns
+        ----------
+        np.ndarray
+            Estimated coefficients for the linear regression problem. If
+            multiple targets are passed during the fit (y 2D), this is a 2D
+            array of shape (n_targets, n_features), while if only one target
+            is passed, this is a 1D array of length n_features.
+        """
         return self.reg.coef_ if self.reg is not None else None
 
     @property
     def r_sq(self):
-        """R^2 (coefficient of determination) regression score function."""
+        """R^2 (coefficient of determination) regression score function.
+
+        Returns
+        ----------
+        float
+            The R^2 score
+        """
         return r2_score(self.y, self.predictions)
 
     @property
     def mse(self):
-        """Mean squared error of the linear regression"""
+        """Mean squared error of the linear regression
+
+        Returns
+        ----------
+        float, nd.array
+            A non-negative floating point value (the best value is 0.0), or
+            an array of floating point values, one for each individual target.
+        """
         return mean_squared_error(self.y, self.predictions)
 
     @property
     def residuals(self):
-        """Residuals of the prediction and sample data"""
+        """Residuals of the prediction and sample data
+
+        Returns
+        ----------
+        np.ndarray
+            y - predictions
+        """
         return np.subtract(self.y, self.predictions)
 
     @property
     def f_stat(self):
-        """The F-statistic of the regression"""
+        """The F-statistic of the regression
+
+        Returns
+        ----------
+        float
+            F-statistic of beta coefficients using regressors.stats
+        """
         return regressors_stats.f_stat(self.ols, self.X, self.y)
 
     @property
     def df_error(self):
-        """Error degrees of freedom"""
+        """Error degrees of freedom
+
+        Returns
+        ----------
+        int
+            Degrees of freedom for the error
+        """
         return len(self.X[:, 0]) - len(self.X[0, :]) - 1
 
     @property
     def df_model(self):
-        """Model degrees of freedom"""
+        """Model degrees of freedom
+
+        Returns
+        ----------
+        int
+            Degrees of freedom for the model
+        """
         return len(self.X[0, :])
 
     @property
     def f_p_value(self):
-        """p-value of the f-statistic"""
+        """p-value of the f-statistic
+
+        Returns
+        ----------
+        float
+            p-value of the F-statistic of beta coefficients using scipy
+        """
         return scipy_stats.f.cdf(self.f_stat, self.df_model, self.df_error)
 
 
@@ -240,7 +333,13 @@ class ControlChart:
 
     @property
     def center_line(self):
-        """Center line of charting data (i.e., mean value)"""
+        """Center line of charting data (i.e., mean value)
+
+        Returns
+        ----------
+        np.ndarray, np.nan
+            Mean value of y with np.mean() or np.nan if y is empty
+        """
         data = remove_nan(self.y)
         if len(data):
             return np.mean(data)
@@ -248,12 +347,24 @@ class ControlChart:
 
     @property
     def avg_moving_range(self):
-        """Avg moving range based on 2 consecutive points"""
+        """Avg moving range based on 2 consecutive points
+
+        Returns
+        ----------
+        np.ndarray, np.nan
+            Average moving range. Returns NaN if arr is empty.
+        """
         return avg_moving_range(self.y, nan_policy="omit")
 
     @property
     def sigma(self):
-        """UCL/LCL = center_line +/- sigma * std"""
+        """UCL/LCL = center_line +/- sigma * std
+
+        Returns
+        ----------
+        np.ndarray, np.nan
+            sigma or np.nan if arr is empty
+        """
         return self.avg_moving_range / self.scalar_d
 
     @property
@@ -262,8 +373,10 @@ class ControlChart:
 
         Returns
         ----------
-        float, float
-            A tuple is returned: lower control limit and upper control limit
+        lcl : float
+            Lower Control Limit (LCL)
+        ucl : float
+            Upper Control Limit (UCL)
         """
         cl = self.center_line
         sigma = self.sigma
@@ -295,19 +408,38 @@ class ControlChart:
 
     @property
     def out_of_control_high(self):
-        """Get the indices of observations > ucl"""
+        """Get the indices of observations > ucl
+
+        Returns
+        ----------
+        np.ndarray
+            An array of indices that are greater than the upper control limit
+        """
         _, ucl = self.control_limits
         return np.argwhere(self.y > ucl)
 
     @property
     def out_of_control_low(self):
-        """Get the indices of observations < lcl"""
+        """Get the indices of observations < lcl
+
+        Returns
+        ----------
+        np.ndarray
+            An array of indices that are less than the lower control limit
+        """
         lcl, _ = self.control_limits
         return np.argwhere(self.y < lcl)
 
     @property
     def chart_data(self):
-        """JSON compatible dict for chart generation"""
+        """JSON compatible dict for chart generation
+
+        Returns
+        ----------
+        dict
+            Data used for Histogram visuals. Keys include 'x', 'y',
+            'out_of_control', 'center_line', 'lcl', 'ucl'
+        """
         lcl, ucl = self.control_limits
         return {
             "x": self.x.tolist(),
@@ -363,12 +495,23 @@ class HotellingT2:
 
     @property
     def observations(self):
-        """Number of observations in data"""
+        """Number of observations in data
+
+        Returns
+        ----------
+        int
+            Number of rows in data
+        """
         return self.data.shape[0]
 
     @property
     def variable_count(self):
-        """Number of variables in data"""
+        """Number of variables in data
+
+        Returns
+        ----------
+        int
+            Number of columns in data"""
         return self.data.shape[1]
 
     @property
@@ -392,22 +535,48 @@ class HotellingT2:
 
     @property
     def center_line(self):
-        """Center line (median value of beta distribution)"""
+        """Center line for the control chart
+
+        Returns
+        ----------
+        float
+            Median value of beta distribution.
+        """
         return self.get_control_limit(0.5)
 
     @property
     def control_limits(self):
-        """Lower and Upper control limits"""
+        """Lower and Upper control limits
+
+        Returns
+        ----------
+        lcl : float
+            Lower Control Limit (LCL). This is fixed to 0 for Hotelling T2
+        ucl : float
+            Upper Control Limit (UCL)
+        """
         return self.lcl, self.ucl
 
     @property
     def ucl(self):
-        """Upper control limit"""
+        """Upper control limit
+
+        Returns
+        ----------
+        ucl : float
+            Upper Control Limit (UCL)"""
         return self.get_control_limit(1 - self.alpha / 2)
 
     @property
     def out_of_control(self):
-        """Indices of out-of-control observations"""
+        """Indices of out-of-control observations
+
+        Returns
+        ----------
+        np.ndarray
+            An array of indices that are greater than the upper
+            control limit. (NOTE: Q is never negative)
+        """
         return np.argwhere(self.Q > self.ucl).T[0]
 
     def get_control_limit(self, x):
@@ -431,7 +600,14 @@ class HotellingT2:
 
     @property
     def chart_data(self):
-        """JSON compatible dict for chart generation"""
+        """JSON compatible dict for chart generation
+
+        Returns
+        ----------
+        dict
+            Data used for Histogram visuals. Keys include 'x', 'y',
+            'out_of_control', 'center_line', 'lcl', 'ucl'
+        """
         return {
             "x": list(range(1, self.observations + 1)),
             "y": self.Q.tolist(),
@@ -493,11 +669,26 @@ class PCA(sklearn_PCA):
 
     @property
     def feature_map_data(self):
+        """Used for feature analysis heat map
+
+        Returns
+        ----------
+        np.ndarray Shape (n_components, n_features)
+            Principal axes in feature space, representing the directions of
+            maximum variance in the data. The components are sorted by
+            explained_variance.
+        """
         return self.components_
 
     @property
     def component_labels(self):
-        """Get component names"""
+        """Get component names
+
+        Returns
+        ----------
+        list
+            Labels for plotting. (1st Comp, 2nd Comp, 3rd Comp, etc.)
+        """
         return [
             "%s Comp" % (get_ordinal(n + 1))
             for n in range(self.components_.shape[0])
@@ -534,11 +725,27 @@ class CorrelationMatrix:
 
     @property
     def normality(self):
-        return normality(self.X, nan_policy="omit")
+        """The normality and normality p-value of the input array
+
+        Returns
+        ----------
+        statistic : np.ndarray
+            Normality calculated with scipy.stats.normaltest
+        p-value : np.ndarray
+            A 2-sided chi squared probability for the hypothesis test.
+        """
+        return scipy_stats.normaltest(self.X, nan_policy="omit")
 
     @property
     def chart_data(self):
-        """JSON compatible dict for chart generation"""
+        """JSON compatible dict for chart generation
+
+        Returns
+        ----------
+        dict
+            Data used for Histogram visuals. Keys include 'corr', 'p',
+            'norm', 'norm_p'
+        """
         norm, norm_p = self.normality
         return {
             "corr": self.corr.tolist(),
@@ -688,36 +895,6 @@ def moving_avg(y, avg_len, x=None, weight=None):
     x_final = [x[i] for i in range(avg_len - 1, len(x))]
 
     return np.array(x_final), np.array(moving_aves)
-
-
-def normality(data, nan_policy="omit"):
-    """Calculate the normality and associated p-values for each variable
-
-    Parameters
-    ----------
-    data : np.ndarray
-        A 2-D array of data
-    nan_policy : str
-        Value must be one of the following: {‘propagate’, ‘raise’, ‘omit’}
-        Defines how to handle when input contains nan. The following options
-        are available (default is ‘omit’):
-        ‘propagate’: returns nan
-        ‘raise’: throws an error
-        ‘omit’: performs the calculations ignoring nan values
-
-    Returns
-    ----------
-    np.ndarray, np.ndarray
-        A tuple of 1-D arrays are returned: Normality and its
-        p-values.
-    """
-    var_count = data.shape[1]
-    norm, p = np.zeros(var_count), np.zeros(var_count)
-    for i in range(var_count):
-        norm[i], p[i] = scipy_stats.normaltest(
-            data[:, i], nan_policy=nan_policy
-        )
-    return norm, p
 
 
 def box_cox(arr, alpha=None, lmbda=None, const_policy="propagate"):
