@@ -48,6 +48,11 @@ class TestPlot(unittest.TestCase):
         )
         p.close()
 
+    def test_histogram(self):
+        """Test Histogram initialization"""
+        p = plot.Histogram(self.y)
+        p.close()
+
 
 if __name__ == "__main__":
     import sys
