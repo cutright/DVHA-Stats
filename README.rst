@@ -8,8 +8,9 @@ dvhastats
 |build| |pypi| |Docs| |lgtm| |Codecov|
 
 A library of prediction and statistical process control tools. Although based
-on work in `DVH Analytics <http://www.dvhanalytics.com>`__, all statistical tools in
-this library are generic and not radiation oncology.
+on work in `DVH Analytics <http://www.dvhanalytics.com>`__, all statistical
+tools in this library are generic and not specific to radiation oncology. See
+our `documentation <http://dvha-stats.readthedocs.io>`__ for advanced uses.
 
 What does it do?
 ----------------
