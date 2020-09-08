@@ -127,10 +127,10 @@ class DVHAStats(DVHAStatsBaseClass):
 
         Returns
         ----------
-        CorrelationMatrix
-            A CorrelationMatrix class object
+        CorrelationMatrixUI
+            A CorrelationMatrixUI class object
         """
-        return CorrelationMatrix(
+        return CorrelationMatrixUI(
             self.data, self.var_names, corr_type=corr_type
         )
 
@@ -241,7 +241,7 @@ class DVHAStats(DVHAStatsBaseClass):
         Returns
         ----------
         dict
-            ControlChartData class objects stored in a dictionary with
+            ControlChart class objects stored in a dictionary with
             var_names and indices as keys (can use var_name or index)
         """
         kwargs = {"std": std, "ucl_limit": ucl_limit, "lcl_limit": lcl_limit}
@@ -261,7 +261,7 @@ class DVHAStats(DVHAStatsBaseClass):
         for i, key in enumerate(self.var_names):
             if const_policy == "propagate" and stats.is_nan_arr(cc_data[:, i]):
                 plot_title = "Cannot calculate control chart with const data!"
-            data[key] = ControlChart(
+            data[key] = ControlChartUI(
                 cc_data[:, i], var_name=key, plot_title=plot_title, **kwargs
             )
             data[i] = data[key]
@@ -302,8 +302,8 @@ class DVHAStats(DVHAStatsBaseClass):
 
         Returns
         ----------
-        HotellingT2
-            HotellingT2 class object
+        HotellingT2UI
+            HotellingT2UI class object
         """
 
         if box_cox:
@@ -323,7 +323,7 @@ class DVHAStats(DVHAStatsBaseClass):
             data = self.non_const_data if const_policy == "omit" else self.data
             plot_title = None
 
-        return HotellingT2(data, alpha, plot_title=plot_title)
+        return HotellingT2UI(data, alpha, plot_title=plot_title)
 
     def box_cox_by_index(
         self, index, alpha=None, lmbda=None, const_policy="propagate"
@@ -386,7 +386,7 @@ class DVHAStats(DVHAStatsBaseClass):
 
     def pca(self, n_components=0.95, transform=True, **kwargs):
         """Return an sklearn PCA-like object, see PCA object for details"""
-        return PCA(
+        return PCAUI(
             self.data,
             var_names=self.var_names,
             n_components=n_components,
@@ -411,7 +411,7 @@ class DVHAStats(DVHAStatsBaseClass):
         return self.plots[-1].figure.number
 
 
-class ControlChart(DVHAStatsBaseClass, stats.ControlChartData):
+class ControlChartUI(DVHAStatsBaseClass, stats.ControlChart):
     """Univariate Control Chart"""
 
     def __init__(
@@ -442,7 +442,7 @@ class ControlChart(DVHAStatsBaseClass, stats.ControlChartData):
             Over-ride the plot title
         """
         DVHAStatsBaseClass.__init__(self)
-        stats.ControlChartData.__init__(
+        stats.ControlChart.__init__(
             self, y, std=std, ucl_limit=ucl_limit, lcl_limit=lcl_limit, x=x
         )
 
@@ -465,7 +465,7 @@ class ControlChart(DVHAStatsBaseClass, stats.ControlChartData):
         return self.plots[-1].figure.number
 
 
-class HotellingT2(DVHAStatsBaseClass, stats.HotellingT2Data):
+class HotellingT2UI(DVHAStatsBaseClass, stats.HotellingT2):
     """Hotelling's t-squared statistic for multivariate hypothesis testing"""
 
     def __init__(self, data, alpha=0.05, plot_title=None):
@@ -483,7 +483,7 @@ class HotellingT2(DVHAStatsBaseClass, stats.HotellingT2Data):
             Over-ride the plot title
         """
         DVHAStatsBaseClass.__init__(self)
-        stats.HotellingT2Data.__init__(self, data, alpha=alpha)
+        stats.HotellingT2.__init__(self, data, alpha=alpha)
 
         self.plot_title = (
             "Multivariate Control Chart" if plot_title is None else plot_title
@@ -502,7 +502,7 @@ class HotellingT2(DVHAStatsBaseClass, stats.HotellingT2Data):
         return self.plots[-1].figure.number
 
 
-class PCA(DVHAStatsBaseClass, stats.PCAData):
+class PCAUI(DVHAStatsBaseClass, stats.PCA):
     """Hotelling's t-squared statistic for multivariate hypothesis testing"""
 
     def __init__(
@@ -541,7 +541,7 @@ class PCA(DVHAStatsBaseClass, stats.PCAData):
         """
         # print(kwargs)
         DVHAStatsBaseClass.__init__(self)
-        stats.PCAData.__init__(
+        stats.PCA.__init__(
             self, X, n_components=n_components, transform=transform, **kwargs
         )
         self.var_names = range(X.shape[1]) if var_names is None else var_names
@@ -566,7 +566,7 @@ class PCA(DVHAStatsBaseClass, stats.PCAData):
             return self.plots[-1].figure.number
 
 
-class CorrelationMatrix(DVHAStatsBaseClass, stats.CorrelationMatrixData):
+class CorrelationMatrixUI(DVHAStatsBaseClass, stats.CorrelationMatrix):
     """Pearson-R correlation matrix"""
 
     def __init__(
@@ -587,7 +587,7 @@ class CorrelationMatrix(DVHAStatsBaseClass, stats.CorrelationMatrixData):
             matplotlib compatible color map
         """
         DVHAStatsBaseClass.__init__(self)
-        stats.CorrelationMatrixData.__init__(self, X=X, corr_type=corr_type)
+        stats.CorrelationMatrix.__init__(self, X=X, corr_type=corr_type)
         self.var_names = range(X.shape[1]) if var_names is None else var_names
         self.cmap = cmap
 

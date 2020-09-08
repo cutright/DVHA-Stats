@@ -15,8 +15,63 @@ import numpy as np
 from scipy import stats as scipy_stats
 from sklearn import linear_model
 from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA as sklearn_PCA
 from regressors import stats as regressors_stats
+
+
+class Histogram:
+    def __init__(self, y, bins, nan_policy='omit'):
+        """
+
+
+        y: array-like
+            Input array.
+        nan_policy : str
+            Value must be one of the following: ‘propagate’, ‘raise’, ‘omit’
+            Defines how to handle when input contains nan. The following options
+            are available (default is ‘omit’):
+            ‘propagate’: returns nan
+            ‘raise’: throws an error
+            ‘omit’: performs the calculations ignoring nan values
+        """
+
+        self.y = process_nan_policy(y, nan_policy)
+        self.bins = bins
+        self.nan_policy = nan_policy
+
+    @property
+    def mean(self):
+        """The mean value of the input array"""
+        return np.mean(self.y)
+
+    @property
+    def median(self):
+        """The median value of the input array"""
+        return np.median(self.y)
+
+    @property
+    def std(self):
+        """The standard deviation of the input array"""
+        return np.std(self.y)
+
+    @property
+    def normality(self):
+        """The normality and normality p-value of the input array"""
+        return normality(self.y, nan_policy=self.nan_policy)
+
+    @property
+    def chart_data(self):
+        """JSON compatible dict for chart generation"""
+        hist, bins = np.histogram(self.y, bins=self.bins)
+        center = (bins[:-1] + bins[1:]) / 2.
+        norm, norm_p = self.normality
+        return {'x': center.tolist(),
+                'y': hist.tolist(),
+                'mean': float(self.mean),
+                'median': float(self.median),
+                'std': float(self.std),
+                'normality': float(norm),
+                'normality_p': float(norm_p)}
 
 
 class MultiVariableRegression:
@@ -27,15 +82,15 @@ class MultiVariableRegression:
 
         Parameters
         ----------
-        X : np.ndarray
+        X : array-like
             Independent data
-        y : np.ndarray, list
+        y : array-like
             Dependent data
         saved_reg : MultiVariableRegression, optional
             Optionally provide a previously calculated regression
         """
 
-        self.X = X
+        self.X = np.array(X) if isinstance(X, list) else X
         self.y = np.array(y) if isinstance(y, list) else y
 
         self._do_fit(saved_reg=saved_reg)
@@ -132,7 +187,7 @@ class MultiVariableRegression:
         return scipy_stats.f.cdf(self.f_stat, self.df_model, self.df_error)
 
 
-class ControlChartData:
+class ControlChart:
     """Univariate Control Chart"""
 
     def __init__(
@@ -160,10 +215,10 @@ class ControlChartData:
         """
 
         self.y = np.array(y) if isinstance(y, list) else y
+        self.x = x if x else np.linspace(1, len(self.y), len(self.y))
         self.std = std
         self.ucl_limit = ucl_limit
         self.lcl_limit = lcl_limit
-        self.x = x
 
         # since moving range is calculated based on 2 consecutive points
         self.scalar_d = 1.128
@@ -250,16 +305,17 @@ class ControlChartData:
 
     @property
     def chart_data(self):
+        """JSON compatible dict for chart generation"""
         lcl, ucl = self.control_limits
-        return {'x': self.x,
-                'y': self.y,
-                'out_of_control': self.out_of_control,
-                'center_line': self.center_line,
-                'lcl': lcl,
-                'ucl': ucl}
+        return {'x': self.x.tolist(),
+                'y': self.y.tolist(),
+                'out_of_control': self.out_of_control.tolist(),
+                'center_line': float(self.center_line),
+                'lcl': float(lcl),
+                'ucl': float(ucl)}
 
 
-class HotellingT2Data:
+class HotellingT2:
     """Hotelling's t-squared statistic for multivariate hypothesis testing"""
 
     def __init__(self, data, alpha=0.05):
@@ -363,25 +419,28 @@ class HotellingT2Data:
 
     @property
     def chart_data(self):
-        return {'x': np.linspace(1, self.observations, self.observations),
-                'y': self.Q,
-                'out_of_control': self.out_of_control,
-                'center_line': self.center_line,
-                'lcl': self.lcl,
-                'ucl': self.ucl}
+        """JSON compatible dict for chart generation"""
+        return {'x': list(range(1, self.observations+1)),
+                'y': self.Q.tolist(),
+                'out_of_control': self.out_of_control.tolist(),
+                'center_line': float(self.center_line),
+                'lcl': float(self.lcl),
+                'ucl': float(self.ucl)}
 
 
-class PCAData(PCA):
+class PCA(sklearn_PCA):
     """Hotelling's t-squared statistic for multivariate hypothesis testing"""
 
-    def __init__(self, X, n_components=0.95, transform=True, **kwargs):
+    def __init__(self, X, var_names=None, n_components=0.95, transform=True, **kwargs):
         """Initialize PCA and perform fit. Inherits sklearn.decomposition.PCA
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples and
-            n_features is the number of features.
+        X : np.ndarray
+            Training data (2-D), where n_samples is the number of samples and
+            n_features is the number of features. shape (n_samples, n_features)
+        var_names : list, optional
+            Optionally provide names of the features
         n_components : int, float, None or str
             Number of components to keep. if n_components is not set all
             components are kept:
@@ -406,7 +465,8 @@ class PCAData(PCA):
         """
 
         self.X = X
-        PCA.__init__(self, n_components=n_components, **kwargs)
+        self.var_names = list(range(self.X.shape[1])) if var_names is None else var_names
+        sklearn_PCA.__init__(self, n_components=n_components, **kwargs)
 
         if transform:
             self.fit_transform(self.X)
@@ -417,8 +477,15 @@ class PCAData(PCA):
     def feature_map_data(self):
         return self.components_
 
+    @property
+    def component_labels(self):
+        """Get component names"""
+        return [
+            "%s Comp" % (get_ordinal(n + 1)) for n in range(self.n_components)
+        ]
 
-class CorrelationMatrixData:
+
+class CorrelationMatrix:
     """Pearson-R correlation matrix"""
 
     def __init__(self, X, corr_type="Pearson"):
@@ -445,6 +512,21 @@ class CorrelationMatrixData:
         }
         if self.corr_type in list(func_map):
             self.corr, self.p = func_map[self.corr_type](self.X)
+
+    @property
+    def normality(self):
+        norm, norm_p = np.ones(self.X.shape[1]), np.ones(self.X.shape[1])
+        for i in range(self.X.shape[1]):
+            norm[i], norm_p[i] = normality(self.X[:, i], nan_policy='omit')
+        return norm, norm_p
+
+    def chart_data(self):
+        """JSON compatible dict for chart generation"""
+        norm, norm_p = self.normality
+        return {'corr': self.corr.tolist(),
+                'p': self.p.tolist(),
+                'norm': norm.tolist(),
+                'norm_p': norm_p.tolist()}
 
 
 #########################################################
@@ -618,22 +700,6 @@ def normality(data, nan_policy="omit"):
     return norm, p
 
 
-def is_arr_constant(arr):
-    """Determine if data by var_name is constant
-
-    Parameters
-    ----------
-    arr : array-like
-        Input array or object that can be converted to an array
-
-    Returns
-    ----------
-    bool
-        True if all values the same (i.e., no variation)
-    """
-    return np.all(arr == arr[0])
-
-
 def box_cox(arr, alpha=None, lmbda=None, const_policy="propagate"):
     """
 
@@ -677,7 +743,7 @@ def avg_moving_range(arr, nan_policy="omit"):
     ----------
     arr : array-like (1-D)
         Input array. Must be positive 1-dimensional.
-    nan_policy : str
+    nan_policy : str, optional
         Value must be one of the following: {‘propagate’, ‘raise’, ‘omit’}
         Defines how to handle when input contains nan. The following options
         are available (default is ‘omit’):
@@ -687,19 +753,14 @@ def avg_moving_range(arr, nan_policy="omit"):
 
     Returns
     ----------
-    np.ndarray
-        Average moving range
+    np.ndarray, np.nan
+        Average moving range. Returns NaN if arr is empty
     """
-    arr_no_nan = remove_nan(arr)
-    if len(arr_no_nan) != len(arr):
-        if nan_policy == "raise":
-            msg = "NaN values are not supported for avg_moving_range"
-            raise NotImplementedError(msg)
-        if nan_policy == "propagate":
-            return np.nan
-    if len(arr_no_nan) == 0:
+
+    arr = process_nan_policy(arr, nan_policy)
+    if len(arr) == 0:
         return np.nan
-    return np.mean(np.absolute(np.diff(arr_no_nan)))
+    return np.mean(np.absolute(np.diff(arr)))
 
 
 ###################################################
@@ -737,3 +798,71 @@ def is_nan_arr(arr):
         True if all elements are np.nan
     """
     return np.all(np.isnan(arr))
+
+
+def is_arr_constant(arr):
+    """Determine if data by var_name is constant
+
+    Parameters
+    ----------
+    arr : array-like
+        Input array or object that can be converted to an array
+
+    Returns
+    ----------
+    bool
+        True if all values the same (i.e., no variation)
+    """
+    return np.all(arr == arr[0])
+
+
+def process_nan_policy(arr, nan_policy):
+    """Calculate the average moving range (over 2-consecutive point1)
+
+    Parameters
+    ----------
+    arr : array-like (1-D)
+        Input array. Must be positive 1-dimensional.
+    nan_policy : str
+        Value must be one of the following: {‘propagate’, ‘raise’, ‘omit’}
+        Defines how to handle when input contains nan. The following options
+        are available (default is ‘omit’):
+        ‘propagate’: returns nan
+        ‘raise’: throws an error
+        ‘omit’: performs the calculations ignoring nan values
+
+    Returns
+    ----------
+    np.ndarray, np.nan
+        Input array evaluated per nan_policy
+    """
+
+    arr_no_nan = remove_nan(arr)
+    if len(arr_no_nan) != len(arr):
+        if nan_policy == "raise":
+            msg = "NaN values are not supported for avg_moving_range"
+            raise NotImplementedError(msg)
+        if nan_policy == "propagate":
+            return np.nan
+        if nan_policy == 'omit':
+            return arr_no_nan
+    return arr
+
+
+def get_ordinal(n):
+    """Convert number to its ordinal (e.g., 1 to 1st)
+
+    Parameters
+    ----------
+    n : int
+        Number to be converted to ordinal
+
+    Returns
+    ----------
+    str
+        the ordinal of n
+    """
+    return "%d%s" % (
+        n,
+        "tsnrhtdd"[(n // 10 % 10 != 1) * (n % 10 < 4) * n % 10 :: 4],
+    )

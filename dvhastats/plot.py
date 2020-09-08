@@ -103,8 +103,8 @@ class Plot(Chart):
             Specify the scatter plot circle color
         """
         Chart.__init__(self, title=title)
-        self.x = np.linspace(1, len(y), len(y)) if x is None else x
-        self.y = y
+        self.x = np.linspace(1, len(y), len(y)) if x is None else np.array(x)
+        self.y = np.array(y) if not isinstance(y, np.ndarray) else y
         self.show = show
         self.xlabel = xlabel
         self.ylabel = ylabel
