@@ -20,7 +20,7 @@ from regressors import stats as regressors_stats
 
 
 class Histogram:
-    def __init__(self, y, bins, nan_policy='omit'):
+    def __init__(self, y, bins, nan_policy="omit"):
         """
 
 
@@ -28,8 +28,8 @@ class Histogram:
             Input array.
         nan_policy : str
             Value must be one of the following: ‘propagate’, ‘raise’, ‘omit’
-            Defines how to handle when input contains nan. The following options
-            are available (default is ‘omit’):
+            Defines how to handle when input contains nan. The following
+            options are available (default is ‘omit’):
             ‘propagate’: returns nan
             ‘raise’: throws an error
             ‘omit’: performs the calculations ignoring nan values
@@ -63,15 +63,17 @@ class Histogram:
     def chart_data(self):
         """JSON compatible dict for chart generation"""
         hist, bins = np.histogram(self.y, bins=self.bins)
-        center = (bins[:-1] + bins[1:]) / 2.
+        center = (bins[:-1] + bins[1:]) / 2.0
         norm, norm_p = self.normality
-        return {'x': center.tolist(),
-                'y': hist.tolist(),
-                'mean': float(self.mean),
-                'median': float(self.median),
-                'std': float(self.std),
-                'normality': float(norm),
-                'normality_p': float(norm_p)}
+        return {
+            "x": center.tolist(),
+            "y": hist.tolist(),
+            "mean": float(self.mean),
+            "median": float(self.median),
+            "std": float(self.std),
+            "normality": float(norm),
+            "normality_p": float(norm_p),
+        }
 
 
 class MultiVariableRegression:
@@ -307,18 +309,20 @@ class ControlChart:
     def chart_data(self):
         """JSON compatible dict for chart generation"""
         lcl, ucl = self.control_limits
-        return {'x': self.x.tolist(),
-                'y': self.y.tolist(),
-                'out_of_control': self.out_of_control.tolist(),
-                'center_line': float(self.center_line),
-                'lcl': float(lcl),
-                'ucl': float(ucl)}
+        return {
+            "x": self.x.tolist(),
+            "y": self.y.tolist(),
+            "out_of_control": self.out_of_control.tolist(),
+            "center_line": float(self.center_line),
+            "lcl": float(lcl),
+            "ucl": float(ucl),
+        }
 
 
 class HotellingT2:
     """Hotelling's t-squared statistic for multivariate hypothesis testing"""
 
-    def __init__(self, data, alpha=0.05, const_policy='raise'):
+    def __init__(self, data, alpha=0.05, const_policy="raise"):
         """Initialize the Hotelling T^2 class
 
         Parameters
@@ -337,7 +341,9 @@ class HotellingT2:
             'omit': exclude constant variables from calculation
         """
 
-        self.data = data if const_policy == 'raise' else remove_const_column(data)
+        self.data = (
+            data if const_policy == "raise" else remove_const_column(data)
+        )
         self.alpha = alpha
         self.lcl = 0
 
@@ -426,18 +432,22 @@ class HotellingT2:
     @property
     def chart_data(self):
         """JSON compatible dict for chart generation"""
-        return {'x': list(range(1, self.observations+1)),
-                'y': self.Q.tolist(),
-                'out_of_control': self.out_of_control.tolist(),
-                'center_line': float(self.center_line),
-                'lcl': float(self.lcl),
-                'ucl': float(self.ucl)}
+        return {
+            "x": list(range(1, self.observations + 1)),
+            "y": self.Q.tolist(),
+            "out_of_control": self.out_of_control.tolist(),
+            "center_line": float(self.center_line),
+            "lcl": float(self.lcl),
+            "ucl": float(self.ucl),
+        }
 
 
 class PCA(sklearn_PCA):
     """Hotelling's t-squared statistic for multivariate hypothesis testing"""
 
-    def __init__(self, X, var_names=None, n_components=0.95, transform=True, **kwargs):
+    def __init__(
+        self, X, var_names=None, n_components=0.95, transform=True, **kwargs
+    ):
         """Initialize PCA and perform fit. Inherits sklearn.decomposition.PCA
 
         Parameters
@@ -471,7 +481,9 @@ class PCA(sklearn_PCA):
         """
 
         self.X = X
-        self.var_names = list(range(self.X.shape[1])) if var_names is None else var_names
+        self.var_names = (
+            list(range(self.X.shape[1])) if var_names is None else var_names
+        )
         sklearn_PCA.__init__(self, n_components=n_components, **kwargs)
 
         if transform:
@@ -487,7 +499,8 @@ class PCA(sklearn_PCA):
     def component_labels(self):
         """Get component names"""
         return [
-            "%s Comp" % (get_ordinal(n + 1)) for n in range(self.components_.shape[0])
+            "%s Comp" % (get_ordinal(n + 1))
+            for n in range(self.components_.shape[0])
         ]
 
 
@@ -521,21 +534,24 @@ class CorrelationMatrix:
 
     @property
     def normality(self):
-        return normality(self.X, nan_policy='omit')
+        return normality(self.X, nan_policy="omit")
 
     @property
     def chart_data(self):
         """JSON compatible dict for chart generation"""
         norm, norm_p = self.normality
-        return {'corr': self.corr.tolist(),
-                'p': self.p.tolist(),
-                'norm': norm.tolist(),
-                'norm_p': norm_p.tolist()}
+        return {
+            "corr": self.corr.tolist(),
+            "p": self.p.tolist(),
+            "norm": norm.tolist(),
+            "norm_p": norm_p.tolist(),
+        }
 
 
 #########################################################
 # Pure stats functions
 #########################################################
+
 
 def get_lin_reg_p_values(X, y, predictions, y_intercept, slope):
     """
@@ -769,6 +785,7 @@ def avg_moving_range(arr, nan_policy="omit"):
 # Stats related utilities
 ###################################################
 
+
 def remove_nan(arr):
     """Remove indices from 1-D array with values of np.nan
 
@@ -862,7 +879,7 @@ def process_nan_policy(arr, nan_policy):
             raise NotImplementedError(msg)
         if nan_policy == "propagate":
             return np.nan
-        if nan_policy == 'omit':
+        if nan_policy == "omit":
             return arr_no_nan
     return arr
 

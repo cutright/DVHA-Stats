@@ -119,9 +119,7 @@ def import_data(data, var_names=None):
     """
     if isinstance(data, np.ndarray):
         var_names = (
-            var_names
-            if var_names is not None
-            else list(range(data.shape[1]))
+            var_names if var_names is not None else list(range(data.shape[1]))
         )
         return data, var_names
     if isinstance(data, dict):
@@ -132,7 +130,5 @@ def import_data(data, var_names=None):
             data = dict_to_array(csv_to_dict(data, dtype=float))
             return data["data"], data["var_names"]
 
-    msg = (
-        "Invalid data provided - must be a numpy array, dict, or .csv file"
-    )
+    msg = "Invalid data provided - must be a numpy array, dict, or .csv file"
     raise NotImplementedError(msg)

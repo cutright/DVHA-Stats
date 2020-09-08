@@ -223,8 +223,8 @@ class TestStats(unittest.TestCase):
 
     def test_spearman_correlation_matrix(self):
         """Test Spearman correlation matrix calculation"""
-        corr_mat = stats.CorrelationMatrix(self.data, corr_type='Spearman')
-        self.assertEqual(corr_mat.corr_type, 'spearman')
+        corr_mat = stats.CorrelationMatrix(self.data, corr_type="Spearman")
+        self.assertEqual(corr_mat.corr_type, "spearman")
 
     def test_normality(self):
         """Test normality calculation"""
@@ -385,7 +385,7 @@ class TestStats(unittest.TestCase):
         stats.box_cox(self.expected_arr_no_nan[:, 0])
         self.assertTrue(stats.is_nan_arr(stats.box_cox(np.ones(10))))
         with self.assertRaises(ValueError):
-            stats.is_nan_arr(stats.box_cox(np.ones(10), const_policy='raise'))
+            stats.is_nan_arr(stats.box_cox(np.ones(10), const_policy="raise"))
 
     def test_moving_avg(self):
         """Test moving average calculation"""
@@ -410,7 +410,7 @@ class TestStats(unittest.TestCase):
     def test_avg_moving_range(self):
         """Test avg moving range"""
         test = np.array([1, 2, 3, 4, np.nan])
-        self.assertEqual(stats.avg_moving_range(test), 1.)
+        self.assertEqual(stats.avg_moving_range(test), 1.0)
         test_nan = np.array([np.nan])
         self.assertTrue(np.isnan(stats.avg_moving_range(test_nan)))
 
@@ -422,26 +422,26 @@ class TestStats(unittest.TestCase):
     def test_process_nan_policy(self):
         """Test process nan policy"""
         arr = np.array([1, 2, 3, np.nan])
-        test = stats.process_nan_policy(arr, 'omit')
+        test = stats.process_nan_policy(arr, "omit")
         assert_array_equal(test, arr[:3])
 
         with self.assertRaises(NotImplementedError):
-            stats.process_nan_policy(arr, 'raise')
+            stats.process_nan_policy(arr, "raise")
 
-        test = stats.process_nan_policy(arr, 'propagate')
+        test = stats.process_nan_policy(arr, "propagate")
         self.assertTrue(np.isnan(test))
 
     def test_histogram(self):
         """Test histogram class object"""
         hist = stats.Histogram(np.linspace(1, 20, 20), 4)
         data = hist.chart_data
-        assert_array_equal(data['x'], [3.375, 8.125, 12.875, 17.625])
-        assert_array_equal(data['y'], [5, 5, 5, 5])
-        self.assertEqual(data['mean'], 10.5)
-        self.assertEqual(data['median'], 10.5)
-        self.assertEqual(round(data['std'], 3), 5.766)
-        self.assertEqual(round(data['normality'], 3), 3.992)
-        self.assertEqual(round(data['normality_p'], 3), 0.136)
+        assert_array_equal(data["x"], [3.375, 8.125, 12.875, 17.625])
+        assert_array_equal(data["y"], [5, 5, 5, 5])
+        self.assertEqual(data["mean"], 10.5)
+        self.assertEqual(data["median"], 10.5)
+        self.assertEqual(round(data["std"], 3), 5.766)
+        self.assertEqual(round(data["normality"], 3), 3.992)
+        self.assertEqual(round(data["normality_p"], 3), 0.136)
 
 
 if __name__ == "__main__":

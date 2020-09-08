@@ -457,9 +457,7 @@ class ControlChartUI(DVHAStatsBaseClass, stats.ControlChart):
         """Display the univariate control chart with matplotlib"""
         self.plots.append(
             plot.ControlChart(
-                title=self.plot_title,
-                ylabel=self.var_name,
-                **self.chart_data
+                title=self.plot_title, ylabel=self.var_name, **self.chart_data
             )
         )
         return self.plots[-1].figure.number
