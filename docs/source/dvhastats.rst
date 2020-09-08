@@ -1,3 +1,11 @@
+ui module
+---------------------------------
+
+.. automodule:: dvhastats.ui
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 stats module
 ---------------------------------
 

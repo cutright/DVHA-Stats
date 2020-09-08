@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# test_stats.py
-"""unittest cases for stats."""
+# test_ui.py
+"""unittest cases for ui."""
 #
 # Copyright (c) 2020 Dan Cutright
 # This file is part of DVHA-Stats, released under a MIT license.
@@ -14,11 +14,12 @@ import unittest
 from os.path import join
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
-from dvhastats import stats
-from dvhastats.utilities import import_data
+from dvhastats import ui
 import warnings
+import matplotlib
 from copy import deepcopy
 
+matplotlib.use("Template")
 
 basedata_dir = join("tests", "testdata")
 example_data = join(basedata_dir, "multivariate_data_small.csv")
@@ -45,44 +46,65 @@ class TestStats(unittest.TestCase):
 
         self.expected_dict = {key: data[i] for i, key in enumerate(keys)}
         self.expected_dict_nh = {i: row for i, row in enumerate(data)}
+        self.expected_dict_no_nan = deepcopy(self.expected_dict)
+        self.expected_dict_no_nan["V1"][0] = 56.5
         self.expected_arr = np.array(data).T
-        self.expected_arr_no_nan = deepcopy(self.expected_arr)
-        self.expected_arr_no_nan[0, 0] = 56.5
         self.expected_var_names = keys
 
         self.const_data = deepcopy(self.expected_arr)
         self.const_data[:, 0] = np.ones_like(self.expected_arr[:, 0])
 
-        self.data, self.var_names = import_data(self.expected_dict)
+        self.stats_obj = ui.DVHAStats(self.data_path)
 
     def test_arr_import(self):
         """Test array importing"""
-        data, var_names = import_data(
-            self.expected_arr, self.expected_var_names
+        stats_obj = ui.DVHAStats(
+            self.expected_arr, var_names=self.expected_var_names
         )
-        assert_array_equal(data, self.expected_arr)
-        self.assertEqual(var_names, self.expected_var_names)
+        assert_array_equal(stats_obj.data, self.expected_arr)
+        self.assertEqual(stats_obj.var_names, self.expected_var_names)
 
     def test_dict_import(self):
         """Test dict importing"""
-        data, var_names = import_data(self.expected_dict)
-        assert_array_equal(data, self.expected_arr)
-        self.assertEqual(var_names, self.expected_var_names)
+        stats_obj = ui.DVHAStats(self.expected_dict)
+        assert_array_equal(stats_obj.data, self.expected_arr)
+        self.assertEqual(stats_obj.var_names, self.expected_var_names)
 
     def test_csv_import(self):
         """Test csv importing"""
-        data, var_names = import_data(self.data_path)
-        assert_array_equal(data, self.expected_arr)
-        self.assertEqual(var_names, self.expected_var_names)
+        stats_obj = ui.DVHAStats(self.data_path)
+        assert_array_equal(stats_obj.data, self.expected_arr)
+        self.assertEqual(stats_obj.var_names, self.expected_var_names)
 
     def test_invalid_data_import(self):
         with self.assertRaises(NotImplementedError):
-            import_data("test")
+            ui.DVHAStats("test")
+
+    def test_get_index_by_var_name(self):
+        """Test data column index look-up by variable name"""
+        self.assertEqual(0, self.stats_obj.get_index_by_var_name("V1"))
+        with self.assertRaises(AttributeError):
+            self.stats_obj.get_index_by_var_name("test")
+        self.assertEqual(0, self.stats_obj.get_index_by_var_name(0))
+
+    def test_get_data_by_var_name(self):
+        """Test get data of a given var_name"""
+        expected = self.expected_arr[:, 0]
+        data = self.stats_obj.get_data_by_var_name("V1")
+        assert_array_equal(data, expected)
+
+    def test_observations(self):
+        """Test DVHAStats.observations property"""
+        self.assertEqual(self.stats_obj.observations, 10)
+
+    def test_variable_count(self):
+        """Test DVHAStats.variable_count property"""
+        self.assertEqual(self.stats_obj.variable_count, 6)
 
     def test_correlation_matrix_type_failure(self):
         """Check that error is raised if corr_type Spearman or Pearson"""
         with self.assertRaises(NotImplementedError):
-            stats.CorrelationMatrix(self.data, corr_type="test")
+            self.stats_obj.correlation_matrix(corr_type="test")
 
     def test_pearson_r_matrix(self):
         """Test Pearson-R matrix calculation"""
@@ -190,41 +212,9 @@ class TestStats(unittest.TestCase):
                 ],
             ]
         )
-
-        corr_mat = stats.CorrelationMatrix(self.data)
-        warnings.filterwarnings("ignore")
-        data = corr_mat.chart_data
-        warnings.filterwarnings("default")
-        assert_array_almost_equal(data["corr"], exp_r)
-        assert_array_almost_equal(data["p"], exp_p)
-
-        exp_norm = np.array(
-            [
-                5.560821491105694,
-                2.168424114591037,
-                0.4849069523738952,
-                0.36635238844506546,
-                3.997163488853074,
-                5.497952110420669,
-            ]
-        )
-        exp_norm_p = np.array(
-            [
-                0.06201303056894888,
-                0.3381681380630833,
-                0.7847002539774257,
-                0.8326214397249772,
-                0.1355273594307197,
-                0.06399335333154248,
-            ]
-        )
-        assert_array_almost_equal(data["norm"], exp_norm)
-        assert_array_almost_equal(data["norm_p"], exp_norm_p)
-
-    def test_spearman_correlation_matrix(self):
-        """Test Spearman correlation matrix calculation"""
-        corr_mat = stats.CorrelationMatrix(self.data, corr_type='Spearman')
-        self.assertEqual(corr_mat.corr_type, 'spearman')
+        corr_mat = self.stats_obj.correlation_matrix()
+        assert_array_almost_equal(corr_mat.corr, exp_r)
+        assert_array_almost_equal(corr_mat.p, exp_p)
 
     def test_normality(self):
         """Test normality calculation"""
@@ -249,56 +239,59 @@ class TestStats(unittest.TestCase):
             ]
         )
         warnings.filterwarnings("ignore")
-        norm, p = stats.normality(self.data, nan_policy="omit")
+        norm, p = self.stats_obj.normality
         warnings.filterwarnings("default")
         assert_array_almost_equal(norm, expected_norm)
         assert_array_almost_equal(p, expected_p)
 
-    def test_control_chart(self):
+    def test_univariate_control_chart(self):
         """Test univariate control chart creation and values"""
-        ucc = stats.ControlChart(self.data[:, 0])
+        ucc = self.stats_obj.univariate_control_charts()
+        self.assertEqual(round(ucc[0].center_line, 3), 48.544)
+        lcl, ucl = ucc[0].control_limits
+        self.assertEqual(round(lcl, 3), 28.199)
+        self.assertEqual(round(ucl, 3), 68.89)
+        self.assertEqual(len(ucc[0].out_of_control), 0)
         str_rep = (
             "center_line: 48.544\ncontrol_limits: "
             "28.199, 68.890\nout_of_control: []"
         )
-        self.assertEqual(str(ucc), str_rep)
-        self.assertEqual(repr(ucc), str_rep)
+        self.assertEqual(str(ucc[0]), str_rep)
+        self.assertEqual(repr(ucc[0]), str_rep)
 
-        chart_data = ucc.chart_data
-        self.assertEqual(len(chart_data["out_of_control"]), 0)
-        self.assertEqual(round(chart_data["center_line"], 3), 48.544)
-        self.assertEqual(round(chart_data["lcl"], 3), 28.199)
-        self.assertEqual(round(chart_data["ucl"], 3), 68.89)
-        self.assertEqual(len(ucc.out_of_control_high), 0)
-        self.assertEqual(len(ucc.out_of_control_low), 0)
-
-    def test_control_chart_with_limits(self):
+    def test_univariate_control_chart_with_limits(self):
         """Test univariate control chart creation and values"""
-        ucc = stats.ControlChart(
-            self.data[:, 0],
+        ucc = self.stats_obj.univariate_control_charts(
             lcl_limit=30,
             ucl_limit=50,
         )
-        lcl, ucl = ucc.control_limits
+        lcl, ucl = ucc[0].control_limits
         self.assertEqual(round(lcl, 3), 30)
         self.assertEqual(round(ucl, 3), 50)
-        self.assertEqual(len(ucc.out_of_control), 1)
+        self.assertEqual(len(ucc[0].out_of_control), 1)
 
-    def test_control_chart_with_all_nan_input(self):
-        data = np.array([[np.nan] * 5]).T
-        ucc = stats.ControlChart(data)
-        self.assertTrue(np.isnan(ucc.center_line))
+    def test_univariate_control_chart_box_cox(self):
+        """Test univariate control chart creation and values with Box-Cox"""
+        stats_obj = ui.DVHAStats(self.data_path_full)
+        ucc = stats_obj.univariate_control_charts(
+            box_cox=True, const_policy="omit"
+        )
+        self.assertEqual(round(ucc[0].center_line, 3), 1835.702)
+        lcl, ucl = ucc[0].control_limits
+        self.assertEqual(round(lcl, 3), 136.258)
+        self.assertEqual(round(ucl, 3), 3535.147)
+        self.assertEqual(len(ucc[0].out_of_control), 3)
+        self.assertEqual(len(ucc[0].out_of_control_high), 1)
+        self.assertEqual(len(ucc[0].out_of_control_low), 2)
 
     def test_hotelling_t2(self):
         """Test multivariate control chart creation and values"""
-        ht2 = stats.HotellingT2(self.data, const_policy="omit")
-
-        chart_data = ht2.chart_data
+        ht2 = self.stats_obj.hotelling_t2(const_policy="omit")
+        self.assertEqual(round(ht2.center_line, 3), 5.614)
         lcl, ucl = ht2.control_limits
-        self.assertEqual(round(chart_data["center_line"], 3), 5.614)
         self.assertEqual(round(lcl, 3), 0)
         self.assertEqual(round(ucl, 3), 7.834)
-        self.assertEqual(len(chart_data["out_of_control"]), 0)
+        self.assertEqual(len(ht2.out_of_control), 0)
         str_rep = (
             "Q: [nan nan nan nan nan nan nan nan nan nan]\n"
             "center_line: 5.614\n"
@@ -308,39 +301,21 @@ class TestStats(unittest.TestCase):
         self.assertEqual(str(ht2), str_rep)
         self.assertEqual(repr(ht2), str_rep)
 
-    def test_pca(self):
-        """Test PCA"""
-        pca = stats.PCA(self.expected_arr_no_nan)
-        exp = np.array(
-            [
-                [
-                    0.26641603,
-                    0.24490217,
-                    0.32525642,
-                    0.49217851,
-                    0.55671381,
-                    0.45943851,
-                ],
-                [
-                    -0.55407909,
-                    -0.56054476,
-                    -0.38688698,
-                    0.19060815,
-                    0.33893785,
-                    0.2790951,
-                ],
-            ]
-        )
-        assert_array_almost_equal(pca.feature_map_data, exp)
-        self.assertEqual(pca.component_labels, ["1st Comp", "2nd Comp"])
-
-        pca = stats.PCA(self.expected_arr_no_nan, transform=False)
-        assert_array_almost_equal(pca.feature_map_data, exp)
+    def test_hotelling_t2_box_cox(self):
+        """Test multivariate control chart creation and values"""
+        stats_obj = ui.DVHAStats(self.data_path_full)
+        ht2 = stats_obj.hotelling_t2(box_cox=True, const_policy="omit")
+        self.assertEqual(round(ht2.center_line, 3), 5.375)
+        lcl, ucl = ht2.control_limits
+        self.assertEqual(round(lcl, 3), 0)
+        self.assertEqual(round(ucl, 3), 13.555)
+        self.assertEqual(len(ht2.out_of_control), 2)
 
     def test_multi_variable_regression(self):
         """Test Multi-Variable Linear Regression"""
         y = np.linspace(1, 10, 10)
-        mvr = stats.MultiVariableRegression(self.expected_arr_no_nan, y)
+        stats_obj = ui.DVHAStats(self.expected_dict_no_nan)
+        mvr = stats_obj.linear_reg(y)
         self.assertEqual(round(mvr.y_intercept, 3), 2.983)
         slope = np.array(
             [
@@ -375,73 +350,69 @@ class TestStats(unittest.TestCase):
         self.assertEqual(mvr.df_model, 6)
         self.assertEqual(round(mvr.f_p_value, 3), 0.763)
 
-        mvr2 = stats.MultiVariableRegression(
-            self.expected_arr_no_nan, y, saved_reg=mvr
-        )
+        mvr2 = stats_obj.linear_reg(y, saved_reg=mvr)
         assert_array_equal(mvr.residuals, mvr2.residuals)
 
-    def test_box_cox(self):
-        """Test Box-Cox"""
-        stats.box_cox(self.expected_arr_no_nan[:, 0])
-        self.assertTrue(stats.is_nan_arr(stats.box_cox(np.ones(10))))
-        with self.assertRaises(ValueError):
-            stats.is_nan_arr(stats.box_cox(np.ones(10), const_policy='raise'))
+    def test_box_cox_by_index(self):
+        """Test box-cox transformation by index and keyword"""
+        data_by_index = self.stats_obj.box_cox_by_index(0)
+        data_by_key = self.stats_obj.box_cox_by_index("V1")
+        assert_array_equal(data_by_index, data_by_key)
 
-    def test_moving_avg(self):
-        """Test moving average calculation"""
-        avg_len = 5
-        y = np.array([4, 23, 1, 4, -18, 2.2, 100, 34, 9, 8])
-        x = np.linspace(1, len(y), len(y))
-        x_avg, y_avg = stats.moving_avg(y, avg_len)
-        assert_array_equal(x_avg, x[avg_len - 1 : :])
-        y_avg_exp = np.array([2.8, 2.44, 17.84, 24.44, 25.44, 30.64])
-        assert_array_almost_equal(y_avg, y_avg_exp)
+    def test_show_calls(self):
+        """Test matplotlib show calls"""
+        fig = self.stats_obj.show(0)
+        self.stats_obj.close(fig)
 
-        avg_len = 3
-        x += 10
-        w = np.array([1, 2, 1, 1, 5, 2, 1, 1, 1, 1])
-        x_avg, y_avg = stats.moving_avg(y, avg_len, x=x, weight=w)
-        assert_array_equal(x_avg, x[avg_len - 1 : :])
-        y_avg_exp = np.array(
-            [5.5, 5.5, 0.466667, 0.5, 32.5, 45.033333, 47.666667, 17.0]
+        corr_mat = self.stats_obj.correlation_matrix(corr_type="Spearman")
+        fig = corr_mat.show()
+        corr_mat.close(fig)
+
+        ucc = self.stats_obj.univariate_control_charts()
+        fig = ucc[0].show()
+        ucc[0].close(fig)
+
+        ht2 = self.stats_obj.hotelling_t2()
+        fig = ht2.show()
+        ht2.close(fig)
+
+    def test_pca(self):
+        """Test PCA initialization and plot"""
+        stats_obj = ui.DVHAStats(self.expected_dict_no_nan)
+        pca = stats_obj.pca()
+        fig = pca.show()
+        pca.close(fig)
+
+        # Test no transform
+        stats_obj.pca(transform=False)
+
+    def test_del_const_var(self):
+        """Test init deletes constant variables if del_const_vars is True"""
+        stats_obj = ui.DVHAStats(
+            self.const_data,
+            var_names=self.expected_var_names,
+            del_const_vars=True,
         )
-        assert_array_almost_equal(y_avg, y_avg_exp)
+        self.assertEqual(stats_obj.deleted_vars, ["V1"])
+        assert_array_equal(
+            stats_obj.data, np.delete(self.const_data, 0, axis=1)
+        )
 
-    def test_avg_moving_range(self):
-        """Test avg moving range"""
-        test = np.array([1, 2, 3, 4, np.nan])
-        self.assertEqual(stats.avg_moving_range(test), 1.)
-        test_nan = np.array([np.nan])
-        self.assertTrue(np.isnan(stats.avg_moving_range(test_nan)))
+    def test_control_chart_if_const_data(self):
+        """Test that const data does not crash control chart"""
+        stats_obj = ui.DVHAStats(self.const_data)
+        ucc = stats_obj.univariate_control_charts(box_cox=True)
+        ucc[0].show()
+        self.assertEqual(
+            ucc[0].plot_title,
+            "Cannot calculate control chart with const data!",
+        )
 
-    def test_is_arr_const(self):
-        """Test if array is constant"""
-        self.assertTrue(stats.is_arr_constant(np.ones(5)))
-        self.assertFalse(stats.is_arr_constant(np.array([1, 2])))
-
-    def test_process_nan_policy(self):
-        """Test process nan policy"""
-        arr = np.array([1, 2, 3, np.nan])
-        test = stats.process_nan_policy(arr, 'omit')
-        assert_array_equal(test, arr[:3])
-
-        with self.assertRaises(NotImplementedError):
-            stats.process_nan_policy(arr, 'raise')
-
-        test = stats.process_nan_policy(arr, 'propagate')
-        self.assertTrue(np.isnan(test))
-
-    def test_histogram(self):
-        """Test histogram class object"""
-        hist = stats.Histogram(np.linspace(1, 20, 20), 4)
-        data = hist.chart_data
-        assert_array_equal(data['x'], [3.375, 8.125, 12.875, 17.625])
-        assert_array_equal(data['y'], [5, 5, 5, 5])
-        self.assertEqual(data['mean'], 10.5)
-        self.assertEqual(data['median'], 10.5)
-        self.assertEqual(round(data['std'], 3), 5.766)
-        self.assertEqual(round(data['normality'], 3), 3.992)
-        self.assertEqual(round(data['normality_p'], 3), 0.136)
+    def test_box_cox_const_policy_raise_(self):
+        """Test const_policy='raise' results in ValueError with const data"""
+        stats_obj = ui.DVHAStats(self.const_data)
+        with self.assertRaises(ValueError):
+            stats_obj.box_cox_by_index(0, const_policy="raise")
 
 
 if __name__ == "__main__":
