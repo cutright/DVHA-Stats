@@ -100,7 +100,7 @@ def dict_to_array(data, key_order=None):
     return {"data": np.asarray(arr_data).T, "var_names": var_names}
 
 
-def import_data(data, var_names):
+def import_data(data, var_names=None):
     """Generalized data importer for np.ndarray, dict, and csv file
 
     Parameters

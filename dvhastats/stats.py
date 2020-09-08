@@ -57,7 +57,7 @@ class Histogram:
     @property
     def normality(self):
         """The normality and normality p-value of the input array"""
-        return normality(self.y, nan_policy=self.nan_policy)
+        return scipy_stats.normaltest(self.y, nan_policy=self.nan_policy)
 
     @property
     def chart_data(self):
@@ -318,7 +318,7 @@ class ControlChart:
 class HotellingT2:
     """Hotelling's t-squared statistic for multivariate hypothesis testing"""
 
-    def __init__(self, data, alpha=0.05):
+    def __init__(self, data, alpha=0.05, const_policy='raise'):
         """Initialize the Hotelling T^2 class
 
         Parameters
@@ -329,9 +329,15 @@ class HotellingT2:
         alpha : float
             The significance level used to calculate the
             upper control limit (UCL)
+        const_policy : str
+            {‘raise’, 'omit'}
+            Defines how to handle when data is constant. The following
+            options are available (default is ‘raise’):
+            ‘raise’: throws an error
+            'omit': exclude constant variables from calculation
         """
 
-        self.data = data
+        self.data = data if const_policy == 'raise' else remove_const_column(data)
         self.alpha = alpha
         self.lcl = 0
 
@@ -481,7 +487,7 @@ class PCA(sklearn_PCA):
     def component_labels(self):
         """Get component names"""
         return [
-            "%s Comp" % (get_ordinal(n + 1)) for n in range(self.n_components)
+            "%s Comp" % (get_ordinal(n + 1)) for n in range(self.components_.shape[0])
         ]
 
 
@@ -515,11 +521,9 @@ class CorrelationMatrix:
 
     @property
     def normality(self):
-        norm, norm_p = np.ones(self.X.shape[1]), np.ones(self.X.shape[1])
-        for i in range(self.X.shape[1]):
-            norm[i], norm_p[i] = normality(self.X[:, i], nan_policy='omit')
-        return norm, norm_p
+        return normality(self.X, nan_policy='omit')
 
+    @property
     def chart_data(self):
         """JSON compatible dict for chart generation"""
         norm, norm_p = self.normality
@@ -722,9 +726,7 @@ def box_cox(arr, alpha=None, lmbda=None, const_policy="propagate"):
         options are available (default is ‘propagate’):
         ‘propagate’: returns nan
         ‘raise’: throws an error
-        'omit': remove NaN values
     """
-    arr = remove_nan(arr) if const_policy == "omit" else arr
 
     try:
         box_cox_data, _ = scipy_stats.boxcox(arr, alpha=alpha, lmbda=lmbda)
@@ -782,6 +784,22 @@ def remove_nan(arr):
 
     """
     return arr[~np.isnan(arr)]
+
+
+def remove_const_column(arr):
+    """Remove all columns with zero variance
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        Input array (2-D)
+
+    Returns
+    ----------
+    np.ndarray
+        Input array with columns of a constant value removed
+    """
+    return arr[:, ~np.all(np.isnan(arr), axis=0)]
 
 
 def is_nan_arr(arr):

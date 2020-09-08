@@ -315,7 +315,7 @@ class DVHAStats(DVHAStatsBaseClass):
                 )
             data = self.box_cox_data
             if const_policy == "omit":
-                data = data[:, ~np.all(np.isnan(data), axis=0)]
+                data = stats.remove_const_column(data)
             plot_title = (
                 "Multivariate Control Chart with Box-Cox Transformation"
             )
