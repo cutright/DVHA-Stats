@@ -421,7 +421,16 @@ class PCAFeatureMap(HeatMap):
 
 class Histogram(Chart):
     """Histogram plotting class object"""
-    def __init__(self, data, bins=10, title="Histogram", xlabel="Bins", ylabel="Counts", **kwargs):
+
+    def __init__(
+        self,
+        data,
+        bins=10,
+        title="Histogram",
+        xlabel="Bins",
+        ylabel="Counts",
+        **kwargs
+    ):
         """Initialization of Histogram class
 
         Parameters

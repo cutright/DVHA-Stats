@@ -2,8 +2,8 @@
 dvhastats
 =========
 
-.. image:: _static/logo.png
-   :scale: 75 %
+.. image:: https://user-images.githubusercontent.com/4778878/92505112-351c7780-f1c9-11ea-9b5c-0de1ad2d131d.png
+   :width: 400
    :align: center
    :alt: DVH Analytics logo
 
@@ -56,6 +56,12 @@ Basic Usage
     >>> s.show('V1')  # or s.show(0), can provide index or var_name
 
 |plot|
+
+.. code-block:: python
+
+    >>> s.show(0, plot_type="hist")
+
+|hist|
 
 Pearson-R Correlation Matrix
 ############################
@@ -128,6 +134,8 @@ Principal Component Analysis (PCA)
    :alt: Documentation Status
 
 .. |plot| image:: https://user-images.githubusercontent.com/4778878/91908372-0c4c2d80-ec71-11ea-9dfc-7c4f6c209542.png
+   :width: 350
+.. |hist| image:: https://user-images.githubusercontent.com/4778878/92502706-e4efe600-f1c5-11ea-9f63-4218899e885b.png
    :width: 350
 .. |pearson| image:: https://user-images.githubusercontent.com/4778878/92064453-1ea69400-ed63-11ea-8f72-5034c577c1e3.png
    :width: 350
