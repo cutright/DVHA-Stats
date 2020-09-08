@@ -336,6 +336,9 @@ class TestStats(unittest.TestCase):
         fig = self.stats_obj.show(0)
         self.stats_obj.close(fig)
 
+        fig = self.stats_obj.show(0, plot_type="hist")
+        self.stats_obj.close(fig)
+
         corr_mat = self.stats_obj.correlation_matrix(corr_type="Spearman")
         fig = corr_mat.show()
         corr_mat.close(fig)
