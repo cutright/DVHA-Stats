@@ -221,10 +221,17 @@ class TestStats(unittest.TestCase):
         assert_array_almost_equal(data["norm"], exp_norm)
         assert_array_almost_equal(data["norm_p"], exp_norm_p)
 
+        self.validate_dict_is_json_compat(data)
+
     def test_spearman_correlation_matrix(self):
         """Test Spearman correlation matrix calculation"""
         corr_mat = stats.CorrelationMatrix(self.data, corr_type="Spearman")
         self.assertEqual(corr_mat.corr_type, "spearman")
+
+        warnings.filterwarnings("ignore")
+        data = corr_mat.chart_data
+        warnings.filterwarnings("default")
+        self.validate_dict_is_json_compat(data)
 
     def test_control_chart(self):
         """Test univariate control chart creation and values"""
@@ -243,6 +250,8 @@ class TestStats(unittest.TestCase):
         self.assertEqual(round(chart_data["ucl"], 3), 68.89)
         self.assertEqual(len(ucc.out_of_control_high), 0)
         self.assertEqual(len(ucc.out_of_control_low), 0)
+
+        self.validate_dict_is_json_compat(ucc.chart_data)
 
     def test_control_chart_with_limits(self):
         """Test univariate control chart creation and values"""
@@ -279,6 +288,8 @@ class TestStats(unittest.TestCase):
         )
         self.assertEqual(str(ht2), str_rep)
         self.assertEqual(repr(ht2), str_rep)
+
+        self.validate_dict_is_json_compat(ht2.chart_data)
 
     def test_pca(self):
         """Test PCA"""
@@ -352,6 +363,9 @@ class TestStats(unittest.TestCase):
         )
         assert_array_equal(mvr.residuals, mvr2.residuals)
 
+        self.validate_dict_is_json_compat(mvr.chart_data)
+        self.validate_dict_is_json_compat(mvr.prob_plot)
+
     def test_box_cox(self):
         """Test Box-Cox"""
         stats.box_cox(self.expected_arr_no_nan[:, 0])
@@ -414,6 +428,29 @@ class TestStats(unittest.TestCase):
         self.assertEqual(round(data["std"], 3), 5.766)
         self.assertEqual(round(data["normality"], 3), 3.992)
         self.assertEqual(round(data["normality_p"], 3), 0.136)
+
+        self.validate_dict_is_json_compat(hist.chart_data)
+
+    def validate_dict_is_json_compat(self, data_dict):
+        """Verify dictionary is json compatible"""
+        for key, value in data_dict.items():
+            self.assertIsInstance(key, (int, str))
+            if isinstance(value, list):
+                self.validate_list_is_json_compat(value)
+            elif isinstance(value, dict):
+                self.validate_dict_is_json_compat(value)
+            else:
+                self.assertIsInstance(value, (float, str, int))
+
+    def validate_list_is_json_compat(self, data_list):
+        """Verify list is json compatible"""
+        for item in data_list:
+            if isinstance(item, list):
+                self.validate_list_is_json_compat(item)
+            elif isinstance(item, dict):
+                self.validate_dict_is_json_compat(item)
+            else:
+                self.assertIsInstance(item, (float, str, int))
 
 
 if __name__ == "__main__":

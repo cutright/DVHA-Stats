@@ -9,5 +9,9 @@ downloads/
 docs/_build/
 docs/build
 
+# Coverage tests
+.pytest_cache/
+htmlcov/
+
 # Mac OS X cruft
 .DS_Store

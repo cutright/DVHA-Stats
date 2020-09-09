@@ -325,6 +325,13 @@ class TestStats(unittest.TestCase):
         mvr2 = stats_obj.linear_reg(y, saved_reg=mvr)
         assert_array_equal(mvr.residuals, mvr2.residuals)
 
+        fig = mvr.show()
+        mvr.close(fig)
+        fig = mvr.show("prob")
+        mvr.close(fig)
+
+        self.assertIsNone(mvr.show("test"))
+
     def test_box_cox_by_index(self):
         """Test box-cox transformation by index and keyword"""
         data_by_index = self.stats_obj.box_cox_by_index(0)

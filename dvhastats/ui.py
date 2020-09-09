@@ -231,10 +231,10 @@ class DVHAStats(DVHAStatsBaseClass):
 
         Returns
         ----------
-        MultiVariableRegression
-            A MultiVariableRegression class object.
+        LinearRegUI
+            A LinearRegUI class object.
         """
-        return stats.MultiVariableRegression(self.data, y, saved_reg)
+        return LinearRegUI(self.data, y, saved_reg)
 
     def univariate_control_charts(
         self,
@@ -678,7 +678,7 @@ class PCAUI(DVHAStatsBaseClass, stats.PCA):
 
 
 class CorrelationMatrixUI(DVHAStatsBaseClass, stats.CorrelationMatrix):
-    """Pearson-R correlation matrix"""
+    """Pearson-R correlation matrix UI object"""
 
     def __init__(
         self, X, var_names=None, corr_type="Pearson", cmap="coolwarm"
@@ -702,23 +702,6 @@ class CorrelationMatrixUI(DVHAStatsBaseClass, stats.CorrelationMatrix):
         self.var_names = range(X.shape[1]) if var_names is None else var_names
         self.cmap = cmap
 
-    def __title(self, is_corr=True):
-        """Get plot title
-
-        Parameters
-        ----------
-        is_corr : bool
-            Set to True if plot data type is correlation, False if p-value
-
-        Returns
-        ----------
-        str
-            Plot title
-        """
-        mat_type = "Pearson-R" if self.corr_type == "pearson" else "Spearman"
-        value_type = ["p-value", "Correlation"][is_corr]
-        return "%s %s Matrix" % (mat_type, value_type)
-
     def show(self, absolute=False, corr=True):
         """Create a heat map of PCA components
 
@@ -738,13 +721,99 @@ class CorrelationMatrixUI(DVHAStatsBaseClass, stats.CorrelationMatrix):
 
         data = self.corr if corr else self.p
         data = abs(data) if absolute else data
+
+        mat_type = "Pearson-R" if self.corr_type == "pearson" else "Spearman"
+        value_type = ["p-value", "Correlation"][corr]
+        title = "%s %s Matrix" % (mat_type, value_type)
+
         self.plots.append(
             plot.HeatMap(
                 data,
                 xlabels=self.var_names,
                 ylabels=self.var_names,
                 cmap=self.cmap,
-                title=self.__title(corr),
+                title=title,
             )
         )
+        return self.plots[-1].figure.number
+
+
+class LinearRegUI(DVHAStatsBaseClass, stats.MultiVariableRegression):
+    """A MultiVariableRegression class UI object
+
+    Parameters
+    ----------
+    y : np.ndarray, list
+        Dependent data based on DVHAStats.data
+    saved_reg : MultiVariableRegression, optional
+        If supplied, predicted values (y-hat) will be calculated with
+        DVHAStats.data and the regression from saved_reg. This is useful
+        if testing a regression model on new data.
+    """
+
+    def __init__(self, X, y, saved_reg=None):
+        DVHAStatsBaseClass.__init__(self)
+        stats.MultiVariableRegression.__init__(
+            self, X=X, y=y, saved_reg=saved_reg
+        )
+
+    def show(self, plot_type="residual"):
+        """Create a Residual or Probability Plot
+
+        Parameters
+        ----------
+        plot_type : str
+            Either "residual" or "prob"
+
+        Returns
+        ----------
+        int
+            The number of the newly created matplotlib figure
+        """
+
+        if plot_type not in {"residual", "prob"}:
+            return
+
+        title = (
+            "Multi-Variable Linear Regression"
+            if self.X.shape[1] > 1
+            else "Linear Regression"
+        )
+
+        if plot_type == "residual":
+            data = self.chart_data
+            self.plots.append(
+                plot.Plot(
+                    data["resid"],
+                    x=data["y"],
+                    title=title,
+                    xlabel="Fitted Values",
+                    ylabel="Residual",
+                    line=False,
+                )
+            )
+            x_zero = [np.min(data["y"]), np.max(data["y"])]
+            y_zero = [0, 0]
+            self.plots[-1].add_line(
+                y_zero, x_zero, line_color="black", line_style="--"
+            )
+        elif plot_type == "prob":
+            data = self.prob_plot
+            self.plots.append(
+                plot.Plot(
+                    data["y"],
+                    x=data["x"],
+                    title="Probability Plot",
+                    xlabel="Quantiles",
+                    ylabel="Ordered Values",
+                    line=False,
+                )
+            )
+            self.plots[-1].add_line(
+                data["y_trend"],
+                data["x_trend"],
+                line_color="black",
+                line_style="--",
+            )
+
         return self.plots[-1].figure.number

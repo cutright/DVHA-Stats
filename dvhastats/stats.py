@@ -127,8 +127,8 @@ class MultiVariableRegression:
             Optionally provide a previously calculated regression
         """
 
-        self.X = np.array(X) if isinstance(X, list) else X
-        self.y = np.array(y) if isinstance(y, list) else y
+        self.X = np.array(X)
+        self.y = np.array(y)
 
         self._do_fit(saved_reg=saved_reg)
 
@@ -152,31 +152,6 @@ class MultiVariableRegression:
         self.p, self.std_err, self.t = get_lin_reg_p_values(
             self.X, self.y, self.predictions, self.y_intercept, self.slope
         )
-
-        # ------------------------------------------
-        # Calculate quantiles for a probability plot
-        # ------------------------------------------
-        norm_prob_plot = scipy_stats.probplot(
-            self.residuals, dist="norm", fit=False, plot=None, rvalue=False
-        )
-
-        reg_prob = linear_model.LinearRegression()
-        reg_prob.fit([[val] for val in norm_prob_plot[0]], norm_prob_plot[1])
-
-        x_trend = [
-            min(norm_prob_plot[0]),
-            max(norm_prob_plot[0]),
-        ]
-        y_trend = np.add(
-            np.multiply(x_trend, reg_prob.coef_),
-            reg_prob.intercept_,
-        )
-        self.prob_plot = {
-            "norm_prob_plot": norm_prob_plot,
-            "y_intercept": reg_prob.intercept_,
-            "slope": reg_prob.coef_,
-            "trend": {"x": x_trend, "y": y_trend},
-        }
 
     @property
     def y_intercept(self):
@@ -280,6 +255,75 @@ class MultiVariableRegression:
             p-value of the F-statistic of beta coefficients using scipy
         """
         return scipy_stats.f.cdf(self.f_stat, self.df_model, self.df_error)
+
+    @property
+    def coef(self):
+        """Coefficients for the regression
+
+        Returns
+        ----------
+        np.ndarray
+            An array of regression coefficients (i.e., y_intercept,
+            1st var slope, 2nd var slope, etc.)
+        """
+        return np.concatenate(([self.y_intercept], self.slope))
+
+    @property
+    def chart_data(self):
+        """JSON compatible dict for chart generation
+
+        Returns
+        ----------
+        dict
+            Data used for residual visuals. Keys include 'x', 'y', 'pred',
+            'resid', 'coef', 'r_sq', 'mse', 'std_err', 't_value', 'p_value'
+        """
+        return {
+            "y": self.y.tolist(),
+            "pred": self.predictions.tolist(),
+            "resid": self.residuals.tolist(),
+            "coef": self.coef.tolist(),
+            "r_sq": float(self.r_sq),
+            "mse": float(self.mse),
+            "std_err": self.std_err.tolist(),
+            "t_value": self.t.tolist(),
+            "p_value": self.p.tolist(),
+        }
+
+    @property
+    def prob_plot(self):
+        """
+        Calculate quantiles for a probability plot
+
+        Returns
+        ----------
+        dict
+            Data for generating a probablity plot. Keys include:
+            'x', 'y', 'y_intercept', 'slope', 'x_trend', 'y_trend'
+        """
+        norm_prob_plot = scipy_stats.probplot(
+            self.residuals, dist="norm", fit=False, plot=None, rvalue=False
+        )
+
+        reg_prob = linear_model.LinearRegression()
+        reg_prob.fit([[val] for val in norm_prob_plot[0]], norm_prob_plot[1])
+
+        x_trend = [
+            float(np.min(norm_prob_plot[0])),
+            float(np.max(norm_prob_plot[0])),
+        ]
+        y_trend = np.add(
+            np.multiply(x_trend, reg_prob.coef_),
+            reg_prob.intercept_,
+        )
+        return {
+            "x": norm_prob_plot[0].tolist(),
+            "y": norm_prob_plot[1].tolist(),
+            "y_intercept": float(reg_prob.intercept_),
+            "slope": float(reg_prob.coef_),
+            "x_trend": x_trend,
+            "y_trend": y_trend.tolist(),
+        }
 
 
 class ControlChart:
@@ -774,15 +818,19 @@ def get_lin_reg_p_values(X, y, predictions, y_intercept, slope):
     predictions : np.ndarray, list
         Predictions using the linear regression.
         (Output from linear_model.LinearRegression.predict)
-    y_intercept : float
+    y_intercept : float, np.ndarray
         The y-intercept of the linear regression
-    slope : float
+    slope : float, np.ndarray
         The slope of the linear regression
 
     Returns
     ----------
-    np.ndarray, np.ndarray, np.ndarray
-         A tuple of arrays: p-values, standard errors, and t-values
+    p_value : np.ndarray
+        p-value of the linear regression coefficients
+    std_errs : np.ndarray
+        standard errors of the linear regression coefficients
+    t_value : np.ndarray
+        t-values of the linear regression coefficients
     """
 
     newX = np.append(np.ones((len(X), 1)), X, axis=1)
@@ -813,6 +861,13 @@ def pearson_correlation_matrix(X):
             Training data, where n_samples is the number of samples and
             n_features is the number of features.
 
+    Returns
+    ----------
+    r : np.ndarray
+        Array (2-D) of Pearson-R correlations between the row indexed and
+        column indexed variables
+    p : np.ndarray
+        Array (2-D) of p-values associated with r
     """
 
     r = np.ones([X.shape[1], X.shape[1]])  # Pearson R
@@ -856,6 +911,18 @@ def spearman_correlation_matrix(X, nan_policy="omit"):
         ‘propagate’: returns nan
         ‘raise’: throws an error
         ‘omit’: performs the calculations ignoring nan values
+
+    Returns
+    ----------
+    correlation : float or ndarray (2-D square)
+        Spearman correlation matrix or correlation coefficient (if only 2
+        variables are given as parameters. Correlation matrix is square with
+        length equal to total number of variables (columns or rows) in a and
+        b combined.
+    p-value : float
+        The two-sided p-value for a hypothesis test whose null hypothesis is
+        that two sets of data are uncorrelated, has same dimension as rho.
+
     """
     return scipy_stats.spearmanr(X, nan_policy=nan_policy)
 
@@ -879,8 +946,10 @@ def moving_avg(y, avg_len, x=None, weight=None):
 
     Returns
     ----------
-    array-like
-        x-values, moving average values
+    x : np.ndarray
+        Resulting x-values for the moving average
+    moving_avg : np.ndarray
+        moving average values
     """
     x = np.linspace(1, len(y), len(y)) if x is None else x
     weight = np.ones_like(y) if weight is None else weight
@@ -919,6 +988,11 @@ def box_cox(arr, alpha=None, lmbda=None, const_policy="propagate"):
         options are available (default is ‘propagate’):
         ‘propagate’: returns nan
         ‘raise’: throws an error
+
+    Returns
+    ----------
+    box_cox : np.ndarray
+        Box-Cox power transformed array
     """
 
     try:

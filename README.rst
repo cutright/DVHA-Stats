@@ -107,6 +107,23 @@ Multivariate Control Chart (w/ non-normal data)
 
 |hotelling-t2-bc|
 
+Multi-Variable Linear Regression
+###############################################
+.. code-block:: python
+
+    import numpy as np
+    y = np.random.rand(s.observations)
+    mvr = s.linear_reg(y)
+    >>> mvr.show()
+
+|mvr|
+
+.. code-block:: python
+
+    >>> mvr.show("prob")
+
+|mvr-prob|
+
 Principal Component Analysis (PCA)
 ##################################
 .. code-block:: python
@@ -169,4 +186,16 @@ Principal Component Analysis (PCA)
 
     <a>
       <img src="https://user-images.githubusercontent.com/4778878/92505112-351c7780-f1c9-11ea-9b5c-0de1ad2d131d.png" width='400' alt="DVHA logo"/>
+    </a>
+
+.. |mvr| raw:: html
+
+    <a>
+      <img src="https://user-images.githubusercontent.com/4778878/92635692-dd027580-f29b-11ea-834e-3a05e36498fe.png" width='400' alt="DVHA logo"/>
+    </a>
+
+.. |mvr-prob| raw:: html
+
+    <a>
+      <img src="https://user-images.githubusercontent.com/4778878/92635704-e390ed00-f29b-11ea-9425-d758e21dcebc.png" width='400' alt="DVHA logo"/>
     </a>
