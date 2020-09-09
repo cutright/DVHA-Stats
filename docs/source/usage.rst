@@ -9,6 +9,7 @@ Statistical data can be accessed with :mod:`dvhastats.ui.DVHAStats` class.
 Getting Started
 ###############
 Before attempting the examples below, run these lines first:
+
 .. code-block:: python
 
     from dvhastats.ui import DVHAStats
