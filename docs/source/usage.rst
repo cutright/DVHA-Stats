@@ -4,7 +4,7 @@ Usage
 
 To use dvha-stats in a project:
 
-Statistical data can be accessed with :mod:`dvhastats.ui.DVHAStats` class.
+Statistical data can be easily accessed with :mod:`dvhastats.ui.DVHAStats` class.
 
 Getting Started
 ###############
@@ -13,7 +13,7 @@ Before attempting the examples below, run these lines first:
 .. code-block:: python
 
     from dvhastats.ui import DVHAStats
-    s = DVHAStats("your_data.csv")  # or DVHAStats() to load test data
+    s = DVHAStats("your_data.csv")  # use s = DVHAStats() for test data
 
 Basic Plotting
 ##############

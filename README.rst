@@ -7,13 +7,13 @@ dvhastats
 |build| |pypi| |Docs| |lgtm| |Codecov|
 
 A library of prediction and statistical process control tools. Although based
-on work in `DVH Analytics <http://www.dvhanalytics.com>`__, all statistical
-tools in this library are generic and not specific to radiation oncology. See
+on work in `DVH Analytics <http://www.dvhanalytics.com>`__, all tools in this
+library are generic and not specific to radiation oncology. See
 our `documentation <http://dvha-stats.readthedocs.io>`__ for advanced uses.
 
 What does it do?
 ----------------
-* Read data from CSV or supply as numpy array
+* Read data from CSV, supply as numpy array or dict
 * Basic plotting
     * Simple one-variable plots from data
     * Control Charts (Univariate and Multivariate)
