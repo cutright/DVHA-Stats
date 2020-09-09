@@ -11,6 +11,7 @@ Welcome to the documentation for DVHA-Stats!
 
    readme
    installation
+   usage
    Module Reference <modules>
    authors
 

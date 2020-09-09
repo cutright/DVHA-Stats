@@ -17,17 +17,43 @@ from sklearn import linear_model
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.decomposition import PCA as sklearn_PCA
 from regressors import stats as regressors_stats
+from prettytable import PrettyTable
 
 
 class Histogram:
     """Basic histogram plot using matplotlib histogram calculation"""
 
     def __init__(self, y, bins, nan_policy="omit"):
-        """
-        Initialization of Histogram class object
+        """Initialization of Histogram class object
 
         y: array-like
             Input array.
+        bins : int, list, str, optional
+            If bins is an int, it defines the number of equal-width bins in
+            the given range (10, by default). If bins is a sequence, it
+            defines a monotonically increasing array of bin edges, including
+            the rightmost edge, allowing for non-uniform bin widths.
+            If bins is a string, it defines the method used to calculate the
+            optimal bin width, as defined by histogram_bin_edges.
+            ‘auto’ - Maximum of the ‘sturges’ and ‘fd’ estimators.
+            Provides good all around performance.
+            ‘fd’  - (Freedman Diaconis Estimator) Robust (resilient to
+            outliers) estimator that takes into account data variability and
+            data size.
+            ‘doane’ - An improved version of Sturges’ estimator that works
+            better with non-normal datasets.
+            ‘scott’ - Less robust estimator that that takes into account data
+            variability and data size.
+            ‘stone’ - Estimator based on leave-one-out cross-validation
+            estimate of the integrated squared error. Can be regarded as a
+            generalization of Scott’s rule.
+            ‘rice’ - Estimator does not take variability into account, only
+            data size. Commonly overestimates number of bins required.
+            ‘sturges’ - R’s default method, only accounts for data size. Only
+            optimal for gaussian data and underestimates number of bins for
+            large non-gaussian datasets.
+            ‘sqrt’ - Square root (of data size) estimator, used by Excel and
+            other programs for its speed and simplicity.
         nan_policy : str
             Value must be one of the following: ‘propagate’, ‘raise’, ‘omit’
             Defines how to handle when input contains nan. The following
@@ -88,6 +114,21 @@ class Histogram:
         return scipy_stats.normaltest(self.y, nan_policy=self.nan_policy)
 
     @property
+    def hist_data(self):
+        """Get the histogram data
+
+        Returns
+        ----------
+        hist : np.ndarray
+            The values of the histogram
+        center : np.ndarray
+            The centers of the bins
+        """
+        hist, bin_edges = np.histogram(self.y, bins=self.bins)
+        center = (bin_edges[:-1] + bin_edges[1:]) / 2.0
+        return hist, center
+
+    @property
     def chart_data(self):
         """JSON compatible dict for chart generation
 
@@ -97,8 +138,7 @@ class Histogram:
             Data used for Histogram visuals. Keys include 'x', 'y', 'mean',
             'median', 'std', 'normality', 'normality_p'
         """
-        hist, bins = np.histogram(self.y, bins=self.bins)
-        center = (bins[:-1] + bins[1:]) / 2.0
+        hist, center = self.hist_data
         norm, norm_p = self.normality
         return {
             "x": center.tolist(),
@@ -114,7 +154,7 @@ class Histogram:
 class MultiVariableRegression:
     """Multi-variable regression using scikit-learn"""
 
-    def __init__(self, X, y, saved_reg=None):
+    def __init__(self, X, y, saved_reg=None, var_names=None):
         """Initialization of a MultiVariableRegression
 
         Parameters
@@ -125,12 +165,49 @@ class MultiVariableRegression:
             Dependent data
         saved_reg : MultiVariableRegression, optional
             Optionally provide a previously calculated regression
+        var_names : list, optional
+            Optionally provide names of the variables
         """
 
         self.X = np.array(X)
         self.y = np.array(y)
 
+        self.var_names = (
+            list(range(self.X.shape[1])) if var_names is None else var_names
+        )
+
         self._do_fit(saved_reg=saved_reg)
+
+    def __str__(self):
+        """String representation of MultiVariableRegression object"""
+
+        table = PrettyTable()
+
+        table.field_names = ["", "Coef", "Std. Err.", "t-value", "p-value"]
+        for c in table.field_names[1:]:
+            table.align[c] = 'r'
+        data = {"": ["y-int"] + self.var_names,
+                "Coef": ["%0.3E" % v for v in self.coef],
+                "Std. Err.": ["%0.3E" % v for v in self.std_err],
+                "t-value": ["%0.3f" % v for v in self.t],
+                "p-value": ["%0.3f" % v for v in self.p]}
+
+        for r in range(0, len(data[""])):
+            table.add_row([data[c][r] for c in table.field_names])
+
+        msg = [
+            "Multi-Variable Regression results/model\n",
+            "R²: %0.3f" % self.r_sq,
+            "MSE: %0.3f" % self.mse,
+            "f-stat: %0.3f" % self.f_stat,
+            "f-stat p-value: %0.3f" % self.f_p_value,
+            str(table)
+        ]
+        return "\n".join(msg)
+
+    def __repr__(self):
+        """Return the string representation"""
+        return str(self)
 
     def _do_fit(self, saved_reg=None):
         """Perform linear regression

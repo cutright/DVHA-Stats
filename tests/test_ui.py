@@ -15,7 +15,6 @@ from os.path import join
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from dvhastats import ui
-import warnings
 import matplotlib
 from copy import deepcopy
 
@@ -395,6 +394,10 @@ class TestStats(unittest.TestCase):
         stats_obj = ui.DVHAStats(self.const_data)
         with self.assertRaises(ValueError):
             stats_obj.box_cox_by_index(0, const_policy="raise")
+
+    def test_histogram(self):
+        """Test histogram"""
+        self.stats_obj.histogram(0)
 
 
 if __name__ == "__main__":

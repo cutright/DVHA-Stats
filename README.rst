@@ -1,4 +1,3 @@
-=========
 dvhastats
 =========
 
@@ -47,7 +46,7 @@ Basic Usage
 .. code-block:: python
 
     from dvhastats.ui import DVHAStats
-    s = DVHAStats("tests/testdata/multivariate_data.csv")
+    s = DVHAStats("your_data.csv")  # use s = DVHAStats() for test data
 
     >>> s.var_names
     ['V1', 'V2', 'V3', 'V4', 'V5', 'V6']
@@ -56,47 +55,6 @@ Basic Usage
 
 |plot|
 
-.. code-block:: python
-
-    >>> s.show(0, plot_type="hist")
-
-|hist|
-
-Pearson-R Correlation Matrix
-############################
-.. code-block:: python
-
-    pearson_mat = s.correlation_matrix()
-    >>> pearson_mat.show()
-
-|pearson|
-
-Spearman Correlation Matrix
-###########################
-.. code-block:: python
-
-    spearman_mat = s.correlation_matrix("Spearman")
-    >>> spearman_mat.show()
-
-|spearman|
-
-Univariate Control Chart
-########################
-.. code-block:: python
-
-    ucc = s.univariate_control_charts()
-    >>> ucc["V1"].show()  # or ucc[0].show(), can provide index or var_name
-
-|control-chart|
-
-Multivariate Control Chart
-##########################
-.. code-block:: python
-
-    ht2 = s.hotelling_t2()
-    >>> ht2.show()
-
-|hotelling-t2|
 
 Multivariate Control Chart (w/ non-normal data)
 ###############################################
@@ -107,22 +65,6 @@ Multivariate Control Chart (w/ non-normal data)
 
 |hotelling-t2-bc|
 
-Multi-Variable Linear Regression
-###############################################
-.. code-block:: python
-
-    import numpy as np
-    y = np.random.rand(s.observations)
-    mvr = s.linear_reg(y)
-    >>> mvr.show()
-
-|mvr|
-
-.. code-block:: python
-
-    >>> mvr.show("prob")
-
-|mvr-prob|
 
 Principal Component Analysis (PCA)
 ##################################
@@ -153,26 +95,6 @@ Principal Component Analysis (PCA)
 
     <a><img src="https://user-images.githubusercontent.com/4778878/91908372-0c4c2d80-ec71-11ea-9dfc-7c4f6c209542.png" width="350 alt="Basic Plot"/></a>
 
-.. |hist| raw:: html
-
-    <a><img src="https://user-images.githubusercontent.com/4778878/92502706-e4efe600-f1c5-11ea-9f63-4218899e885b.png" width="350 alt="Basic Histogram"/></a>
-
-.. |pearson| raw:: html
-
-    <a><img src="https://user-images.githubusercontent.com/4778878/92064453-1ea69400-ed63-11ea-8f72-5034c577c1e3.png" width="350 alt="Pearson-R Matrix"/></a>
-
-.. |spearman| raw:: html
-
-    <a><img src="https://user-images.githubusercontent.com/4778878/92177010-4a7a5600-ee05-11ea-91b9-2a0128eafe5b.png" width="310 alt="Spearman Matrix"/></a>
-
-.. |control-chart| raw:: html
-
-    <a><img src="https://user-images.githubusercontent.com/4778878/91908380-0fdfb480-ec71-11ea-9394-d029a8a6727e.png" width="350 alt="Control Chart"/></a>
-
-.. |hotelling-t2| raw:: html
-
-    <a><img src="https://user-images.githubusercontent.com/4778878/91908391-166e2c00-ec71-11ea-941b-321e01f56542.png" width="350 alt="Multivariate Control Chart"/></a>
-
 .. |hotelling-t2-bc| raw:: html
 
     <a><img src="https://user-images.githubusercontent.com/4778878/91908394-179f5900-ec71-11ea-88a0-9c95d714fb4c.png" width="350 alt="Multivariate Control Chart w/ Box Cox Transformation"/></a>
@@ -186,16 +108,4 @@ Principal Component Analysis (PCA)
 
     <a>
       <img src="https://user-images.githubusercontent.com/4778878/92505112-351c7780-f1c9-11ea-9b5c-0de1ad2d131d.png" width='400' alt="DVHA logo"/>
-    </a>
-
-.. |mvr| raw:: html
-
-    <a>
-      <img src="https://user-images.githubusercontent.com/4778878/92635692-dd027580-f29b-11ea-834e-3a05e36498fe.png" width='400' alt="DVHA logo"/>
-    </a>
-
-.. |mvr-prob| raw:: html
-
-    <a>
-      <img src="https://user-images.githubusercontent.com/4778878/92635704-e390ed00-f29b-11ea-9425-d758e21dcebc.png" width='400' alt="DVHA logo"/>
     </a>

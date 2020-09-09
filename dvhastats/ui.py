@@ -11,10 +11,15 @@
 #    available at https://github.com/cutright/DVHA-Stats
 
 
+from os.path import dirname, join
 import numpy as np
 from dvhastats.utilities import import_data
 from dvhastats import plot
 from dvhastats import stats
+
+SCRIPT_DIR = dirname(__file__)
+PARENT_DIR = dirname(SCRIPT_DIR)
+TEST_DATA_PATH = join(PARENT_DIR, 'tests', 'testdata', 'multivariate_data.csv')
 
 
 class DVHAStatsBaseClass:
@@ -38,7 +43,7 @@ class DVHAStats(DVHAStatsBaseClass):
 
     def __init__(
         self,
-        data,
+        data=None,
         var_names=None,
         x_axis=None,
         avg_len=5,
@@ -48,10 +53,10 @@ class DVHAStats(DVHAStatsBaseClass):
 
         Parameters
         ----------
-        data : numpy.array, dict, str
+        data : numpy.array, dict, str, None
             Input data (2-D) with N rows of observations and
             p columns of variables.  The CSV file must have a header row
-            for column names.
+            for column names. Test data is loaded if None
         var_names : list of str, optional
             If data is a numpy array, optionally provide the column names.
         x_axis : numpy.array, list, optional
@@ -68,6 +73,7 @@ class DVHAStats(DVHAStatsBaseClass):
         """
         DVHAStatsBaseClass.__init__(self)
 
+        data = TEST_DATA_PATH if data is None else data
         self.data, self.var_names = import_data(data, var_names)
 
         self.x_axis = x_axis
@@ -217,6 +223,24 @@ class DVHAStats(DVHAStatsBaseClass):
         """
         return np.delete(self.data, self.constant_var_indices, axis=1)
 
+    def histogram(self, var_name, bins='auto', nan_policy="omit"):
+        """Get a Histogram class object
+
+        var_name : str, int
+            The name (str) or index (int) of teh variable to plot
+        bins : int, list, str, optional
+            See https://numpy.org/doc/stable/reference/generated/numpy.histogram.html for details
+        nan_policy : str
+            Value must be one of the following: ‘propagate’, ‘raise’, ‘omit’
+            Defines how to handle when input contains nan. The following
+            options are available (default is ‘omit’):
+            ‘propagate’: returns nan
+            ‘raise’: throws an error
+            ‘omit’: performs the calculations ignoring nan values
+        """
+        data = self.get_data_by_var_name(var_name)
+        return stats.Histogram(data, bins, nan_policy)
+
     def linear_reg(self, y, saved_reg=None):
         """Initialize a MultiVariableRegression class object
 
@@ -234,10 +258,10 @@ class DVHAStats(DVHAStatsBaseClass):
         LinearRegUI
             A LinearRegUI class object.
         """
-        return LinearRegUI(self.data, y, saved_reg)
+        return LinearRegUI(self.data, y, saved_reg, self.var_names)
 
-    def univariate_control_charts(
-        self,
+    def univariate_control_chart(self,
+        var_name,
         std=3,
         ucl_limit=None,
         lcl_limit=None,
@@ -245,12 +269,14 @@ class DVHAStats(DVHAStatsBaseClass):
         box_cox_alpha=None,
         box_cox_lmbda=None,
         const_policy="propagate",
-    ):
+        ):
         """
         Calculate control limits for a standard univariate Control Chart
 
         Parameters
         ----------
+        var_name : str, int
+            The name (str) or index (int) of teh variable to plot
         std : int, float, optional
             Number of standard deviations used to calculate if a y-value is
             out-of-control
@@ -279,30 +305,58 @@ class DVHAStats(DVHAStatsBaseClass):
 
         Returns
         ----------
-        dict
-            ControlChart class objects stored in a dictionary with
-            var_names and indices as keys (can use var_name or index)
+        stats.ControlChart
+            stats.ControlChart class object
         """
         kwargs = {"std": std, "ucl_limit": ucl_limit, "lcl_limit": lcl_limit}
-        data = {}
+
+        index = self.get_index_by_var_name(var_name)
+        var_name = self.var_names[index]
+
         if box_cox:
             if self.box_cox_data is None:
-                self.box_cox(
+                cc_data = self.box_cox_by_index(
+                    index,
                     alpha=box_cox_alpha,
                     lmbda=box_cox_lmbda,
                     const_policy=const_policy,
                 )
-            cc_data = self.box_cox_data
+            else:
+                cc_data = self.box_cox_data[:, index]
             plot_title = "Univariate Control Chart with Box-Cox Transformation"
         else:
-            cc_data = self.data
+            cc_data = self.data[:, index]
             plot_title = None
+
+        if const_policy == "propagate" and stats.is_nan_arr(cc_data):
+            plot_title = "Cannot calculate control chart with const data!"
+        data = ControlChartUI(
+            cc_data, var_name=var_name, plot_title=plot_title, **kwargs
+        )
+
+        return data
+
+    def univariate_control_charts(
+        self,
+        **kwargs
+    ):
+        """
+        Calculate Control charts for all variables
+
+        Parameters
+        ----------
+        kwargs : any
+            See univariate_control_chart for keyword parameters
+
+        Returns
+        ----------
+        dict
+            ControlChart class objects stored in a dictionary with
+            var_names and indices as keys (can use var_name or index)
+        """
+        data = {}
         for i, key in enumerate(self.var_names):
-            if const_policy == "propagate" and stats.is_nan_arr(cc_data[:, i]):
-                plot_title = "Cannot calculate control chart with const data!"
-            data[key] = ControlChartUI(
-                cc_data[:, i], var_name=key, plot_title=plot_title, **kwargs
-            )
+            data[key] = self.univariate_control_chart(key, **kwargs)
             data[i] = data[key]
         return data
 
@@ -749,12 +803,14 @@ class LinearRegUI(DVHAStatsBaseClass, stats.MultiVariableRegression):
         If supplied, predicted values (y-hat) will be calculated with
         DVHAStats.data and the regression from saved_reg. This is useful
         if testing a regression model on new data.
+    var_names : list, optional
+        Optionally provide names of the variables
     """
 
-    def __init__(self, X, y, saved_reg=None):
+    def __init__(self, X, y, saved_reg=None, var_names=None):
         DVHAStatsBaseClass.__init__(self)
         stats.MultiVariableRegression.__init__(
-            self, X=X, y=y, saved_reg=saved_reg
+            self, X=X, y=y, saved_reg=saved_reg, var_names=var_names
         )
 
     def show(self, plot_type="residual"):

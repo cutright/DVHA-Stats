@@ -7,11 +7,12 @@ from setuptools import setup
 from dvhastats._version import __version__, __author__, __email__
 
 
-with open('requirements.txt', 'r') as doc:
+with open('requirements.txt') as doc:
     requires = [line.strip() for line in doc]
 
-with open('README.rst', 'r') as doc:
+with open('README.rst') as doc:
     long_description = doc.read()
+
 
 CLASSIFIERS = [
     "License :: OSI Approved :: MIT License",
@@ -46,7 +47,6 @@ setup(
     classifiers=CLASSIFIERS,
     install_requires=requires,
     long_description=long_description,
-    long_description_content_type="text/markdown",
     test_suite='tests',
     tests_require=[]
 )

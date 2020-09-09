@@ -366,6 +366,8 @@ class TestStats(unittest.TestCase):
         self.validate_dict_is_json_compat(mvr.chart_data)
         self.validate_dict_is_json_compat(mvr.prob_plot)
 
+        self.assertIsInstance(repr(mvr), str)
+
     def test_box_cox(self):
         """Test Box-Cox"""
         stats.box_cox(self.expected_arr_no_nan[:, 0])
