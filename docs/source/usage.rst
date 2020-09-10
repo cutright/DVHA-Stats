@@ -37,6 +37,8 @@ Basic Plotting
 
 Histogram
 #########
+Calculation with `numpy <https://numpy.org/doc/stable/reference/generated/numpy.histogram.html>`__.
+
 .. code-block:: python
 
     h = s.histogram('V1')
@@ -51,12 +53,19 @@ Histogram
            49.49047619, 52.32857143, 55.16666667, 58.0047619 , 60.84285714,
            63.68095238])
 
-    >>> s.show(0, plot_type="hist")
+
+Calculation with `matplotlib <https://matplotlib.org/3.3.1/api/_as_gen/matplotlib.pyplot.hist.html>`__.
+
+.. code-block:: python
+
+    >>> s.show(0, plot_type="hist")  # histogram recalculated using matplotlib
 
 |hist|
 
 Pearson-R Correlation Matrix
 ############################
+Calculation with `scipy <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.pearsonr.html>`__.
+
 .. code-block:: python
 
     pearson_mat = s.correlation_matrix()
@@ -80,6 +89,8 @@ Pearson-R Correlation Matrix
 
 Spearman Correlation Matrix
 ###########################
+Calculation with `scipy <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.spearmanr.html>`__.
+
 .. code-block:: python
 
     spearman_mat = s.correlation_matrix("Spearman")
@@ -127,6 +138,33 @@ Multivariate Control Chart
 
 |hotelling-t2|
 
+Box-Cox Transformation (for non-normal data)
+############################################
+Calculation with `scipy <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.boxcox.html>`__.
+
+.. code-block:: python
+
+    bc = s.box_cox_by_index(0)
+    >>> bc
+    array([3185.2502073 , 2237.32503551, 2257.79294148, 4346.90639712,
+           2136.50469314, 2425.19594298, 2382.73410297, 2319.80580872,
+           1148.63472597, 1886.15962058, 1517.3226398 , 1794.37742725,
+           1812.53465647, 2176.52932216, 1484.4619302 , 1740.50195077,
+           1326.0093692 , 2299.03324672, 1601.1904051 , 2136.50469314,
+           1177.23656545, 2077.22485894, 1942.42664844,  499.72380601,
+           1794.37742725, 1942.42664844, 2057.66647538, 1584.22036354,
+           1148.63472597, 1584.22036354, 1280.36568471, 1670.05579771,
+           2136.50469314, 2077.22485894, 1776.31962594, 2018.85154453,
+           1451.99231252, 2533.13894266, 1849.14775291, 1500.84335095,
+           1999.59482773,  336.62160027, 2038.20873211, 1812.53465647,
+           1830.79140224, 1220.85798302, 2018.85154453, 2319.80580872,
+           1904.81531264, 1341.41740006,   23.64034973,   18.74313335,
+           1942.42664844, 2077.22485894, 2319.80580872, 2237.32503551,
+           1999.59482773, 3259.95515527, 1120.41519999, 2077.22485894,
+            764.99904232, 1618.25887705, 2802.6765172 , 1961.38246534,
+           1652.69148146, 2018.85154453, 1758.36116355, 1830.79140224,
+           2038.20873211])
+
 Multivariate Control Chart (w/ non-normal data)
 ###############################################
 .. code-block:: python
@@ -138,6 +176,8 @@ Multivariate Control Chart (w/ non-normal data)
 
 Multi-Variable Linear Regression
 ###############################################
+Calculation with `sklearn <https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html>`__.
+
 .. code-block:: python
 
     from numpy.np
@@ -175,6 +215,8 @@ Multi-Variable Linear Regression
 
 Principal Component Analysis (PCA)
 ##################################
+Calculation with `sklearn <https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html>`__.
+
 .. code-block:: python
 
     pca = s.pca()

@@ -4,7 +4,7 @@ dvhastats
 |logo|
 
 
-|build| |pypi| |Docs| |lgtm| |Codecov|
+|build| |pypi| |Docs| |lgtm| |lgtm-cq| |Codecov|
 
 A library of prediction and statistical process control tools. Although based
 on work in `DVH Analytics <http://www.dvhanalytics.com>`__, all tools in this
@@ -14,13 +14,21 @@ our `documentation <http://dvha-stats.readthedocs.io>`__ for advanced uses.
 What does it do?
 ----------------
 * Read data from CSV, supply as numpy array or dict
+
 * Basic plotting
+
     * Simple one-variable plots from data
+
     * Control Charts (Univariate and Multivariate)
+
     * Heat Maps (correlations, PCA, etc.)
+
 * Perform Box-Cox transformations
+
 * Calculate Correlation matrices
+
 * Perform Multi-Variable Linear Regressions
+
 * Perform Principal Component Analysis (PCA)
 
 Other information
@@ -38,6 +46,7 @@ Dependencies
 -  `scikit-learn <http://scikit-learn.org>`__
 -  `regressors <https://pypi.org/project/regressors/>`__
 -  `matplotlib <http://matplotlib.org>`__
+-  `PTable <https://github.com/kxxoling/PTable>`__
 
 
 Basic Usage
@@ -81,8 +90,11 @@ Principal Component Analysis (PCA)
 .. |pypi| image:: https://img.shields.io/pypi/v/dvha-stats.svg
    :target: https://pypi.org/project/dvha-stats
    :alt: PyPI
-.. |lgtm| image:: https://img.shields.io/lgtm/grade/python/g/cutright/DVHA-Stats.svg?logo=lgtm&label=code%20quality
+.. |lgtm-cq| image:: https://img.shields.io/lgtm/grade/python/g/cutright/DVHA-Stats.svg?logo=lgtm&label=code%20quality
    :target: https://lgtm.com/projects/g/cutright/DVHA-Stats/context:python
+   :alt: lgtm code quality
+.. |lgtm| image:: https://img.shields.io/lgtm/alerts/g/cutright/DVHA-Stats.svg?logo=lgtm
+   :target: https://lgtm.com/projects/g/cutright/DVHA-Stats/alerts
    :alt: lgtm
 .. |Codecov| image:: https://codecov.io/gh/cutright/DVHA-Stats/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/cutright/DVHA-Stats
