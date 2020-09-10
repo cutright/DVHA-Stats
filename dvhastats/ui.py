@@ -19,7 +19,7 @@ from dvhastats import stats
 
 SCRIPT_DIR = dirname(__file__)
 PARENT_DIR = dirname(SCRIPT_DIR)
-TEST_DATA_PATH = join(PARENT_DIR, 'tests', 'testdata', 'multivariate_data.csv')
+TEST_DATA_PATH = join(PARENT_DIR, "tests", "testdata", "multivariate_data.csv")
 
 
 class DVHAStatsBaseClass:
@@ -223,7 +223,7 @@ class DVHAStats(DVHAStatsBaseClass):
         """
         return np.delete(self.data, self.constant_var_indices, axis=1)
 
-    def histogram(self, var_name, bins='auto', nan_policy="omit"):
+    def histogram(self, var_name, bins="auto", nan_policy="omit"):
         """Get a Histogram class object
 
         var_name : str, int
@@ -260,7 +260,8 @@ class DVHAStats(DVHAStatsBaseClass):
         """
         return LinearRegUI(self.data, y, saved_reg, self.var_names)
 
-    def univariate_control_chart(self,
+    def univariate_control_chart(
+        self,
         var_name,
         std=3,
         ucl_limit=None,
@@ -269,7 +270,7 @@ class DVHAStats(DVHAStatsBaseClass):
         box_cox_alpha=None,
         box_cox_lmbda=None,
         const_policy="propagate",
-        ):
+    ):
         """
         Calculate control limits for a standard univariate Control Chart
 
@@ -336,10 +337,7 @@ class DVHAStats(DVHAStatsBaseClass):
 
         return data
 
-    def univariate_control_charts(
-        self,
-        **kwargs
-    ):
+    def univariate_control_charts(self, **kwargs):
         """
         Calculate Control charts for all variables
 
@@ -502,7 +500,7 @@ class DVHAStats(DVHAStatsBaseClass):
 
         Returns
         ----------
-        stats.PCA
+        PCAUI
             A principal component analysis object inherited from
             sklearn.decomposition.PCA
         """
@@ -512,6 +510,47 @@ class DVHAStats(DVHAStatsBaseClass):
             n_components=n_components,
             transform=transform,
             **kwargs
+        )
+
+    def risk_adjusted_control_chart(
+        self,
+        y,
+        std=3,
+        ucl_limit=None,
+        lcl_limit=None,
+        saved_reg=None,
+        y_name=None,
+    ):
+        """
+        Calculate control limits for a Risk-Adjusted Control Chart
+
+        Parameters
+        ----------
+        y : list, np.ndarray
+            1-D Input data (dependent data)
+        std : int, float, optional
+            Number of standard deviations used to calculate if a y-value is
+            out-of-control.
+        ucl_limit : float, optional
+            Limit the upper control limit to this value
+        lcl_limit : float, optional
+            Limit the lower control limit to this value
+        saved_reg : MultiVariableRegression, optional
+            Optionally provide a previously calculated regression
+        y_name : str, optional
+            Name for the dependent data y
+        """
+
+        return RiskAdjustedControlChartUI(
+            self.data,
+            y,
+            std=std,
+            ucl_limit=ucl_limit,
+            lcl_limit=lcl_limit,
+            saved_reg=saved_reg,
+            x=self.x_axis,
+            y_name=y_name,
+            var_names=self.var_names,
         )
 
     def __add_tend_line(self, var_name, plot_index):
@@ -601,10 +640,88 @@ class ControlChartUI(DVHAStatsBaseClass, stats.ControlChart):
         )
 
         self.var_name = var_name
-        self.plots = []
 
     def show(self):
         """Display the univariate control chart with matplotlib
+
+        Returns
+        ----------
+        int
+            The number of the newly created matplotlib figure
+        """
+        self.plots.append(
+            plot.ControlChart(
+                title=self.plot_title, ylabel=self.var_name, **self.chart_data
+            )
+        )
+        return self.plots[-1].figure.number
+
+
+class RiskAdjustedControlChartUI(
+    DVHAStatsBaseClass, stats.RiskAdjustedControlChart
+):
+    """Risk-Adjusted Control Chart using a Multi-Variable Regression"""
+
+    def __init__(
+        self,
+        X,
+        y,
+        std=3,
+        ucl_limit=None,
+        lcl_limit=None,
+        x=None,
+        y_name=None,
+        var_names=None,
+        saved_reg=None,
+        plot_title=None,
+    ):
+        """
+        Calculate control limits for a Risk-Adjusted Control Chart
+
+        Parameters
+        ----------
+        X : array-like
+            Input array (independent data)
+        y : list, np.ndarray
+            1-D Input data (dependent data)
+        std : int, float, optional
+            Number of standard deviations used to calculate if a y-value is
+            out-of-control.
+        ucl_limit : float, optional
+            Limit the upper control limit to this value
+        lcl_limit : float, optional
+            Limit the lower control limit to this value
+        x : list, np.ndarray, optional
+            x-axis values
+        plot_title : str, optional
+            Over-ride the plot title
+        saved_reg : MultiVariableRegression, optional
+            Optionally provide a previously calculated regression
+        var_names : list, optional
+            Optionally provide names of the variables
+        """
+        DVHAStatsBaseClass.__init__(self)
+
+        stats.RiskAdjustedControlChart.__init__(
+            self,
+            X,
+            y,
+            std=std,
+            ucl_limit=ucl_limit,
+            lcl_limit=lcl_limit,
+            x=x,
+            saved_reg=saved_reg,
+            var_names=var_names,
+        )
+
+        self.plot_title = (
+            "Risk-Adjusted Control Chart" if plot_title is None else plot_title
+        )
+
+        self.var_name = y_name
+
+    def show(self):
+        """Display the risk-adjusted control chart with matplotlib
 
         Returns
         ----------
@@ -642,7 +759,6 @@ class HotellingT2UI(DVHAStatsBaseClass, stats.HotellingT2):
         self.plot_title = (
             "Multivariate Control Chart" if plot_title is None else plot_title
         )
-        self.plots = []
 
     def show(self):
         """Display the multivariate control chart with matplotlib
@@ -705,7 +821,6 @@ class PCAUI(DVHAStatsBaseClass, stats.PCA):
             self, X, n_components=n_components, transform=transform, **kwargs
         )
         self.var_names = range(X.shape[1]) if var_names is None else var_names
-        self.plots = []
 
     def show(self, plot_type="feature_map", absolute=True):
         """Create a heat map of PCA components

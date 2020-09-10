@@ -181,7 +181,7 @@ Calculation with `sklearn <https://scikit-learn.org/stable/modules/generated/skl
 .. code-block:: python
 
     from numpy.np
-    y = np.random.rand(s.observations)
+    y = np.random.rand(s.observations)  # replace with your own data
     mvr = s.linear_reg(y)
 
     >>> mvr
@@ -213,6 +213,20 @@ Calculation with `sklearn <https://scikit-learn.org/stable/modules/generated/skl
 
 |mvr-prob|
 
+
+Risk-Adjusted Control Chart
+###########################
+
+.. code-block:: python
+
+    # Make some fake y-data for demonstration purposes
+    N = s.observations
+    y = np.square(np.multiply(np.linspace(1, N, N), np.random.rand(N)))
+    ra_cc = s.risk_adjusted_control_chart(y)
+    >>> ra_cc.show()
+
+|ra-cc|
+
 Principal Component Analysis (PCA)
 ##################################
 Calculation with `sklearn <https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html>`__.
@@ -225,6 +239,7 @@ Calculation with `sklearn <https://scikit-learn.org/stable/modules/generated/skl
            [-0.52601728, -0.51017406, -0.02139406,  0.4386136 ,  0.43258992, 0.28819198],
            [ 0.42660699,  0.01072412, -0.5661977 , -0.24404558,  0.39945093, 0.52743943]])
     >>> pca.show()
+
 
 |pca|
 
@@ -262,9 +277,13 @@ Calculation with `sklearn <https://scikit-learn.org/stable/modules/generated/skl
    :alt: Principal Component Analysis
 
 .. |mvr| image:: https://user-images.githubusercontent.com/4778878/92635692-dd027580-f29b-11ea-834e-3a05e36498fe.png
-   :width: 400
+   :width: 350
    :alt: DVHA logo
 
 .. |mvr-prob| image:: https://user-images.githubusercontent.com/4778878/92635704-e390ed00-f29b-11ea-9425-d758e21dcebc.png
-   :width: 400
+   :width: 350
+   :alt: DVHA logo
+
+.. |ra-cc| image:: https://user-images.githubusercontent.com/4778878/92777315-b3ae1c00-f365-11ea-9d8d-38f18d781359.png
+   :width: 350
    :alt: DVHA logo

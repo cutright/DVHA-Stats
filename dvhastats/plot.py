@@ -285,7 +285,7 @@ class ControlChart(Plot):
         for prop in props:
             value = getattr(self, prop)
             if isinstance(value, float):
-                formatter = ["E", "f"][9999 > float(value) > 0.1]
+                formatter = ["E", "f"][9999 >= abs(float(value)) >= 0.1]
                 text.append(("%%0.3%s" % formatter) % value)
             else:
                 text.append(str(value))

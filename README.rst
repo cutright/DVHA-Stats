@@ -13,22 +13,15 @@ our `documentation <http://dvha-stats.readthedocs.io>`__ for advanced uses.
 
 What does it do?
 ----------------
+
 * Read data from CSV, supply as numpy array or dict
-
 * Basic plotting
-
-    * Simple one-variable plots from data
-
-    * Control Charts (Univariate and Multivariate)
-
-    * Heat Maps (correlations, PCA, etc.)
-
+   * Simple one-variable plots from data
+   * Control Charts (Univariate, Multivariate, & Risk-Adjusted)
+   * Heat Maps (correlations, PCA, etc.)
 * Perform Box-Cox transformations
-
 * Calculate Correlation matrices
-
 * Perform Multi-Variable Linear Regressions
-
 * Perform Principal Component Analysis (PCA)
 
 Other information

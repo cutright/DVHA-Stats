@@ -185,12 +185,14 @@ class MultiVariableRegression:
 
         table.field_names = ["", "Coef", "Std. Err.", "t-value", "p-value"]
         for c in table.field_names[1:]:
-            table.align[c] = 'r'
-        data = {"": ["y-int"] + self.var_names,
-                "Coef": ["%0.3E" % v for v in self.coef],
-                "Std. Err.": ["%0.3E" % v for v in self.std_err],
-                "t-value": ["%0.3f" % v for v in self.t],
-                "p-value": ["%0.3f" % v for v in self.p]}
+            table.align[c] = "r"
+        data = {
+            "": ["y-int"] + self.var_names,
+            "Coef": ["%0.3E" % v for v in self.coef],
+            "Std. Err.": ["%0.3E" % v for v in self.std_err],
+            "t-value": ["%0.3f" % v for v in self.t],
+            "p-value": ["%0.3f" % v for v in self.p],
+        }
 
         for r in range(0, len(data[""])):
             table.add_row([data[c][r] for c in table.field_names])
@@ -201,7 +203,7 @@ class MultiVariableRegression:
             "MSE: %0.3f" % self.mse,
             "f-stat: %0.3f" % self.f_stat,
             "f-stat p-value: %0.3f" % self.f_p_value,
-            str(table)
+            str(table),
         ]
         return "\n".join(msg)
 
@@ -737,6 +739,53 @@ class HotellingT2:
             "lcl": float(self.lcl),
             "ucl": float(self.ucl),
         }
+
+
+class RiskAdjustedControlChart(ControlChart):
+    def __init__(
+        self,
+        X,
+        y,
+        std=3,
+        ucl_limit=None,
+        lcl_limit=None,
+        x=None,
+        saved_reg=None,
+        var_names=None,
+    ):
+        """
+        Calculate control limits for a standard univariate Control Chart
+
+        Parameters
+        ----------
+        X : array-like
+                Independent data
+        y : list, np.ndarray
+            Input data (1-D)
+        std : int, float, optional
+            Number of standard deviations used to calculate if a y-value is
+            out-of-control.
+        ucl_limit : float, optional
+            Limit the upper control limit to this value
+        lcl_limit : float, optional
+            Limit the lower control limit to this value
+        saved_reg : MultiVariableRegression, optional
+            Optionally provide a previously calculated regression
+        var_names : list, optional
+            Optionally provide names of the variables
+        """
+        self.y_raw = y
+        self.mvr = MultiVariableRegression(
+            X, y, saved_reg=saved_reg, var_names=var_names
+        )
+        ControlChart.__init__(
+            self,
+            self.mvr.residuals,
+            std=std,
+            ucl_limit=ucl_limit,
+            lcl_limit=lcl_limit,
+            x=x,
+        )
 
 
 class PCA(sklearn_PCA):

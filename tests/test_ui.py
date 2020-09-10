@@ -287,40 +287,6 @@ class TestStats(unittest.TestCase):
         y = np.linspace(1, 10, 10)
         stats_obj = ui.DVHAStats(self.expected_dict_no_nan)
         mvr = stats_obj.linear_reg(y)
-        self.assertEqual(round(mvr.y_intercept, 3), 2.983)
-        slope = np.array(
-            [
-                3.80907501,
-                -4.68155991,
-                0.67410364,
-                -0.32432575,
-                0.9811169,
-                -1.10516451,
-            ]
-        )
-        assert_array_almost_equal(mvr.slope, slope)
-        self.assertEqual(round(mvr.mse, 3), 1.353)
-        self.assertEqual(round(mvr.r_sq, 3), 0.836)
-        residuals = np.array(
-            [
-                -0.62566871,
-                -1.28605435,
-                0.47511697,
-                0.40490283,
-                -0.11474329,
-                -0.13508221,
-                0.34435215,
-                -1.26302838,
-                -0.76163533,
-                2.96184032,
-            ]
-        )
-        assert_array_almost_equal(mvr.residuals, residuals)
-        self.assertEqual(round(mvr.f_stat, 3), 2.548)
-        self.assertEqual(mvr.df_error, 3)
-        self.assertEqual(mvr.df_model, 6)
-        self.assertEqual(round(mvr.f_p_value, 3), 0.763)
-
         mvr2 = stats_obj.linear_reg(y, saved_reg=mvr)
         assert_array_equal(mvr.residuals, mvr2.residuals)
 
@@ -356,6 +322,12 @@ class TestStats(unittest.TestCase):
         ht2 = self.stats_obj.hotelling_t2()
         fig = ht2.show()
         ht2.close(fig)
+
+        y = list(range(10))
+        s = ui.DVHAStats(self.expected_dict_no_nan)
+        ra_cc = s.risk_adjusted_control_chart(y)
+        fig = ra_cc.show()
+        ra_cc.close(fig)
 
     def test_pca(self):
         """Test PCA initialization and plot"""

@@ -253,6 +253,12 @@ class TestStats(unittest.TestCase):
 
         self.validate_dict_is_json_compat(ucc.chart_data)
 
+    def test_risk_adjusted_cc(self):
+        """Test Risk Adjusted Control Chart"""
+        y = np.linspace(1, 10, 10)
+        ra_cc = stats.RiskAdjustedControlChart(self.expected_arr_no_nan, y)
+        self.assertEqual(ra_cc.out_of_control, [9])
+
     def test_control_chart_with_limits(self):
         """Test univariate control chart creation and values"""
         ucc = stats.ControlChart(
