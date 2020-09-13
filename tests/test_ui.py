@@ -329,6 +329,17 @@ class TestStats(unittest.TestCase):
         fig = ra_cc.show()
         ra_cc.close(fig)
 
+        fig = self.stats_obj.show(plot_type="box")
+        self.stats_obj.close(fig)
+
+        # test if plot_type not accepted
+        with self.assertRaises(NotImplementedError):
+            self.stats_obj.show(plot_type="test")
+
+        # test if var_name = None and plot_type not "box"
+        with self.assertRaises(NotImplementedError):
+            self.stats_obj.show()
+
     def test_pca(self):
         """Test PCA initialization and plot"""
         stats_obj = ui.DVHAStats(self.expected_dict_no_nan)

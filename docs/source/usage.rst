@@ -62,6 +62,22 @@ Calculation with `matplotlib <https://matplotlib.org/3.3.1/api/_as_gen/matplotli
 
 |hist|
 
+Box & Whisker Plot
+##################
+Calculation with `matplotlib <https://matplotlib.org/3.3.1/gallery/pyplots/boxplot_demo_pyplot.html#sphx-glr-gallery-pyplots-boxplot-demo-pyplot-py>`__
+
+.. code-block:: python
+
+   >>> s.show(0, plot_type="box")
+
+|boxplot|
+
+.. code-block:: python
+
+   >>> s.show(plot_type="box")
+
+|boxplot-all|
+
 Pearson-R Correlation Matrix
 ############################
 Calculation with `scipy <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.pearsonr.html>`__.
@@ -278,12 +294,20 @@ Calculation with `sklearn <https://scikit-learn.org/stable/modules/generated/skl
 
 .. |mvr| image:: https://user-images.githubusercontent.com/4778878/92635692-dd027580-f29b-11ea-834e-3a05e36498fe.png
    :width: 350
-   :alt: DVHA logo
+   :alt: Multi-Variable Regression
 
 .. |mvr-prob| image:: https://user-images.githubusercontent.com/4778878/92635704-e390ed00-f29b-11ea-9425-d758e21dcebc.png
    :width: 350
-   :alt: DVHA logo
+   :alt: Probability Plot
 
 .. |ra-cc| image:: https://user-images.githubusercontent.com/4778878/92777315-b3ae1c00-f365-11ea-9d8d-38f18d781359.png
    :width: 350
-   :alt: DVHA logo
+   :alt: Risk-Adjusted Control Chart
+
+.. |boxplot| image:: https://user-images.githubusercontent.com/4778878/93030883-11539a00-f5ec-11ea-937d-f8c0239ea00f.png
+   :width: 350
+   :alt: Box and Whisker Plot
+
+.. |boxplot-all| image:: https://user-images.githubusercontent.com/4778878/93030003-37297080-f5e5-11ea-9d5d-7540ef0efd8d.png
+   :width: 350
+   :alt: Box and Whisker Plots

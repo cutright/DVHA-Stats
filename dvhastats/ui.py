@@ -562,15 +562,16 @@ class DVHAStats(DVHAStatsBaseClass):
             trend_y, x=trend_x, line_color="black", line_width=0.75
         )
 
-    def show(self, var_name, plot_type="trend", **kwargs):
+    def show(self, var_name=None, plot_type="trend", **kwargs):
         """Display a plot of var_name with matplotlib
 
         Parameters
         ----------
-        var_name : str, int
-            The name (str) or index (int) of teh variable to plot
+        var_name : str, int, None
+            The name (str) or index (int) of the variable to plot.  If None
+            and plot_type="boxplot", all variables will be plotted.
         plot_type : str
-            Either "trend" or "hist"
+            Either "trend", "hist", "box"
         kwargs : any
             If plot_type is "hist", pass any of the matplotlib hist key word
             arguments
@@ -580,8 +581,21 @@ class DVHAStats(DVHAStatsBaseClass):
         int
             The number of the newly created matplotlib figure
         """
-        index = self.get_index_by_var_name(var_name)
-        var_name = self.var_names[index]
+        plot_type = plot_type.lower()
+
+        if plot_type not in {"trend", "hist", "box"}:
+            msg = "plot_type must be in 'trend', 'hist', or 'box'"
+            raise NotImplementedError(msg)
+
+        if var_name is None:
+            if plot_type != "box":
+                msg = "Must specify var_name if plot_type in ('trend', 'hist')"
+                raise NotImplementedError(msg)
+            index = None
+        else:
+            index = self.get_index_by_var_name(var_name)
+            var_name = self.var_names[index]
+
         if plot_type == "trend":
             self.plots.append(
                 plot.Plot(
@@ -597,6 +611,10 @@ class DVHAStats(DVHAStatsBaseClass):
             self.plots.append(
                 plot.Histogram(self.data[:, index], xlabel=var_name, **kwargs)
             )
+        elif plot_type == "box":
+            data = self.data if var_name is None else self.data[:, index]
+            xlabels = self.var_names if var_name is None else [var_name]
+            self.plots.append(plot.BoxPlot(data, xlabels=xlabels, **kwargs))
         return self.plots[-1].figure.number
 
 
