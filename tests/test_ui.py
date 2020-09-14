@@ -297,6 +297,10 @@ class TestStats(unittest.TestCase):
 
         self.assertIsNone(mvr.show("test"))
 
+        mvr3 = stats_obj.linear_reg("V1", reg_vars=["V1", "V2", "V3"])
+        self.assertEqual(mvr3.var_names, ["V2", "V3"])
+        assert_array_equal(stats_obj.data[:, 0], mvr3.y)
+
     def test_box_cox_by_index(self):
         """Test box-cox transformation by index and keyword"""
         data_by_index = self.stats_obj.box_cox_by_index(0)
@@ -328,6 +332,17 @@ class TestStats(unittest.TestCase):
         ra_cc = s.risk_adjusted_control_chart(y)
         fig = ra_cc.show()
         ra_cc.close(fig)
+
+        fig = self.stats_obj.show(plot_type="box")
+        self.stats_obj.close(fig)
+
+        # test if plot_type not accepted
+        with self.assertRaises(NotImplementedError):
+            self.stats_obj.show(plot_type="test")
+
+        # test if var_name = None and plot_type not "box"
+        with self.assertRaises(NotImplementedError):
+            self.stats_obj.show()
 
     def test_pca(self):
         """Test PCA initialization and plot"""
@@ -361,7 +376,7 @@ class TestStats(unittest.TestCase):
             "Cannot calculate control chart with const data!",
         )
 
-    def test_box_cox_const_policy_raise_(self):
+    def test_box_cox_const_policy_raise(self):
         """Test const_policy='raise' results in ValueError with const data"""
         stats_obj = ui.DVHAStats(self.const_data)
         with self.assertRaises(ValueError):
@@ -370,6 +385,13 @@ class TestStats(unittest.TestCase):
     def test_histogram(self):
         """Test histogram"""
         self.stats_obj.histogram(0)
+
+    def test_del_var(self):
+        """Test variable deletion"""
+        exp = self.stats_obj.data
+        s = deepcopy(self.stats_obj)
+        s.del_var(0)
+        assert_array_equal(np.delete(exp, 0, axis=1), s.data)
 
 
 if __name__ == "__main__":

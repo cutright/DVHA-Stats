@@ -12,7 +12,7 @@
 
 import unittest
 from dvhastats import plot
-from numpy import random
+import numpy as np
 import matplotlib
 
 matplotlib.use("Template")
@@ -24,7 +24,7 @@ class TestPlot(unittest.TestCase):
     def setUp(self):
         """Setup files and base data for utility testing."""
         # self.x = [0, 1]
-        self.y = random.standard_normal(10)
+        self.y = np.random.standard_normal(10)
 
     def test_plot_init(self):
         """Test Plot initialization"""
@@ -41,7 +41,7 @@ class TestPlot(unittest.TestCase):
         """Test ControlChart initialization"""
         p = plot.ControlChart(
             self.y,
-            random.randint(5, size=3),
+            np.random.randint(5, size=3),
             0,
             lcl=-1,
             ucl=1,
@@ -51,6 +51,15 @@ class TestPlot(unittest.TestCase):
     def test_histogram(self):
         """Test Histogram initialization"""
         p = plot.Histogram(self.y)
+        p.close()
+
+    def test_boxplot(self):
+        """Test Histogram initialization"""
+        # 1D
+        p = plot.BoxPlot(self.y, xlabels=[1])
+        p.close()
+        # 2D
+        p = plot.BoxPlot(np.array([self.y, self.y]).T, xlabels=[1, 2])
         p.close()
 
 

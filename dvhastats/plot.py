@@ -419,7 +419,48 @@ class PCAFeatureMap(HeatMap):
         )
 
 
-class Histogram(Chart):
+class DistributionChart(Chart):
+    """Distribution plotting class object (base for histogram / boxplot"""
+
+    def __init__(
+        self, data, title="Chart", xlabel="Bins", ylabel="Counts", **kwargs
+    ):
+        """Initialization of Histogram class
+
+        Parameters
+        ----------
+        data : array-like
+            Input array (1-D or 2-D)
+        title : str
+            Set the plot title
+        xlabel : str
+            Set the x-axis title
+        ylabel : str
+            Set the y-axis title
+        kwargs : any
+            Any keyword argument may be set per matplotlib histogram:
+            https://matplotlib.org/3.3.1/api/_as_gen/matplotlib.pyplot.hist.html
+
+        """
+        self.title = title
+        Chart.__init__(self, title=self.title, fig_init=False)
+
+        self.data = np.array(data)
+        self.xlabel = xlabel
+        self.ylabel = ylabel
+        self.kwargs = kwargs
+
+    def _set_title(self):
+        """Set the figure title"""
+        self.figure.suptitle(self.title, fontsize=16)
+
+    def _add_labels(self):
+        """Set the x and y axes labels to figure"""
+        plt.xlabel(self.xlabel)
+        plt.ylabel(self.ylabel)
+
+
+class Histogram(DistributionChart):
     """Histogram plotting class object"""
 
     def __init__(
@@ -454,34 +495,87 @@ class Histogram(Chart):
             If bins is a string, it is one of the binning strategies supported
             by numpy.histogram_bin_edges: 'auto', 'fd', 'doane', 'scott',
             'stone', 'rice', 'sturges', or 'sqrt'.
+        title : str
+            Set the plot title
+        xlabel : str
+            Set the x-axis title
+        ylabel : str
+            Set the y-axis title
         kwargs : any
             Any keyword argument may be set per matplotlib histogram:
             https://matplotlib.org/3.3.1/api/_as_gen/matplotlib.pyplot.hist.html
 
         """
-        self.title = title
-        Chart.__init__(self, title=self.title, fig_init=False)
-
-        self.data = data
         self.bins = bins
-        self.xlabel = xlabel
-        self.ylabel = ylabel
-        self.hist_kwargs = kwargs
+        DistributionChart.__init__(
+            self, data, title=title, xlabel=xlabel, ylabel=ylabel, **kwargs
+        )
 
         self.__set_hist_data()
-        self.__set_title()
-        self.__add_labels()
+        self._set_title()
+        self._add_labels()
 
     def __set_hist_data(self):
         """Generate histogram data and add to figure"""
         self.figure, self.axes = plt.subplots()
-        self.axes.hist(self.data, bins=self.bins, **self.hist_kwargs)
+        self.axes.hist(self.data, bins=self.bins, **self.kwargs)
 
-    def __set_title(self):
-        """Set the figure title"""
-        self.figure.suptitle(self.title, fontsize=16)
 
-    def __add_labels(self):
-        """Set the x and y axes labels to figure"""
-        plt.xlabel(self.xlabel)
-        plt.ylabel(self.ylabel)
+class BoxPlot(DistributionChart):
+    """Box and Whisker plotting class object"""
+
+    def __init__(
+        self,
+        data,
+        title="Box and Whisker",
+        xlabel="",
+        ylabel="",
+        xlabels=None,
+        **kwargs
+    ):
+        """Initialization of Histogram class
+
+        Parameters
+        ----------
+        data : array-like
+            Input array (1-D or 2-D)
+        title : str, optional
+            Set the plot title
+        xlabel : str, optional
+            Set the x-axis title
+        xlabels : array-like, optional
+            Set the xtick labels (e.g., variable names for each box plot)
+        ylabel : str, optional
+            Set the y-axis title
+        kwargs : any, optional
+            Any keyword argument may be set per matplotlib histogram:
+            https://matplotlib.org/3.3.1/api/_as_gen/matplotlib.pyplot.boxplot.html
+        """
+        self.xlabels = xlabels
+        DistributionChart.__init__(
+            self, data, title=title, xlabel=xlabel, ylabel=ylabel, **kwargs
+        )
+
+        self.__set_boxplot_data()
+        self._set_title()
+        self._add_labels()
+        self.__set_ticks()
+
+    def __set_boxplot_data(self):
+        """Generate boxplot data and add to figure"""
+        self.figure, self.axes = plt.subplots()
+        self.axes.boxplot(self.data)
+
+    def __set_ticks(self):
+        """Set tick labels based on variable names"""
+        if self.xlabels is not None:
+            if len(self.data.shape) == 2:
+                length = self.data.shape[1]
+            else:
+                length = 1
+            plt.xticks(
+                range(1, length + 1),
+                self.xlabels,
+                rotation=30,
+                ha="left",
+            )

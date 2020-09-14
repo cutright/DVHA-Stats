@@ -151,10 +151,26 @@ class DVHAStats(DVHAStatsBaseClass):
             Number of columns in data"""
         return self.data.shape[1]
 
+    def del_var(self, var_name):
+        """Determine if data by var_name is constant
+
+        Parameters
+        ----------
+        var_name : int, str
+            The var_name to delete (or index of variable)
+        """
+        index = self.get_index_by_var_name(var_name)
+        self.deleted_vars.append(self.var_names[index])
+        self.data = np.delete(self.data, index, axis=1)
+        self.var_names.pop(index)
+
     def del_const_vars(self):
         """Permanently remove variables with no variation"""
-        self.deleted_vars = self.constant_vars
+        self.deleted_vars.extend(self.constant_vars)
+        del_indices = self.constant_var_indices
         self.data = self.non_const_data
+        for i in del_indices[::-1]:
+            self.var_names.pop(i)
 
     def correlation_matrix(self, corr_type="Pearson"):
         """Get a Pearson-R or Spearman correlation matrices
@@ -241,24 +257,78 @@ class DVHAStats(DVHAStatsBaseClass):
         data = self.get_data_by_var_name(var_name)
         return stats.Histogram(data, bins, nan_policy)
 
-    def linear_reg(self, y, saved_reg=None):
+    def linear_reg(
+        self,
+        y,
+        y_var_name=None,
+        reg_vars=None,
+        saved_reg=None,
+        back_elim=False,
+        back_elim_p=0.05,
+    ):
         """Initialize a MultiVariableRegression class object
 
         Parameters
         ----------
-        y : np.ndarray, list
-            Dependent data based on DVHAStats.data
+        y : np.ndarray, list, str, int
+            Dependent data based on DVHAStats.data. If y is str or int, then
+            it is assumed to be the var_name or index of data to be set as
+            the dependent variable
+        y_var_name : int, str, optional
+            Optionally provide name of the dependent variable. Automatically
+            set if y is str or int
+        reg_vars : list, optional
+            Optionally specify variable names or indices of data to be used
+            in the regression
         saved_reg : MultiVariableRegression, optional
             If supplied, predicted values (y-hat) will be calculated with
             DVHAStats.data and the regression from saved_reg. This is useful
             if testing a regression model on new data.
+        back_elim : bool
+            Automatically perform backward elimination if True
+        back_elim_p : float
+            p-value threshold for backward elimination
 
         Returns
         ----------
         LinearRegUI
             A LinearRegUI class object.
         """
-        return LinearRegUI(self.data, y, saved_reg, self.var_names)
+
+        input_data = self.__process_reg_input(y, reg_vars, y_var_name)
+
+        return LinearRegUI(
+            input_data["data"],
+            input_data["y"],
+            saved_reg,
+            var_names=input_data["var_names"],
+            y_var_name=input_data["y_var_name"],
+            back_elim=back_elim,
+            back_elim_p=back_elim_p,
+        )
+
+    def __process_reg_input(self, y, reg_vars, y_var_name):
+        excl = []
+        if reg_vars is not None:
+            incl = [self.get_index_by_var_name(v) for v in reg_vars]
+            excl = [i for i in range(self.variable_count) if i not in incl]
+
+        if isinstance(y, (str, int)):
+            y_index = self.get_index_by_var_name(y)
+            y_var_name = self.var_names[y_index]
+            if y_index not in excl:
+                excl.append(self.get_index_by_var_name(y))
+                excl.sort()
+            y = self.get_data_by_var_name(y)
+
+        data = np.delete(self.data, excl, axis=1)
+        var_names = [v for i, v in enumerate(self.var_names) if i not in excl]
+        return {
+            "data": data,
+            "y": y,
+            "var_names": var_names,
+            "y_var_name": y_var_name,
+        }
 
     def univariate_control_chart(
         self,
@@ -520,6 +590,9 @@ class DVHAStats(DVHAStatsBaseClass):
         lcl_limit=None,
         saved_reg=None,
         y_name=None,
+        reg_vars=None,
+        back_elim=False,
+        back_elim_p=0.05,
     ):
         """
         Calculate control limits for a Risk-Adjusted Control Chart
@@ -537,20 +610,36 @@ class DVHAStats(DVHAStatsBaseClass):
             Limit the lower control limit to this value
         saved_reg : MultiVariableRegression, optional
             Optionally provide a previously calculated regression
-        y_name : str, optional
-            Name for the dependent data y
+        y_name : int, str, optional
+            Optionally provide name of the dependent variable. Automatically
+            set if y is str or int
+        reg_vars : list, optional
+            Optionally specify variable names or indices of data to be used
+            in the regression
+        saved_reg : MultiVariableRegression, optional
+            If supplied, predicted values (y-hat) will be calculated with
+            DVHAStats.data and the regression from saved_reg. This is useful
+            if testing a regression model on new data.
+        back_elim : bool
+            Automatically perform backward elimination if True
+        back_elim_p : float
+            p-value threshold for backward elimination
         """
 
+        input_data = self.__process_reg_input(y, reg_vars, y_name)
+
         return RiskAdjustedControlChartUI(
-            self.data,
-            y,
+            input_data["data"],
+            input_data["y"],
             std=std,
             ucl_limit=ucl_limit,
             lcl_limit=lcl_limit,
             saved_reg=saved_reg,
             x=self.x_axis,
-            y_name=y_name,
-            var_names=self.var_names,
+            y_name=input_data["y_var_name"],
+            var_names=input_data["var_names"],
+            back_elim=back_elim,
+            back_elim_p=back_elim_p,
         )
 
     def __add_tend_line(self, var_name, plot_index):
@@ -562,15 +651,16 @@ class DVHAStats(DVHAStatsBaseClass):
             trend_y, x=trend_x, line_color="black", line_width=0.75
         )
 
-    def show(self, var_name, plot_type="trend", **kwargs):
+    def show(self, var_name=None, plot_type="trend", **kwargs):
         """Display a plot of var_name with matplotlib
 
         Parameters
         ----------
-        var_name : str, int
-            The name (str) or index (int) of teh variable to plot
+        var_name : str, int, None
+            The name (str) or index (int) of the variable to plot.  If None
+            and plot_type="boxplot", all variables will be plotted.
         plot_type : str
-            Either "trend" or "hist"
+            Either "trend", "hist", "box"
         kwargs : any
             If plot_type is "hist", pass any of the matplotlib hist key word
             arguments
@@ -580,8 +670,21 @@ class DVHAStats(DVHAStatsBaseClass):
         int
             The number of the newly created matplotlib figure
         """
-        index = self.get_index_by_var_name(var_name)
-        var_name = self.var_names[index]
+        plot_type = plot_type.lower()
+
+        if plot_type not in {"trend", "hist", "box"}:
+            msg = "plot_type must be in 'trend', 'hist', or 'box'"
+            raise NotImplementedError(msg)
+
+        if var_name is None:
+            if plot_type != "box":
+                msg = "Must specify var_name if plot_type in ('trend', 'hist')"
+                raise NotImplementedError(msg)
+            index = None
+        else:
+            index = self.get_index_by_var_name(var_name)
+            var_name = self.var_names[index]
+
         if plot_type == "trend":
             self.plots.append(
                 plot.Plot(
@@ -597,6 +700,10 @@ class DVHAStats(DVHAStatsBaseClass):
             self.plots.append(
                 plot.Histogram(self.data[:, index], xlabel=var_name, **kwargs)
             )
+        elif plot_type == "box":
+            data = self.data if var_name is None else self.data[:, index]
+            xlabels = self.var_names if var_name is None else [var_name]
+            self.plots.append(plot.BoxPlot(data, xlabels=xlabels, **kwargs))
         return self.plots[-1].figure.number
 
 
@@ -674,6 +781,8 @@ class RiskAdjustedControlChartUI(
         var_names=None,
         saved_reg=None,
         plot_title=None,
+        back_elim=False,
+        back_elim_p=0.05,
     ):
         """
         Calculate control limits for a Risk-Adjusted Control Chart
@@ -699,6 +808,10 @@ class RiskAdjustedControlChartUI(
             Optionally provide a previously calculated regression
         var_names : list, optional
             Optionally provide names of the variables
+        back_elim : bool
+            Automatically perform backward elimination if True
+        back_elim_p : float
+            p-value threshold for backward elimination
         """
         DVHAStatsBaseClass.__init__(self)
 
@@ -712,6 +825,8 @@ class RiskAdjustedControlChartUI(
             x=x,
             saved_reg=saved_reg,
             var_names=var_names,
+            back_elim=back_elim,
+            back_elim_p=back_elim_p,
         )
 
         self.plot_title = (
@@ -908,24 +1023,47 @@ class CorrelationMatrixUI(DVHAStatsBaseClass, stats.CorrelationMatrix):
 
 
 class LinearRegUI(DVHAStatsBaseClass, stats.MultiVariableRegression):
-    """A MultiVariableRegression class UI object
+    """A MultiVariableRegression class UI object"""
 
-    Parameters
-    ----------
-    y : np.ndarray, list
-        Dependent data based on DVHAStats.data
-    saved_reg : MultiVariableRegression, optional
-        If supplied, predicted values (y-hat) will be calculated with
-        DVHAStats.data and the regression from saved_reg. This is useful
-        if testing a regression model on new data.
-    var_names : list, optional
-        Optionally provide names of the variables
-    """
+    def __init__(
+        self,
+        X,
+        y,
+        saved_reg=None,
+        var_names=None,
+        y_var_name=None,
+        back_elim=False,
+        back_elim_p=0.05,
+    ):
+        """Initialization of LinearRegUI object
 
-    def __init__(self, X, y, saved_reg=None, var_names=None):
+        Parameters
+        ----------
+        y : np.ndarray, list
+            Dependent data based on DVHAStats.data
+        saved_reg : MultiVariableRegression, optional
+            If supplied, predicted values (y-hat) will be calculated with
+            DVHAStats.data and the regression from saved_reg. This is useful
+            if testing a regression model on new data.
+        var_names : list, optional
+            Optionally provide names of the independent variables
+        y_var_name : int, str, optional
+            Optionally provide name of the dependent variable
+        back_elim : bool
+            Automatically perform backward elimination if True
+        back_elim_p : float
+            p-value threshold for backward elimination
+        """
         DVHAStatsBaseClass.__init__(self)
         stats.MultiVariableRegression.__init__(
-            self, X=X, y=y, saved_reg=saved_reg, var_names=var_names
+            self,
+            X=X,
+            y=y,
+            saved_reg=saved_reg,
+            var_names=var_names,
+            y_var_name=y_var_name,
+            back_elim=back_elim,
+            back_elim_p=back_elim_p,
         )
 
     def show(self, plot_type="residual"):
