@@ -196,27 +196,24 @@ Calculation with `sklearn <https://scikit-learn.org/stable/modules/generated/skl
 
 .. code-block:: python
 
-    from numpy.np
-    y = np.random.rand(s.observations)  # replace with your own data
-    mvr = s.linear_reg(y)
+    mvr = s.linear_reg("V1")
 
     >>> mvr
 
     Multi-Variable Regression results/model
-    R2: 0.096
-    MSE: 0.077
-    f-stat: 1.838
-    f-stat p-value: 0.894
+    R²: 0.906
+    MSE: 7.860
+    f-stat: 121.632
+    f-stat p-value: 1.000
     +-------+------------+-----------+---------+---------+
     |       |       Coef | Std. Err. | t-value | p-value |
     +-------+------------+-----------+---------+---------+
-    | y-int |  2.894E-01 | 2.067E-01 |   1.400 |   0.166 |
-    |   V1  |  1.528E-02 | 1.258E-02 |   1.215 |   0.228 |
-    |   V2  | -7.876E-03 | 1.583E-02 |  -0.498 |   0.620 |
-    |   V3  | -1.083E-02 | 1.263E-02 |  -0.857 |   0.394 |
-    |   V4  |  1.740E-02 | 1.357E-02 |   1.282 |   0.204 |
-    |   V5  | -1.057E-02 | 2.544E-02 |  -0.415 |   0.679 |
-    |   V6  |  5.593E-03 | 2.378E-02 |   0.235 |   0.815 |
+    | y-int |  1.262E+01 | 1.326E+00 |   9.518 |   0.000 |
+    |   V2  |  1.107E+00 | 7.547E-02 |  14.664 |   0.000 |
+    |   V3  | -4.442E-01 | 1.135E-01 |  -3.914 |   0.000 |
+    |   V4  |  1.786E-01 | 1.340E-01 |   1.333 |   0.187 |
+    |   V5  | -1.789E-01 | 2.538E-01 |  -0.705 |   0.483 |
+    |   V6  |  2.833E-01 | 2.355E-01 |   1.203 |   0.233 |
     +-------+------------+-----------+---------+---------+
 
     >>> mvr.show()
@@ -229,16 +226,32 @@ Calculation with `sklearn <https://scikit-learn.org/stable/modules/generated/skl
 
 |mvr-prob|
 
+.. code-block:: python
+
+   mvr2 = s.linear_reg("V1", back_elim=True)
+   >>> mvr2
+
+   Multi-Variable Regression results/model
+   R²: 0.903
+   MSE: 8.096
+   f-stat: 202.431
+   f-stat p-value: 1.000
+   +-------+------------+-----------+---------+---------+
+   |       |       Coef | Std. Err. | t-value | p-value |
+   +-------+------------+-----------+---------+---------+
+   | y-int |  1.276E+01 | 1.321E+00 |   9.656 |   0.000 |
+   |   V2  |  1.070E+00 | 6.700E-02 |  15.967 |   0.000 |
+   |   V3  | -3.318E-01 | 6.852E-02 |  -4.843 |   0.000 |
+   |   V6  |  2.000E-01 | 7.542E-02 |   2.652 |   0.010 |
+   +-------+------------+-----------+---------+---------+
+
 
 Risk-Adjusted Control Chart
 ###########################
 
 .. code-block:: python
 
-    # Make some fake y-data for demonstration purposes
-    N = s.observations
-    y = np.square(np.multiply(np.linspace(1, N, N), np.random.rand(N)))
-    ra_cc = s.risk_adjusted_control_chart(y)
+    ra_cc = s.risk_adjusted_control_chart("V1", back_elim=True)
     >>> ra_cc.show()
 
 |ra-cc|
@@ -292,15 +305,15 @@ Calculation with `sklearn <https://scikit-learn.org/stable/modules/generated/skl
    :width: 350
    :alt: Principal Component Analysis
 
-.. |mvr| image:: https://user-images.githubusercontent.com/4778878/92635692-dd027580-f29b-11ea-834e-3a05e36498fe.png
+.. |mvr| image:: https://user-images.githubusercontent.com/4778878/93033182-c42af480-f5fa-11ea-935b-1a38f88d6c91.png
    :width: 350
    :alt: Multi-Variable Regression
 
-.. |mvr-prob| image:: https://user-images.githubusercontent.com/4778878/92635704-e390ed00-f29b-11ea-9425-d758e21dcebc.png
+.. |mvr-prob| image:: https://user-images.githubusercontent.com/4778878/93033181-c42af480-f5fa-11ea-955a-6c12bd9aab46.png
    :width: 350
    :alt: Probability Plot
 
-.. |ra-cc| image:: https://user-images.githubusercontent.com/4778878/92777315-b3ae1c00-f365-11ea-9d8d-38f18d781359.png
+.. |ra-cc| image:: https://user-images.githubusercontent.com/4778878/93035879-d8bfba80-f603-11ea-8dd0-876a6c5a5de2.png
    :width: 350
    :alt: Risk-Adjusted Control Chart
 

@@ -374,6 +374,11 @@ class TestStats(unittest.TestCase):
 
         self.assertIsInstance(repr(mvr), str)
 
+        mvr3 = stats.MultiVariableRegression(
+            self.expected_arr_no_nan, y, back_elim=True
+        )
+        self.assertEqual(mvr3.var_names, [0, 1, 4, 5])
+
     def test_box_cox(self):
         """Test Box-Cox"""
         stats.box_cox(self.expected_arr_no_nan[:, 0])

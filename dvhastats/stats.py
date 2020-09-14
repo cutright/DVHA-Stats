@@ -155,7 +155,16 @@ class Histogram:
 class MultiVariableRegression:
     """Multi-variable regression using scikit-learn"""
 
-    def __init__(self, X, y, saved_reg=None, var_names=None):
+    def __init__(
+        self,
+        X,
+        y,
+        saved_reg=None,
+        var_names=None,
+        y_var_name=None,
+        back_elim=False,
+        back_elim_p=0.05,
+    ):
         """Initialization of a MultiVariableRegression
 
         Parameters
@@ -168,16 +177,26 @@ class MultiVariableRegression:
             Optionally provide a previously calculated regression
         var_names : list, optional
             Optionally provide names of the variables
+        y_var_name : int, str, optional
+            Optionally provide name of the dependent variable
+        back_elim : bool
+            Automatically perform backward elimination if True
+        back_elim_p : float
+            p-value threshold for backward elimination
         """
 
         self.X = np.array(X)
         self.y = np.array(y)
+        self.y_var_name = y_var_name
 
         self.var_names = (
             list(range(self.X.shape[1])) if var_names is None else var_names
         )
 
         self._do_fit(saved_reg=saved_reg)
+
+        if back_elim:
+            self.backward_elimination(back_elim_p)
 
     def __str__(self):
         """String representation of MultiVariableRegression object"""
@@ -347,6 +366,24 @@ class MultiVariableRegression:
             1st var slope, 2nd var slope, etc.)
         """
         return np.concatenate(([self.y_intercept], self.slope))
+
+    def backward_elimination(self, p_value=0.05):
+        """Remove insignificant variables from regression
+
+        p_value : float
+            Iteratively remove the least significant variable until all
+            variables have p-values less than p_value or only one variable
+            remains.
+        """
+        finished = False
+        while not finished:
+            index = self.p[1:].argmax()  # ignore y-int
+            if len(self.var_names) > 1 and self.p[index + 1] > p_value:
+                self.X = np.delete(self.X, index, axis=1)
+                self.var_names.pop(index)
+                self._do_fit()
+            else:
+                finished = True
 
     @property
     def chart_data(self):
@@ -753,6 +790,9 @@ class RiskAdjustedControlChart(ControlChart):
         x=None,
         saved_reg=None,
         var_names=None,
+        reg_vars=None,
+        back_elim=False,
+        back_elim_p=0.05,
     ):
         """
         Calculate control limits for a standard univariate Control Chart
@@ -774,10 +814,19 @@ class RiskAdjustedControlChart(ControlChart):
             Optionally provide a previously calculated regression
         var_names : list, optional
             Optionally provide names of the variables
+        back_elim : bool
+            Automatically perform backward elimination if True
+        back_elim_p : float
+            p-value threshold for backward elimination
         """
         self.y_raw = y
         self.mvr = MultiVariableRegression(
-            X, y, saved_reg=saved_reg, var_names=var_names
+            X,
+            y,
+            saved_reg=saved_reg,
+            var_names=var_names,
+            back_elim=back_elim,
+            back_elim_p=back_elim_p,
         )
         ControlChart.__init__(
             self,
