@@ -11,7 +11,6 @@
 #    available at https://github.com/cutright/DVHA-Stats
 
 
-from matplotlib.pyplot import boxplot
 import numpy as np
 from scipy import stats as scipy_stats
 from sklearn import linear_model
