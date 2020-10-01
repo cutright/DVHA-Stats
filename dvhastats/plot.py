@@ -30,7 +30,15 @@ def get_new_figure_num():
 
 
 class Chart:
-    """Base class for charts"""
+    """Base class for charts
+
+    Parameters
+    ----------
+    title : str, optional
+        Set the title suptitle
+    fig_init : bool
+        Automatically call pyplot.figure, store in Chart.figure
+    """
 
     def __init__(self, title=None, fig_init=True):
         """Initialization of Chart base class"""
@@ -55,8 +63,35 @@ class Chart:
 
 
 class Plot(Chart):
-    """Generic plotting class with matplotlib"""
+    """Generic plotting class with matplotlib
 
+    Parameters
+    ----------
+    y : np.ndarray, list
+        The y data to be plotted (1-D only)
+    x : np.ndarray, list, optional
+        Optionally specify the x-axis values. Otherwise index+1 is used.
+    show : bool
+        Automatically plot the data if True
+    title : str
+        Set the plot title
+    xlabel : str
+        Set the x-axis title
+    ylabel : str
+        Set the y-axis title
+    line : bool
+        Plot the data as a line series
+    line_color : str, optional
+        Specify the line color
+    line_width : float, int
+        Specify the line width
+    line_style : str
+        Specify the line style
+    scatter : bool
+        Plot the data as a scatter plot (circles)
+    scatter_color : str, optional
+        Specify the scatter plot circle color
+    """
     def __init__(
         self,
         y,
@@ -72,36 +107,7 @@ class Plot(Chart):
         scatter=True,
         scatter_color=None,
     ):
-        """
-        Initialization of a general Plot class object
-
-        Parameters
-        ----------
-        y : np.ndarray, list
-            The y data to be plotted (1-D only)
-        x : np.ndarray, list, optional
-            Optionally specify the x-axis values. Otherwise index+1 is used.
-        show : bool
-            Automatically plot the data if True
-        title : str
-            Set the plot title
-        xlabel : str
-            Set the x-axis title
-        ylabel : str
-            Set the y-axis title
-        line : bool
-            Plot the data as a line series
-        line_color : str, optional
-            Specify the line color
-        line_width : float, int
-            Specify the line width
-        line_style : str
-            Specify the line style
-        scatter : bool
-            Plot the data as a scatter plot (circles)
-        scatter_color : str, optional
-            Specify the scatter plot circle color
-        """
+        """Initialization of a general Plot class object"""
         Chart.__init__(self, title=title)
         self.x = np.linspace(1, len(y), len(y)) if x is None else np.array(x)
         self.y = np.array(y) if not isinstance(y, np.ndarray) else y
@@ -180,7 +186,33 @@ class Plot(Chart):
 
 
 class ControlChart(Plot):
-    """ControlChart class object"""
+    """ControlChart class object
+
+    Parameters
+    ----------
+    y : np.ndarray, list
+        Charting data
+    out_of_control : np.ndarray, list
+        The indices of y that are out-of-control
+    center_line : float, np.ndarray
+        The center line value (e.g., np.mean(y))
+    lcl : float, optional
+        The lower control limit (LCL). Line omitted if lcl is None.
+    ucl : float, optional
+        The upper control limit (UCL). Line omitted if ucl is None.
+    title: str
+        Set the plot title
+    xlabel: str
+        Set the x-axis title
+    ylabel: str
+        Set the y-axis title
+    line_color: str, optional
+        Specify the line color
+    line_width: float, int
+        Specify the line width
+    kwargs : any
+        Any additional keyword arguments applicable to the Plot class
+    """
 
     def __init__(
         self,
@@ -202,33 +234,7 @@ class ControlChart(Plot):
         limit_line_style="--",
         **kwargs
     ):
-        """Initialization of a ControlChart plot class object
-
-        Parameters
-        ----------
-        y : np.ndarray, list
-            Charting data
-        out_of_control : np.ndarray, list
-            The indices of y that are out-of-control
-        center_line : float, np.ndarray
-            The center line value (e.g., np.mean(y))
-        lcl : float, optional
-            The lower control limit (LCL). Line omitted if lcl is None.
-        ucl : float, optional
-            The upper control limit (UCL). Line omitted if ucl is None.
-        title: str
-            Set the plot title
-        xlabel: str
-            Set the x-axis title
-        ylabel: str
-            Set the y-axis title
-        line_color: str, optional
-            Specify the line color
-        line_width: float, int
-            Specify the line width
-        kwargs : any
-            Any additional keyword arguments applicable to the Plot class
-        """
+        """Initialization of a ControlChart plot class object"""
         self.center_line = center_line
         self.lcl = lcl
         self.ucl = ucl
@@ -339,8 +345,24 @@ class ControlChart(Plot):
 
 
 class HeatMap(Chart):
-    """Create a heat map using matplotlib.pyplot.matshow"""
+    """Create a heat map using matplotlib.pyplot.matshow
 
+    Parameters
+    ----------
+    X : np.ndarray
+        Input data (2-D) with N rows of observations and
+        p columns of variables.
+    xlabels : list, optional
+        Optionally set the variable names with a list of str
+    ylabels : list, optional
+        Optionally set the variable names with a list of str
+    title : str, optional
+        Set the title suptitle
+    cmap : str
+        matplotlib compatible color map
+    show : bool
+        Automatically show the figure
+    """
     def __init__(
         self,
         X,
@@ -372,8 +394,22 @@ class HeatMap(Chart):
 
 
 class PCAFeatureMap(HeatMap):
-    """Specialized Heat Map for PCA feature evaluation"""
+    """Specialized Heat Map for PCA feature evaluation
 
+    Parameters
+    ----------
+    X : np.ndarray
+        Input data (2-D) with N rows of observations and
+        p columns of variables.
+    features : list, optional
+        Optionally set the feature names with a list of str
+    title : str, optional
+        Set the title suptitle
+    cmap : str
+        matplotlib compatible color map
+    show : bool
+        Automatically show the figure
+    """
     def __init__(
         self,
         X,
@@ -420,28 +456,27 @@ class PCAFeatureMap(HeatMap):
 
 
 class DistributionChart(Chart):
-    """Distribution plotting class object (base for histogram / boxplot"""
+    """Distribution plotting class object (base for histogram / boxplot
+
+    Parameters
+    ----------
+    data : array-like
+        Input array (1-D or 2-D)
+    title : str
+        Set the plot title
+    xlabel : str
+        Set the x-axis title
+    ylabel : str
+        Set the y-axis title
+    kwargs : any
+        Any keyword argument may be set per matplotlib histogram:
+        https://matplotlib.org/3.3.1/api/_as_gen/matplotlib.pyplot.hist.html
+    """
 
     def __init__(
         self, data, title="Chart", xlabel="Bins", ylabel="Counts", **kwargs
     ):
-        """Initialization of Histogram class
-
-        Parameters
-        ----------
-        data : array-like
-            Input array (1-D or 2-D)
-        title : str
-            Set the plot title
-        xlabel : str
-            Set the x-axis title
-        ylabel : str
-            Set the y-axis title
-        kwargs : any
-            Any keyword argument may be set per matplotlib histogram:
-            https://matplotlib.org/3.3.1/api/_as_gen/matplotlib.pyplot.hist.html
-
-        """
+        """Initialization of Histogram class"""
         self.title = title
         Chart.__init__(self, title=self.title, fig_init=False)
 
@@ -461,8 +496,37 @@ class DistributionChart(Chart):
 
 
 class Histogram(DistributionChart):
-    """Histogram plotting class object"""
+    """Histogram plotting class object
 
+    Parameters
+    ----------
+    data : array-like
+        Input array (1-D)
+    bins : int, sequence, str
+        default: rcParams["hist.bins"] (default: 10)
+        If bins is an integer, it defines the number of equal-width
+        bins in the range.
+        If bins is a sequence, it defines the bin edges, including the
+        left edge of the first bin and the right edge of the last bin;
+        in this case, bins may be unequally spaced. All but the last
+        (righthand-most) bin is half-open. In other words, if bins is:
+        [1, 2, 3, 4]
+        then the first bin is [1, 2) (including 1, but excluding 2) and
+        the second [2, 3). The last bin, however, is [3, 4], which
+        includes 4.
+        If bins is a string, it is one of the binning strategies supported
+        by numpy.histogram_bin_edges: 'auto', 'fd', 'doane', 'scott',
+        'stone', 'rice', 'sturges', or 'sqrt'.
+    title : str
+        Set the plot title
+    xlabel : str
+        Set the x-axis title
+    ylabel : str
+        Set the y-axis title
+    kwargs : any
+        Any keyword argument may be set per matplotlib histogram:
+        https://matplotlib.org/3.3.1/api/_as_gen/matplotlib.pyplot.hist.html
+    """
     def __init__(
         self,
         data,
@@ -472,40 +536,7 @@ class Histogram(DistributionChart):
         ylabel="Counts",
         **kwargs
     ):
-        """Initialization of Histogram class
-
-        Parameters
-        ----------
-        data : array-like
-            Input array (1-D)
-        bins : int, sequence, str
-            default: rcParams["hist.bins"] (default: 10)
-            If bins is an integer, it defines the number of equal-width
-            bins in the range.
-
-            If bins is a sequence, it defines the bin edges, including the
-            left edge of the first bin and the right edge of the last bin;
-            in this case, bins may be unequally spaced. All but the last
-            (righthand-most) bin is half-open. In other words, if bins is:
-            [1, 2, 3, 4]
-            then the first bin is [1, 2) (including 1, but excluding 2) and
-            the second [2, 3). The last bin, however, is [3, 4], which
-            includes 4.
-
-            If bins is a string, it is one of the binning strategies supported
-            by numpy.histogram_bin_edges: 'auto', 'fd', 'doane', 'scott',
-            'stone', 'rice', 'sturges', or 'sqrt'.
-        title : str
-            Set the plot title
-        xlabel : str
-            Set the x-axis title
-        ylabel : str
-            Set the y-axis title
-        kwargs : any
-            Any keyword argument may be set per matplotlib histogram:
-            https://matplotlib.org/3.3.1/api/_as_gen/matplotlib.pyplot.hist.html
-
-        """
+        """Initialization of Histogram class"""
         self.bins = bins
         DistributionChart.__init__(
             self, data, title=title, xlabel=xlabel, ylabel=ylabel, **kwargs
@@ -522,8 +553,24 @@ class Histogram(DistributionChart):
 
 
 class BoxPlot(DistributionChart):
-    """Box and Whisker plotting class object"""
+    """Box and Whisker plotting class object
 
+    Parameters
+    ----------
+    data : array-like
+        Input array (1-D or 2-D)
+    title : str, optional
+        Set the plot title
+    xlabel : str, optional
+        Set the x-axis title
+    xlabels : array-like, optional
+        Set the xtick labels (e.g., variable names for each box plot)
+    ylabel : str, optional
+        Set the y-axis title
+    kwargs : any, optional
+        Any keyword argument may be set per matplotlib histogram:
+        https://matplotlib.org/3.3.1/api/_as_gen/matplotlib.pyplot.boxplot.html
+    """
     def __init__(
         self,
         data,
@@ -533,24 +580,7 @@ class BoxPlot(DistributionChart):
         xlabels=None,
         **kwargs
     ):
-        """Initialization of Histogram class
-
-        Parameters
-        ----------
-        data : array-like
-            Input array (1-D or 2-D)
-        title : str, optional
-            Set the plot title
-        xlabel : str, optional
-            Set the x-axis title
-        xlabels : array-like, optional
-            Set the xtick labels (e.g., variable names for each box plot)
-        ylabel : str, optional
-            Set the y-axis title
-        kwargs : any, optional
-            Any keyword argument may be set per matplotlib histogram:
-            https://matplotlib.org/3.3.1/api/_as_gen/matplotlib.pyplot.boxplot.html
-        """
+        """Initialization of Histogram class"""
         self.xlabels = xlabels
         DistributionChart.__init__(
             self, data, title=title, xlabel=xlabel, ylabel=ylabel, **kwargs
