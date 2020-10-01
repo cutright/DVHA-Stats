@@ -39,7 +39,28 @@ class DVHAStatsBaseClass:
 
 
 class DVHAStats(DVHAStatsBaseClass):
-    """The main UI class object for DVHAStats"""
+    """The main UI class object for DVHAStats
+
+    Parameters
+    ----------
+    data : numpy.array, dict, str, None
+        Input data (2-D) with N rows of observations and
+        p columns of variables.  The CSV file must have a header row
+        for column names. Test data is loaded if None
+    var_names : list of str, optional
+        If data is a numpy array, optionally provide the column names.
+    x_axis : numpy.array, list, optional
+        Specify x_axis for plotting purposes. Default is based on row
+        number in data
+    avg_len : int
+        When plotting raw data, a trend line will be plotted using this
+        value as an averaging length. If N < avg_len + 1 will not
+        plot a trend line
+    del_const_vars : bool
+        Automatically delete any variables that have constant data. The
+        names of these variables are stored in the excluded_vars attr.
+        Default value is False.
+    """
 
     def __init__(
         self,
@@ -49,28 +70,7 @@ class DVHAStats(DVHAStatsBaseClass):
         avg_len=5,
         del_const_vars=False,
     ):
-        """Class used to calculated various statistics
-
-        Parameters
-        ----------
-        data : numpy.array, dict, str, None
-            Input data (2-D) with N rows of observations and
-            p columns of variables.  The CSV file must have a header row
-            for column names. Test data is loaded if None
-        var_names : list of str, optional
-            If data is a numpy array, optionally provide the column names.
-        x_axis : numpy.array, list, optional
-            Specify x_axis for plotting purposes. Default is based on row
-            number in data
-        avg_len : int
-            When plotting raw data, a trend line will be plotted using this
-            value as an averaging length. If N < avg_len + 1 will not
-            plot a trend line
-        del_const_vars : bool
-            Automatically delete any variables that have constant data. The
-            names of these variables are stored in the excluded_vars attr.
-            Default value is False.
-        """
+        """Class used to calculated various statistics"""
         DVHAStatsBaseClass.__init__(self)
 
         data = TEST_DATA_PATH if data is None else data
@@ -708,8 +708,22 @@ class DVHAStats(DVHAStatsBaseClass):
 
 
 class ControlChartUI(DVHAStatsBaseClass, stats.ControlChart):
-    """Univariate Control Chart"""
+    """Univariate Control Chart
 
+    Parameters
+    ----------
+    y : list, np.ndarray
+        Input data (1-D)
+    std : int, float, optional
+        Number of standard deviations used to calculate if a y-value is
+        out-of-control.
+    ucl_limit : float, optional
+        Limit the upper control limit to this value
+    lcl_limit : float, optional
+        Limit the lower control limit to this value
+    plot_title : str, optional
+        Over-ride the plot title
+    """
     def __init__(
         self,
         y,
@@ -720,23 +734,7 @@ class ControlChartUI(DVHAStatsBaseClass, stats.ControlChart):
         x=None,
         plot_title=None,
     ):
-        """
-        Calculate control limits for a standard univariate Control Chart
-
-        Parameters
-        ----------
-        y : list, np.ndarray
-            Input data (1-D)
-        std : int, float, optional
-            Number of standard deviations used to calculate if a y-value is
-            out-of-control.
-        ucl_limit : float, optional
-            Limit the upper control limit to this value
-        lcl_limit : float, optional
-            Limit the lower control limit to this value
-        plot_title : str, optional
-            Over-ride the plot title
-        """
+        """Calculate control limits for a standard univariate Control Chart"""
         DVHAStatsBaseClass.__init__(self)
         stats.ControlChart.__init__(
             self, y, std=std, ucl_limit=ucl_limit, lcl_limit=lcl_limit, x=x
@@ -767,7 +765,34 @@ class ControlChartUI(DVHAStatsBaseClass, stats.ControlChart):
 class RiskAdjustedControlChartUI(
     DVHAStatsBaseClass, stats.RiskAdjustedControlChart
 ):
-    """Risk-Adjusted Control Chart using a Multi-Variable Regression"""
+    """Risk-Adjusted Control Chart using a Multi-Variable Regression
+
+    Parameters
+    ----------
+    X : array-like
+        Input array (independent data)
+    y : list, np.ndarray
+        1-D Input data (dependent data)
+    std : int, float, optional
+        Number of standard deviations used to calculate if a y-value is
+        out-of-control.
+    ucl_limit : float, optional
+        Limit the upper control limit to this value
+    lcl_limit : float, optional
+        Limit the lower control limit to this value
+    x : list, np.ndarray, optional
+        x-axis values
+    plot_title : str, optional
+        Over-ride the plot title
+    saved_reg : MultiVariableRegression, optional
+        Optionally provide a previously calculated regression
+    var_names : list, optional
+        Optionally provide names of the variables
+    back_elim : bool
+        Automatically perform backward elimination if True
+    back_elim_p : float
+        p-value threshold for backward elimination
+    """
 
     def __init__(
         self,
@@ -784,35 +809,7 @@ class RiskAdjustedControlChartUI(
         back_elim=False,
         back_elim_p=0.05,
     ):
-        """
-        Calculate control limits for a Risk-Adjusted Control Chart
-
-        Parameters
-        ----------
-        X : array-like
-            Input array (independent data)
-        y : list, np.ndarray
-            1-D Input data (dependent data)
-        std : int, float, optional
-            Number of standard deviations used to calculate if a y-value is
-            out-of-control.
-        ucl_limit : float, optional
-            Limit the upper control limit to this value
-        lcl_limit : float, optional
-            Limit the lower control limit to this value
-        x : list, np.ndarray, optional
-            x-axis values
-        plot_title : str, optional
-            Over-ride the plot title
-        saved_reg : MultiVariableRegression, optional
-            Optionally provide a previously calculated regression
-        var_names : list, optional
-            Optionally provide names of the variables
-        back_elim : bool
-            Automatically perform backward elimination if True
-        back_elim_p : float
-            p-value threshold for backward elimination
-        """
+        """Calculate control limits for a Risk-Adjusted Control Chart"""
         DVHAStatsBaseClass.__init__(self)
 
         stats.RiskAdjustedControlChart.__init__(
@@ -852,22 +849,22 @@ class RiskAdjustedControlChartUI(
 
 
 class HotellingT2UI(DVHAStatsBaseClass, stats.HotellingT2):
-    """Hotelling's t-squared statistic for multivariate hypothesis testing"""
+    """Hotelling's t-squared statistic for multivariate hypothesis testing
+
+    Parameters
+    ----------
+    data : np.ndarray
+        A 2-D array of data to perform multivariate analysis.
+        (e.g., DVHAStats.data)
+    alpha : float
+        The significance level used to calculate the
+        upper control limit (UCL)
+    plot_title : str, optional
+        Over-ride the plot title
+    """
 
     def __init__(self, data, alpha=0.05, plot_title=None):
-        """Initialize the Hotelling T^2 class
-
-        Parameters
-        ----------
-        data : np.ndarray
-            A 2-D array of data to perform multivariate analysis.
-            (e.g., DVHAStats.data)
-        alpha : float
-            The significance level used to calculate the
-            upper control limit (UCL)
-        plot_title : str, optional
-            Over-ride the plot title
-        """
+        """Initialize the Hotelling T^2 class"""
         DVHAStatsBaseClass.__init__(self)
         stats.HotellingT2.__init__(self, data, alpha=alpha)
 
@@ -894,42 +891,39 @@ class HotellingT2UI(DVHAStatsBaseClass, stats.HotellingT2):
 
 
 class PCAUI(DVHAStatsBaseClass, stats.PCA):
-    """Hotelling's t-squared statistic for multivariate hypothesis testing"""
+    """Hotelling's t-squared statistic for multivariate hypothesis testing
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+        Training data, where n_samples is the number of samples and
+        n_features is the number of features.
+    var_names : str, optional
+        Names of the independent variables in X
+    n_components : int, float, None or str
+        Number of components to keep. if n_components is not set all
+        components are kept:
+        n_components == min(n_samples, n_features)
+        If n_components == 'mle' and svd_solver == 'full', Minka’s MLE
+        is used to guess the dimension. Use of n_components == 'mle'
+        will interpret svd_solver == 'auto' as svd_solver == 'full'.
+        If 0 < n_components < 1 and svd_solver == 'full', select the
+        number of components such that the amount of variance that
+        needs to be explained is greater than the percentage specified
+        by n_components.
+        If svd_solver == 'arpack', the number of components must be
+        strictly less than the minimum of n_features and n_samples.
+    transform : bool
+        Fit the model and apply the dimensionality reduction
+    kwargs : any
+        Provide any keyword arguments for sklearn.decomposition.PCA:
+        https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
+    """
 
     def __init__(
         self, X, var_names=None, n_components=0.95, transform=True, **kwargs
     ):
-        """Initialize PCA and perform fit. Inherits sklearn.decomposition.PCA
-
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples and
-            n_features is the number of features.
-        var_names : str, optional
-            Names of the independent variables in X
-        n_components : int, float, None or str
-            Number of components to keep. if n_components is not set all
-            components are kept:
-            n_components == min(n_samples, n_features)
-
-            If n_components == 'mle' and svd_solver == 'full', Minka’s MLE
-            is used to guess the dimension. Use of n_components == 'mle'
-            will interpret svd_solver == 'auto' as svd_solver == 'full'.
-
-            If 0 < n_components < 1 and svd_solver == 'full', select the
-            number of components such that the amount of variance that
-            needs to be explained is greater than the percentage specified
-            by n_components.
-
-            If svd_solver == 'arpack', the number of components must be
-            strictly less than the minimum of n_features and n_samples.
-        transform : bool
-            Fit the model and apply the dimensionality reduction
-        kwargs : any
-            Provide any keyword arguments for sklearn.decomposition.PCA:
-            https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
-        """
+        """Initialize PCA and perform fit. Inherits sklearn.decomposition.PCA"""
         # print(kwargs)
         DVHAStatsBaseClass.__init__(self)
         stats.PCA.__init__(
@@ -962,25 +956,25 @@ class PCAUI(DVHAStatsBaseClass, stats.PCA):
 
 
 class CorrelationMatrixUI(DVHAStatsBaseClass, stats.CorrelationMatrix):
-    """Pearson-R correlation matrix UI object"""
+    """Pearson-R correlation matrix UI object
+
+    Parameters
+    ----------
+    X : np.ndarray
+        Input data (2-D) with N rows of observations and
+        p columns of variables.
+    var_names : list, optional
+        Optionally set the variable names with a list of str
+    corr_type : str
+        Either "Pearson" or "Spearman"
+    cmap : str
+        matplotlib compatible color map
+    """
 
     def __init__(
         self, X, var_names=None, corr_type="Pearson", cmap="coolwarm"
     ):
-        """Initialization of CorrelationMatrix object
-
-        Parameters
-        ----------
-        X : np.ndarray
-            Input data (2-D) with N rows of observations and
-            p columns of variables.
-        var_names : list, optional
-            Optionally set the variable names with a list of str
-        corr_type : str
-            Either "Pearson" or "Spearman"
-        cmap : str
-            matplotlib compatible color map
-        """
+        """Initialization of CorrelationMatrix object"""
         DVHAStatsBaseClass.__init__(self)
         stats.CorrelationMatrix.__init__(self, X=X, corr_type=corr_type)
         self.var_names = range(X.shape[1]) if var_names is None else var_names
@@ -1023,7 +1017,25 @@ class CorrelationMatrixUI(DVHAStatsBaseClass, stats.CorrelationMatrix):
 
 
 class LinearRegUI(DVHAStatsBaseClass, stats.MultiVariableRegression):
-    """A MultiVariableRegression class UI object"""
+    """A MultiVariableRegression class UI object
+
+    Parameters
+    ----------
+    y : np.ndarray, list
+        Dependent data based on DVHAStats.data
+    saved_reg : MultiVariableRegression, optional
+        If supplied, predicted values (y-hat) will be calculated with
+        DVHAStats.data and the regression from saved_reg. This is useful
+        if testing a regression model on new data.
+    var_names : list, optional
+        Optionally provide names of the independent variables
+    y_var_name : int, str, optional
+        Optionally provide name of the dependent variable
+    back_elim : bool
+        Automatically perform backward elimination if True
+    back_elim_p : float
+        p-value threshold for backward elimination
+    """
 
     def __init__(
         self,
@@ -1035,25 +1047,7 @@ class LinearRegUI(DVHAStatsBaseClass, stats.MultiVariableRegression):
         back_elim=False,
         back_elim_p=0.05,
     ):
-        """Initialization of LinearRegUI object
-
-        Parameters
-        ----------
-        y : np.ndarray, list
-            Dependent data based on DVHAStats.data
-        saved_reg : MultiVariableRegression, optional
-            If supplied, predicted values (y-hat) will be calculated with
-            DVHAStats.data and the regression from saved_reg. This is useful
-            if testing a regression model on new data.
-        var_names : list, optional
-            Optionally provide names of the independent variables
-        y_var_name : int, str, optional
-            Optionally provide name of the dependent variable
-        back_elim : bool
-            Automatically perform backward elimination if True
-        back_elim_p : float
-            p-value threshold for backward elimination
-        """
+        """Initialization of LinearRegUI object"""
         DVHAStatsBaseClass.__init__(self)
         stats.MultiVariableRegression.__init__(
             self,

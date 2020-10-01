@@ -21,47 +21,48 @@ from prettytable import PrettyTable
 
 
 class Histogram:
-    """Basic histogram plot using matplotlib histogram calculation"""
+    """Basic histogram plot using matplotlib histogram calculation
+
+    Parameters
+    ----------
+    y: array-like
+        Input array.
+    bins : int, list, str, optional
+        If bins is an int, it defines the number of equal-width bins in
+        the given range (10, by default). If bins is a sequence, it
+        defines a monotonically increasing array of bin edges, including
+        the rightmost edge, allowing for non-uniform bin widths.
+        If bins is a string, it defines the method used to calculate the
+        optimal bin width, as defined by histogram_bin_edges.
+        ‘auto’ - Maximum of the ‘sturges’ and ‘fd’ estimators.
+        Provides good all around performance.
+        ‘fd’  - (Freedman Diaconis Estimator) Robust (resilient to
+        outliers) estimator that takes into account data variability and
+        data size.
+        ‘doane’ - An improved version of Sturges’ estimator that works
+        better with non-normal datasets.
+        ‘scott’ - Less robust estimator that that takes into account data
+        variability and data size.
+        ‘stone’ - Estimator based on leave-one-out cross-validation
+        estimate of the integrated squared error. Can be regarded as a
+        generalization of Scott’s rule.
+        ‘rice’ - Estimator does not take variability into account, only
+        data size. Commonly overestimates number of bins required.
+        ‘sturges’ - R’s default method, only accounts for data size. Only
+        optimal for gaussian data and underestimates number of bins for
+        large non-gaussian datasets.
+        ‘sqrt’ - Square root (of data size) estimator, used by Excel and
+        other programs for its speed and simplicity.
+    nan_policy : str
+        Value must be one of the following: ‘propagate’, ‘raise’, ‘omit’
+        Defines how to handle when input contains nan. The following
+        options are available (default is ‘omit’):
+        ‘propagate’: returns nan
+        ‘raise’: throws an error
+        ‘omit’: performs the calculations ignoring nan values"""
 
     def __init__(self, y, bins, nan_policy="omit"):
-        """Initialization of Histogram class object
-
-        y: array-like
-            Input array.
-        bins : int, list, str, optional
-            If bins is an int, it defines the number of equal-width bins in
-            the given range (10, by default). If bins is a sequence, it
-            defines a monotonically increasing array of bin edges, including
-            the rightmost edge, allowing for non-uniform bin widths.
-            If bins is a string, it defines the method used to calculate the
-            optimal bin width, as defined by histogram_bin_edges.
-            ‘auto’ - Maximum of the ‘sturges’ and ‘fd’ estimators.
-            Provides good all around performance.
-            ‘fd’  - (Freedman Diaconis Estimator) Robust (resilient to
-            outliers) estimator that takes into account data variability and
-            data size.
-            ‘doane’ - An improved version of Sturges’ estimator that works
-            better with non-normal datasets.
-            ‘scott’ - Less robust estimator that that takes into account data
-            variability and data size.
-            ‘stone’ - Estimator based on leave-one-out cross-validation
-            estimate of the integrated squared error. Can be regarded as a
-            generalization of Scott’s rule.
-            ‘rice’ - Estimator does not take variability into account, only
-            data size. Commonly overestimates number of bins required.
-            ‘sturges’ - R’s default method, only accounts for data size. Only
-            optimal for gaussian data and underestimates number of bins for
-            large non-gaussian datasets.
-            ‘sqrt’ - Square root (of data size) estimator, used by Excel and
-            other programs for its speed and simplicity.
-        nan_policy : str
-            Value must be one of the following: ‘propagate’, ‘raise’, ‘omit’
-            Defines how to handle when input contains nan. The following
-            options are available (default is ‘omit’):
-            ‘propagate’: returns nan
-            ‘raise’: throws an error
-            ‘omit’: performs the calculations ignoring nan values
-        """
+        """Initialization of Histogram class object"""
 
         self.y = process_nan_policy(y, nan_policy)
         self.bins = bins
@@ -152,7 +153,25 @@ class Histogram:
 
 
 class MultiVariableRegression:
-    """Multi-variable regression using scikit-learn"""
+    """Multi-variable regression using scikit-learn
+
+    Parameters
+    ----------
+    X : array-like
+        Independent data
+    y : array-like
+        Dependent data
+    saved_reg : MultiVariableRegression, optional
+        Optionally provide a previously calculated regression
+    var_names : list, optional
+        Optionally provide names of the variables
+    y_var_name : int, str, optional
+        Optionally provide name of the dependent variable
+    back_elim : bool
+        Automatically perform backward elimination if True
+    back_elim_p : float
+        p-value threshold for backward elimination
+    """
 
     def __init__(
         self,
@@ -164,25 +183,7 @@ class MultiVariableRegression:
         back_elim=False,
         back_elim_p=0.05,
     ):
-        """Initialization of a MultiVariableRegression
-
-        Parameters
-        ----------
-        X : array-like
-            Independent data
-        y : array-like
-            Dependent data
-        saved_reg : MultiVariableRegression, optional
-            Optionally provide a previously calculated regression
-        var_names : list, optional
-            Optionally provide names of the variables
-        y_var_name : int, str, optional
-            Optionally provide name of the dependent variable
-        back_elim : bool
-            Automatically perform backward elimination if True
-        back_elim_p : float
-            p-value threshold for backward elimination
-        """
+        """Initialization of a MultiVariableRegression"""
 
         self.X = np.array(X)
         self.y = np.array(y)
@@ -443,7 +444,20 @@ class MultiVariableRegression:
 
 
 class ControlChart:
-    """Univariate Control Chart"""
+    """Calculate control limits for a standard univariate Control Chart"
+
+    Parameters
+    ----------
+    y : list, np.ndarray
+        Input data (1-D)
+    std : int, float, optional
+        Number of standard deviations used to calculate if a y-value is
+        out-of-control.
+    ucl_limit : float, optional
+        Limit the upper control limit to this value
+    lcl_limit : float, optional
+        Limit the lower control limit to this value
+    """
 
     def __init__(
         self,
@@ -453,21 +467,7 @@ class ControlChart:
         lcl_limit=None,
         x=None,
     ):
-        """
-        Calculate control limits for a standard univariate Control Chart
-
-        Parameters
-        ----------
-        y : list, np.ndarray
-            Input data (1-D)
-        std : int, float, optional
-            Number of standard deviations used to calculate if a y-value is
-            out-of-control.
-        ucl_limit : float, optional
-            Limit the upper control limit to this value
-        lcl_limit : float, optional
-            Limit the lower control limit to this value
-        """
+        """Initialization of a ControlChart"""
 
         self.y = np.array(y) if isinstance(y, list) else y
         self.x = x if x else np.linspace(1, len(self.y), len(self.y))
@@ -612,26 +612,26 @@ class ControlChart:
 
 
 class HotellingT2:
-    """Hotelling's t-squared statistic for multivariate hypothesis testing"""
+    """Hotelling's t-squared statistic for multivariate hypothesis testing
+
+    Parameters
+    ----------
+    data : np.ndarray
+        A 2-D array of data to perform multivariate analysis.
+        (e.g., DVHAStats.data)
+    alpha : float
+        The significance level used to calculate the
+        upper control limit (UCL)
+    const_policy : str
+        {‘raise’, 'omit'}
+        Defines how to handle when data is constant. The following
+        options are available (default is ‘raise’):
+        ‘raise’: throws an error
+        'omit': exclude constant variables from calculation
+    """
 
     def __init__(self, data, alpha=0.05, const_policy="raise"):
-        """Initialize the Hotelling T^2 class
-
-        Parameters
-        ----------
-        data : np.ndarray
-            A 2-D array of data to perform multivariate analysis.
-            (e.g., DVHAStats.data)
-        alpha : float
-            The significance level used to calculate the
-            upper control limit (UCL)
-        const_policy : str
-            {‘raise’, 'omit'}
-            Defines how to handle when data is constant. The following
-            options are available (default is ‘raise’):
-            ‘raise’: throws an error
-            'omit': exclude constant variables from calculation
-        """
+        """Initialize the Hotelling T^2 class"""
 
         self.data = (
             data if const_policy == "raise" else remove_const_column(data)
@@ -779,6 +779,30 @@ class HotellingT2:
 
 
 class RiskAdjustedControlChart(ControlChart):
+    """ Calculate a risk-adjusted univariate Control Chart (with linear MVR)
+
+    Parameters
+    ----------
+    X : array-like
+        Independent data
+    y : list, np.ndarray
+        Input data (1-D)
+    std : int, float, optional
+        Number of standard deviations used to calculate if a y-value is
+        out-of-control.
+    ucl_limit : float, optional
+        Limit the upper control limit to this value
+    lcl_limit : float, optional
+        Limit the lower control limit to this value
+    saved_reg : MultiVariableRegression, optional
+        Optionally provide a previously calculated regression
+    var_names : list, optional
+        Optionally provide names of the variables
+    back_elim : bool
+        Automatically perform backward elimination if True
+    back_elim_p : float
+        p-value threshold for backward elimination
+    """
     def __init__(
         self,
         X,
@@ -789,35 +813,10 @@ class RiskAdjustedControlChart(ControlChart):
         x=None,
         saved_reg=None,
         var_names=None,
-        reg_vars=None,
         back_elim=False,
         back_elim_p=0.05,
     ):
-        """
-        Calculate control limits for a standard univariate Control Chart
-
-        Parameters
-        ----------
-        X : array-like
-                Independent data
-        y : list, np.ndarray
-            Input data (1-D)
-        std : int, float, optional
-            Number of standard deviations used to calculate if a y-value is
-            out-of-control.
-        ucl_limit : float, optional
-            Limit the upper control limit to this value
-        lcl_limit : float, optional
-            Limit the lower control limit to this value
-        saved_reg : MultiVariableRegression, optional
-            Optionally provide a previously calculated regression
-        var_names : list, optional
-            Optionally provide names of the variables
-        back_elim : bool
-            Automatically perform backward elimination if True
-        back_elim_p : float
-            p-value threshold for backward elimination
-        """
+        """Calculate control limits for a standard univariate Control Chart"""
         self.y_raw = y
         self.mvr = MultiVariableRegression(
             X,
@@ -838,42 +837,39 @@ class RiskAdjustedControlChart(ControlChart):
 
 
 class PCA(sklearn_PCA):
-    """Hotelling's t-squared statistic for multivariate hypothesis testing"""
+    """Principal Component Analysis with sklearn.decomposition.PCA
+
+    Parameters
+    ----------
+    X : np.ndarray
+        Training data (2-D), where n_samples is the number of samples and
+        n_features is the number of features. shape (n_samples, n_features)
+    var_names : list, optional
+        Optionally provide names of the features
+    n_components : int, float, None or str
+        Number of components to keep. if n_components is not set all
+        components are kept:
+        n_components == min(n_samples, n_features)
+        If n_components == 'mle' and svd_solver == 'full', Minka’s MLE
+        is used to guess the dimension. Use of n_components == 'mle'
+        will interpret svd_solver == 'auto' as svd_solver == 'full'.
+        If 0 < n_components < 1 and svd_solver == 'full', select the
+        number of components such that the amount of variance that
+        needs to be explained is greater than the percentage specified
+        by n_components.
+        If svd_solver == 'arpack', the number of components must be
+        strictly less than the minimum of n_features and n_samples.
+    transform : bool
+        Fit the model and apply the dimensionality reduction
+    kwargs : any
+        Provide any keyword arguments for sklearn.decomposition.PCA:
+        https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
+    """
 
     def __init__(
         self, X, var_names=None, n_components=0.95, transform=True, **kwargs
     ):
-        """Initialize PCA and perform fit. Inherits sklearn.decomposition.PCA
-
-        Parameters
-        ----------
-        X : np.ndarray
-            Training data (2-D), where n_samples is the number of samples and
-            n_features is the number of features. shape (n_samples, n_features)
-        var_names : list, optional
-            Optionally provide names of the features
-        n_components : int, float, None or str
-            Number of components to keep. if n_components is not set all
-            components are kept:
-            n_components == min(n_samples, n_features)
-
-            If n_components == 'mle' and svd_solver == 'full', Minka’s MLE
-            is used to guess the dimension. Use of n_components == 'mle'
-            will interpret svd_solver == 'auto' as svd_solver == 'full'.
-
-            If 0 < n_components < 1 and svd_solver == 'full', select the
-            number of components such that the amount of variance that
-            needs to be explained is greater than the percentage specified
-            by n_components.
-
-            If svd_solver == 'arpack', the number of components must be
-            strictly less than the minimum of n_features and n_samples.
-        transform : bool
-            Fit the model and apply the dimensionality reduction
-        kwargs : any
-            Provide any keyword arguments for sklearn.decomposition.PCA:
-            https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
-        """
+        """Initialize PCA and perform fit."""
 
         self.X = X
         self.var_names = (
@@ -915,19 +911,19 @@ class PCA(sklearn_PCA):
 
 
 class CorrelationMatrix:
-    """Pearson-R correlation matrix"""
+    """Pearson-R correlation matrix
+
+    Parameters
+    ----------
+    X : np.ndarray
+        Input data (2-D) with N rows of observations and
+        p columns of variables.
+    corr_type : str
+        Either "Pearson" or "Spearman"
+    """
 
     def __init__(self, X, corr_type="Pearson"):
-        """Initialization of CorrelationMatrix object
-
-        Parameters
-        ----------
-        X : np.ndarray
-            Input data (2-D) with N rows of observations and
-            p columns of variables.
-        corr_type : str
-            Either "Pearson" or "Spearman"
-        """
+        """Initialization of CorrelationMatrix object"""
         self.X = X
         self.corr_type = corr_type.lower()
 
