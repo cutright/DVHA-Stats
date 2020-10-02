@@ -11,6 +11,7 @@
 
 import numpy as np
 from os.path import isfile, splitext
+from dateutil.parser import parse as date_parser
 
 
 def apply_dtype(value, dtype):
@@ -20,7 +21,7 @@ def apply_dtype(value, dtype):
     ----------
     value : any
         Value to be converted
-    dtype : callable
+    dtype : function
         python reserved types, e.g., int, float, str, etc. However, dtype
         could be any callable that raises a ValueError on failure.
 
@@ -132,3 +133,220 @@ def import_data(data, var_names=None):
 
     msg = "Invalid data provided - must be a numpy array, dict, or .csv file"
     raise NotImplementedError(msg)
+
+
+def widen_data(
+    data_dict,
+    uid_columns,
+    x_data_cols,
+    y_data_col,
+    date_col=None,
+    sort_by_date=True,
+    remove_partial_columns=False,
+    multi_val_policy="first",
+    dtype=None,
+    date_parser_kwargs=None,
+):
+    """Convert a flat data dictionary into wide format
+
+    Parameters
+    ----------
+    data_dict : dict
+        Data to be converted. The length of each array must be uniform.
+    uid_columns : list
+        Keys of data_dict used to create an observation uid
+    x_data_cols : list
+        Keys of columns representing independent data
+    y_data_col : int, str
+        Key of data_dict representing dependent data
+    date_col : int, str, optional
+        Key of date column
+    sort_by_date : bool, optional
+        Sort output by date (date_col required)
+    remove_partial_columns : bool, optional
+        If true, any columns that have a blank row will be removed
+    multi_val_policy : str
+        Either 'first', 'last', 'min', 'max'. If multiple values are found for
+        a particular combination of x_data_cols, one value will be selected
+        based on this policy.
+    dtype : function
+        python reserved types, e.g., int, float, str, etc. However, dtype
+        could be any callable that raises a ValueError on failure.
+    date_parser_kwargs : dict, optional
+        Keyword arguments to be passed into dateutil.parser.parse
+
+    Returns
+    ----------
+    dict
+        data_dict reformatted to one row per UID
+    """
+
+    data_lengths = [len(col) for col in data_dict.values()]
+    if len(set(data_lengths)) != 1:
+        msg = "Each column of data_dict must be of the same length"
+        raise NotImplementedError(msg)
+
+    if multi_val_policy not in {"first", "last", "min", "max"}:
+        msg = "multi_val_policy must be in 'first', 'last', 'min', or 'max'"
+        raise NotImplementedError(msg)
+
+    data = {}
+    for row in range(len(data_dict[y_data_col])):
+        uid = "".join([str(data_dict[col][row]) for col in uid_columns])
+
+        if uid not in list(data):
+            data[uid] = {}
+
+        params = "/".join([str(data_dict[col][row]) for col in x_data_cols])
+
+        date = row if date_col is None else data_dict[date_col][row]
+        if date not in data[uid].keys():
+            data[uid][date] = {}
+
+        if params not in list(data[uid][date]):
+            data[uid][date][params] = []
+
+        data[uid][date][params].append(data_dict[y_data_col][row])
+
+    x_variables = []
+    for results in data.values():
+        for date_results in results.values():
+            for param in date_results.keys():
+                if param not in {"uid", "date"}:
+                    x_variables.append(param)
+    x_variables = sorted(list(set(x_variables)))
+
+    keys = ["uid", "date"] + x_variables
+    wide_data = {key: [] for key in keys}
+    partial_cols = []
+    for uid, date_data in data.items():
+        for date, param_data in date_data.items():
+            wide_data["uid"].append(uid)
+            wide_data["date"].append(date)
+            for x in x_variables:
+                values = param_data.get(x)
+                if values is None:
+                    if remove_partial_columns:
+                        partial_cols.append(x)
+                    values = [""]
+
+                if dtype is not None:
+                    values = [apply_dtype(v, dtype) for v in values]
+
+                value = values[0]
+                if len(values) > 1:
+                    print(
+                        "WARNING: Multiple values found for uid: %s, date: "
+                        "%s, param: %s. Only the %s value is included in "
+                        "widen_data output." % (uid, date, x, multi_val_policy)
+                    )
+                    if multi_val_policy == "last":
+                        value = values[-1]
+                    elif multi_val_policy in {"min", "max"}:
+                        value = {"min": min, "max": max}[multi_val_policy](
+                            values
+                        )
+
+                wide_data[x].append(value)
+
+    if remove_partial_columns:
+        partial_cols = set(partial_cols)
+        if len(partial_cols):
+            for col in partial_cols:
+                wide_data.pop(col)
+                x_variables.pop(x_variables.index(col))
+
+    if date_col is None:
+        wide_data.pop("date")
+    elif sort_by_date:
+        kwargs = {} if date_parser_kwargs is None else date_parser_kwargs
+        dates = str_arr_to_date_arr(wide_data["date"], kwargs)
+        sorted_indices = get_sorted_indices(dates)
+        final_data = {key: [] for key in wide_data.keys()}
+        for row in range(len(wide_data[x_variables[0]])):
+            final_data["uid"].append(wide_data["uid"][sorted_indices[row]])
+            final_data["date"].append(wide_data["date"][sorted_indices[row]])
+            for x in x_variables:
+                final_data[x].append(wide_data[x][sorted_indices[row]])
+        return final_data
+
+    return wide_data
+
+
+def get_sorted_indices(list_data):
+    """Get original indices of a list after sorting
+
+    Parameters
+    ----------
+    list_data : list
+        Any python sortable list
+
+    Returns
+    ----------
+    list
+        list_data indices of sorted(list_data)
+    """
+    return [i[0] for i in sorted(enumerate(list_data), key=lambda x: x[1])]
+
+
+def sort_2d_array(arr, index, mode="col"):
+    """Sort a 2-D numpy array
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        Input 2-D array to be sorted
+    index : int, list
+        Index of column or row to sort arr.  If list, will sort by each index
+        in the order provided.
+    mode : str
+        Either 'col' or 'row'
+    """
+    if not isinstance(index, list):
+        index = [index]
+
+    if mode not in {"col", "row"}:
+        msg = (
+            "Unsupported sort_2d_array mode, "
+            "must be either 'col' or 'row' - got %s"
+            % mode
+        )
+        raise NotImplementedError(msg)
+
+    sort_by = arr[:, index[-1]] if mode == "col" else arr[index[-1], :]
+    arr = arr[sort_by.argsort()]
+    for i in index[0:-1][::-1]:
+        sort_by = arr[:, i] if mode == "col" else arr[i, :]
+        arr = arr[sort_by.argsort(kind="mergesort")]
+
+
+def str_arr_to_date_arr(arr, date_parser_kwargs=None, force=False):
+    """Convert an array of datetime strings to a list of datetime objects
+
+    Parameters
+    ----------
+    arr : array-like
+        Array of datetime strings compatible with dateutil.parser.parse
+    date_parser_kwargs : dict, optional
+        Keyword arguments to be passed into dateutil.parser.parse
+    force : bool
+        If true, failed parsings will result in original value. If false,
+        dateutil.parser.parse's error will be raised on failures.
+
+    Returns
+    ----------
+    list
+        list of datetime objects
+    """
+    kwargs = {} if date_parser_kwargs is None else date_parser_kwargs
+    dates = []
+    for date_str in arr:
+        try:
+            date = date_parser(date_str, **kwargs)
+        except Exception as e:
+            if force:
+                date = date_str
+            else:
+                raise e
+        dates.append(date)
+    return dates
