@@ -308,8 +308,7 @@ def sort_2d_array(arr, index, mode="col"):
     if mode not in {"col", "row"}:
         msg = (
             "Unsupported sort_2d_array mode, "
-            "must be either 'col' or 'row' - got %s"
-            % mode
+            "must be either 'col' or 'row' - got %s" % mode
         )
         raise NotImplementedError(msg)
 

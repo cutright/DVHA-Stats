@@ -107,31 +107,39 @@ class TestUtilities(unittest.TestCase):
         # One column sort
         arr = np.copy(self.expected_arr)
         arr = utilities.sort_2d_array(arr, 0)
-        expected_sort = np.array([[35.5, 31.1, 28.7, 25.3, 13.9,  6.9],
-                                  [44.5, 40.5, 37.7, 28.1, 13.3,  4.7],
-                                  [47.1, 41.1, 27.1, 12.1,  4.3,  3.1],
-                                  [48.1, 44.3, 38.5, 21.5, 10.9,  4.7],
-                                  [48.3, 44.5, 37.1, 20.1,  9.9,  3.9],
-                                  [48.9, 44.5, 41.7, 33.7, 16.9,  4.9],
-                                  [49.5, 43.9, 34.5, 13.9,  6.1,  3.7],
-                                  [49.9, 43.9, 40.7, 38.5, 36.5, 29.1],
-                                  [65.1, 58.7, 53.9, 48.7, 42.3, 31.3],
-                                  [np.nan, 51.9, 48.5, 33.9, 19.1, 12.7]])
+        expected_sort = np.array(
+            [
+                [35.5, 31.1, 28.7, 25.3, 13.9, 6.9],
+                [44.5, 40.5, 37.7, 28.1, 13.3, 4.7],
+                [47.1, 41.1, 27.1, 12.1, 4.3, 3.1],
+                [48.1, 44.3, 38.5, 21.5, 10.9, 4.7],
+                [48.3, 44.5, 37.1, 20.1, 9.9, 3.9],
+                [48.9, 44.5, 41.7, 33.7, 16.9, 4.9],
+                [49.5, 43.9, 34.5, 13.9, 6.1, 3.7],
+                [49.9, 43.9, 40.7, 38.5, 36.5, 29.1],
+                [65.1, 58.7, 53.9, 48.7, 42.3, 31.3],
+                [np.nan, 51.9, 48.5, 33.9, 19.1, 12.7],
+            ]
+        )
         assert_array_equal(arr, expected_sort)
 
         # Two column sort
         arr = np.copy(self.expected_arr)
         arr = utilities.sort_2d_array(arr, [1, 0])
-        expected_sort = np.array([[35.5, 31.1, 28.7, 25.3, 13.9,  6.9],
-                                  [44.5, 40.5, 37.7, 28.1, 13.3,  4.7],
-                                  [47.1, 41.1, 27.1, 12.1,  4.3,  3.1],
-                                  [49.5, 43.9, 34.5, 13.9,  6.1,  3.7],
-                                  [49.9, 43.9, 40.7, 38.5, 36.5, 29.1],
-                                  [48.1, 44.3, 38.5, 21.5, 10.9,  4.7],
-                                  [48.3, 44.5, 37.1, 20.1,  9.9,  3.9],
-                                  [48.9, 44.5, 41.7, 33.7, 16.9,  4.9],
-                                  [np.nan, 51.9, 48.5, 33.9, 19.1, 12.7],
-                                  [65.1, 58.7, 53.9, 48.7, 42.3, 31.3]])
+        expected_sort = np.array(
+            [
+                [35.5, 31.1, 28.7, 25.3, 13.9, 6.9],
+                [44.5, 40.5, 37.7, 28.1, 13.3, 4.7],
+                [47.1, 41.1, 27.1, 12.1, 4.3, 3.1],
+                [49.5, 43.9, 34.5, 13.9, 6.1, 3.7],
+                [49.9, 43.9, 40.7, 38.5, 36.5, 29.1],
+                [48.1, 44.3, 38.5, 21.5, 10.9, 4.7],
+                [48.3, 44.5, 37.1, 20.1, 9.9, 3.9],
+                [48.9, 44.5, 41.7, 33.7, 16.9, 4.9],
+                [np.nan, 51.9, 48.5, 33.9, 19.1, 12.7],
+                [65.1, 58.7, 53.9, 48.7, 42.3, 31.3],
+            ]
+        )
         assert_array_equal(arr, expected_sort)
 
         # Verify mode check
@@ -159,20 +167,24 @@ class TestUtilities(unittest.TestCase):
     def test_widen_data(self):
         """Test widen data script"""
         data_dict = utilities.csv_to_dict(example_narrow_data)
-        kwargs = {'uid_columns': ['patient', 'plan', 'field id'],
-                  'x_data_cols': ['DD(%)', 'DTA(mm)', 'Threshold(%)'],
-                  'y_data_col': 'Gamma Pass Rate(%)',
-                  'date_col': 'date',
-                  'dtype': float}
+        kwargs = {
+            "uid_columns": ["patient", "plan", "field id"],
+            "x_data_cols": ["DD(%)", "DTA(mm)", "Threshold(%)"],
+            "y_data_col": "Gamma Pass Rate(%)",
+            "date_col": "date",
+            "dtype": float,
+        }
         ds = utilities.widen_data(data_dict, **kwargs)
 
-        expected = {'uid': ['ANON1234Plan_name3', 'ANON1234Plan_name4'],
-                    'date': ['6/13/2019 7:27', '6/13/2019 7:27'],
-                    '2/3/10': [np.nan, 99.99476863],
-                    '2/3/5': [99.88772435, 99.99533258],
-                    '3/2/10': [99.94708217, 99.99941874],
-                    '3/3/10': [99.97706894, 100],
-                    '3/3/5': [99.97934552, 100]}
+        expected = {
+            "uid": ["ANON1234Plan_name3", "ANON1234Plan_name4"],
+            "date": ["6/13/2019 7:27", "6/13/2019 7:27"],
+            "2/3/10": [np.nan, 99.99476863],
+            "2/3/5": [99.88772435, 99.99533258],
+            "3/2/10": [99.94708217, 99.99941874],
+            "3/3/10": [99.97706894, 100],
+            "3/3/5": [99.97934552, 100],
+        }
 
         for key, exp_value in expected.items():
             assert_array_equal(ds[key], exp_value)
@@ -186,28 +198,30 @@ class TestUtilities(unittest.TestCase):
 
         # test column length check
         data_dict_2 = utilities.csv_to_dict(example_narrow_data)
-        data_dict_2[list(data_dict_2)[0]].append('test')
+        data_dict_2[list(data_dict_2)[0]].append("test")
         with self.assertRaises(NotImplementedError):
             utilities.widen_data(data_dict_2, **kwargs)
 
         # test policy check
         with self.assertRaises(NotImplementedError):
-            utilities.widen_data(data_dict, multi_val_policy='test', **kwargs)
+            utilities.widen_data(data_dict, multi_val_policy="test", **kwargs)
 
-        ds = utilities.widen_data(data_dict, multi_val_policy='last', **kwargs)
-        index = ds['uid'].index('ANON1234Plan_name4')
-        self.assertEqual(ds['2/3/10'][index], 50)
+        ds = utilities.widen_data(data_dict, multi_val_policy="last", **kwargs)
+        index = ds["uid"].index("ANON1234Plan_name4")
+        self.assertEqual(ds["2/3/10"][index], 50)
 
-        ds = utilities.widen_data(data_dict, multi_val_policy='min', **kwargs)
-        index = ds['uid'].index('ANON1234Plan_name4')
-        self.assertEqual(ds['2/3/10'][index], 50)
+        ds = utilities.widen_data(data_dict, multi_val_policy="min", **kwargs)
+        index = ds["uid"].index("ANON1234Plan_name4")
+        self.assertEqual(ds["2/3/10"][index], 50)
 
-        ds = utilities.widen_data(data_dict, multi_val_policy='max', **kwargs)
-        index = ds['uid'].index('ANON1234Plan_name4')
-        self.assertEqual(ds['2/3/10'][index], expected['2/3/10'][index])
+        ds = utilities.widen_data(data_dict, multi_val_policy="max", **kwargs)
+        index = ds["uid"].index("ANON1234Plan_name4")
+        self.assertEqual(ds["2/3/10"][index], expected["2/3/10"][index])
 
-        ds = utilities.widen_data(data_dict, remove_partial_columns=True, **kwargs)
-        self.assertTrue('2/3/10' not in ds.keys())
+        ds = utilities.widen_data(
+            data_dict, remove_partial_columns=True, **kwargs
+        )
+        self.assertTrue("2/3/10" not in ds.keys())
 
 
 if __name__ == "__main__":
