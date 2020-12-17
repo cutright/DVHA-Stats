@@ -11,3 +11,4 @@ omit =
     dvhastats/_version.py
     tests/*
     docs/*
+    venv/*

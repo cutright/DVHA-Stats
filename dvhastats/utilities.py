@@ -21,7 +21,7 @@ def apply_dtype(value, dtype):
     ----------
     value : any
         Value to be converted
-    dtype : function
+    dtype : function, None
         python reserved types, e.g., int, float, str, etc. However, dtype
         could be any callable that raises a ValueError on failure.
 
@@ -65,7 +65,7 @@ def csv_to_dict(csv_file_path, delimiter=",", dtype=None, header_row=True):
         # Read first row, determine column keys
         first_row = fp.readline().strip().split(delimiter)
         if header_row:
-            keys = first_row
+            keys = [key.strip() for key in first_row]
             data = {key: [] for key in keys}
         else:
             keys = list(range(len(first_row)))
@@ -126,7 +126,7 @@ def import_data(data, var_names=None):
     if isinstance(data, dict):
         data = dict_to_array(data)
         return data["data"], data["var_names"]
-    if isfile(data):
+    if isinstance(data, str) and isfile(data):
         if splitext(data)[1] == ".csv":
             data = dict_to_array(csv_to_dict(data, dtype=float))
             return data["data"], data["var_names"]
@@ -318,6 +318,7 @@ def sort_2d_array(arr, index, mode="col"):
     for i in index[0:-1][::-1]:
         sort_by = arr[:, i] if mode == "col" else arr[i, :]
         arr = arr[sort_by.argsort(kind="mergesort")]
+    return arr
 
 
 def str_arr_to_date_arr(arr, date_parser_kwargs=None, force=False):

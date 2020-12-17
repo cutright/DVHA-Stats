@@ -1,0 +1,11 @@
+patient,plan,field id,image type, date, DD(%), DTA(mm),Threshold(%),Gamma Pass Rate(%)
+ANON1234,Plan_name,3,field,6/13/2019 7:27,3,2,10,99.94708217
+ANON1234,Plan_name,3,field,6/13/2019 7:27,3,3,5,99.97934552
+ANON1234,Plan_name,3,field,6/13/2019 7:27,3,3,10,99.97706894
+ANON1234,Plan_name,3,field,6/13/2019 7:27,2,3,5,99.88772435
+ANON1234,Plan_name,4,field,6/13/2019 7:27,3,2,10,99.99941874
+ANON1234,Plan_name,4,field,6/13/2019 7:27,3,3,5,100
+ANON1234,Plan_name,4,field,6/13/2019 7:27,3,3,10,100
+ANON1234,Plan_name,4,field,6/13/2019 7:27,2,3,5,99.99533258
+ANON1234,Plan_name,4,field,6/13/2019 7:27,2,3,10,99.99476863
+ANON1234,Plan_name,4,field,6/13/2019 7:27,2,3,10,50
