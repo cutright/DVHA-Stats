@@ -22,3 +22,12 @@ plot module
     :members:
     :undoc-members:
     :show-inheritance:
+
+
+utilities module
+---------------------------------
+
+.. automodule:: dvhastats.utilities
+    :members:
+    :undoc-members:
+    :show-inheritance:
