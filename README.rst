@@ -4,7 +4,7 @@ dvhastats
 |logo|
 
 
-|build| |pypi| |Docs| |lgtm| |lgtm-cq| |Codecov|
+|build| |Docs| |pypi| |python-version| |lgtm| |lgtm-cq| |Codecov| |code-style|
 
 A library of prediction and statistical process control tools. Although based
 on work in `DVH Analytics <http://www.dvhanalytics.com>`__, all tools in this
@@ -80,7 +80,10 @@ Principal Component Analysis (PCA)
 .. |build| image:: https://github.com/cutright/DVHA-Stats/workflows/build/badge.svg
    :target: https://github.com/cutright/DVHA-Stats/actions
    :alt: build
-.. |pypi| image:: https://img.shields.io/pypi/v/dvha-stats.svg
+.. |pypi| image::  https://img.shields.io/pypi/v/dvha-stats.svg
+   :target: https://pypi.org/project/dvha-stats
+   :alt: PyPI
+.. |python-version| image:: https://img.shields.io/pypi/pyversions/dvha-stats.svg
    :target: https://pypi.org/project/dvha-stats
    :alt: PyPI
 .. |lgtm-cq| image:: https://img.shields.io/lgtm/grade/python/g/cutright/DVHA-Stats.svg?logo=lgtm&label=code%20quality
@@ -95,6 +98,9 @@ Principal Component Analysis (PCA)
 .. |Docs| image:: https://readthedocs.org/projects/dvha-stats/badge/?version=latest
    :target: https://dvha-stats.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
+.. |code-style| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+   :target: https://github.com/psf/black
+   :alt: Code style: black
 
 .. |plot| raw:: html
 

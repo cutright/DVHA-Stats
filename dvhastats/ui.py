@@ -724,6 +724,7 @@ class ControlChartUI(DVHAStatsBaseClass, stats.ControlChart):
     plot_title : str, optional
         Over-ride the plot title
     """
+
     def __init__(
         self,
         y,

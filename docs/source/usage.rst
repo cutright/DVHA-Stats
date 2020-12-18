@@ -4,7 +4,8 @@ Usage
 
 To use dvha-stats in a project:
 
-Statistical data can be easily accessed with :mod:`dvhastats.ui.DVHAStats` class.
+Statistical data can be easily accessed with :mod:`dvhastats.ui.DVHAStats`
+class.
 
 Getting Started
 ###############
@@ -14,6 +15,13 @@ Before attempting the examples below, run these lines first:
 
     from dvhastats.ui import DVHAStats
     s = DVHAStats("your_data.csv")  # use s = DVHAStats() for test data
+
+This assumes that your csv is formatted such that it contains one row per
+observation (*i.e.*, wide format). If your csv contains multivariate data with
+one row per dependent value (*i.e.*, narrow format), you can use
+:mod:`dvhastats.utilities.widen_data`. See
+:ref:`Reformatting CSV` for an example.
+
 
 Basic Plotting
 ##############
@@ -271,6 +279,49 @@ Calculation with `sklearn <https://scikit-learn.org/stable/modules/generated/skl
 
 
 |pca|
+
+
+Reformatting CSV
+################
+Below is an example of how to reformat a "narrow" csv (one row per dependent
+variable value) to a "wide" format (one row per observation). Please see
+:mod:`dvhastats.utilities.widen_data` for additional documentation.
+
+Let's assume the contents of your csv file looks like:
+
+.. code-block:: python
+
+    patient,plan,field id,image type, date, DD(%), DTA(mm),Threshold(%),Gamma Pass Rate(%)
+    ANON1234,Plan_name,3,field,6/13/2019 7:27,3,2,10,99.94708217
+    ANON1234,Plan_name,3,field,6/13/2019 7:27,3,3,5,99.97934552
+    ANON1234,Plan_name,3,field,6/13/2019 7:27,3,3,10,99.97706894
+    ANON1234,Plan_name,3,field,6/13/2019 7:27,2,3,5,99.88772435
+    ANON1234,Plan_name,4,field,6/13/2019 7:27,3,2,10,99.99941874
+    ANON1234,Plan_name,4,field,6/13/2019 7:27,3,3,5,100
+    ANON1234,Plan_name,4,field,6/13/2019 7:27,3,3,10,100
+    ANON1234,Plan_name,4,field,6/13/2019 7:27,2,3,5,99.99533258
+
+We can see that all data here is of the same patient, plan, and date. In this
+example, we want to evaluate the variation of Gamma Pass Rate(%) as a function
+of DD(%), DTA(mm), and Threshold(%). So, in this context, we really only want
+two rows of data, one for each field id (*i.e.*, 3 or 4).
+
+.. code-block:: python
+
+    from dvhastats.utilities import csv_to_dict, widen_data
+    data_dict = csv_to_dict("path_to_csv_file.csv")
+    uid_columns = ['patient', 'plan', 'field id']  # only field id really needed in this case
+    x_data_cols = ['DD(%)', 'DTA(mm)', 'Threshold(%)']
+    y_data_col = 'Gamma Pass Rate(%)'
+    wide_data = widen_data(data_dict, uid_columns, x_data_cols, y_data_col)
+    >>> wide_data
+        {'uid': ['ANON1234Plan_name3', 'ANON1234Plan_name4'],
+         '2/3/5': ['99.88772435', '99.99533258'],
+         '3/2/10': ['99.94708217', '99.99941874'],
+         '3/3/10': ['99.97706894', '100'],
+         '3/3/5': ['99.97934552', '100']}
+
+
 
 
 .. |plot| image:: https://user-images.githubusercontent.com/4778878/91908372-0c4c2d80-ec71-11ea-9dfc-7c4f6c209542.png

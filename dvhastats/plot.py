@@ -92,6 +92,7 @@ class Plot(Chart):
     scatter_color : str, optional
         Specify the scatter plot circle color
     """
+
     def __init__(
         self,
         y,
@@ -363,6 +364,7 @@ class HeatMap(Chart):
     show : bool
         Automatically show the figure
     """
+
     def __init__(
         self,
         X,
@@ -410,6 +412,7 @@ class PCAFeatureMap(HeatMap):
     show : bool
         Automatically show the figure
     """
+
     def __init__(
         self,
         X,
@@ -527,6 +530,7 @@ class Histogram(DistributionChart):
         Any keyword argument may be set per matplotlib histogram:
         https://matplotlib.org/3.3.1/api/_as_gen/matplotlib.pyplot.hist.html
     """
+
     def __init__(
         self,
         data,
@@ -571,6 +575,7 @@ class BoxPlot(DistributionChart):
         Any keyword argument may be set per matplotlib histogram:
         https://matplotlib.org/3.3.1/api/_as_gen/matplotlib.pyplot.boxplot.html
     """
+
     def __init__(
         self,
         data,

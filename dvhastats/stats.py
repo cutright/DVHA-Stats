@@ -779,7 +779,7 @@ class HotellingT2:
 
 
 class RiskAdjustedControlChart(ControlChart):
-    """ Calculate a risk-adjusted univariate Control Chart (with linear MVR)
+    """Calculate a risk-adjusted univariate Control Chart (with linear MVR)
 
     Parameters
     ----------
@@ -803,6 +803,7 @@ class RiskAdjustedControlChart(ControlChart):
     back_elim_p : float
         p-value threshold for backward elimination
     """
+
     def __init__(
         self,
         X,
