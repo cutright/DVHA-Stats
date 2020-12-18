@@ -19,7 +19,7 @@ Before attempting the examples below, run these lines first:
 This assumes that your csv is formatted such that it contains one row per
 observation (*i.e.*, wide format). If your csv contains multivariate data with
 one row per dependent value (*i.e.*, narrow format), you can use
-:mod:`dvhastats.utilities.widen_data`. See
+:meth:`dvhastats.utilities.widen_data`. See
 :ref:`Reformatting CSV` for an example.
 
 
