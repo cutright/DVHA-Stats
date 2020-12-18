@@ -13,8 +13,8 @@ Before attempting the examples below, run these lines first:
 
 .. code-block:: python
 
-    from dvhastats.ui import DVHAStats
-    s = DVHAStats("your_data.csv")  # use s = DVHAStats() for test data
+    >>> from dvhastats.ui import DVHAStats
+    >>> s = DVHAStats("your_data.csv")  # use s = DVHAStats() for test data
 
 This assumes that your csv is formatted such that it contains one row per
 observation (*i.e.*, wide format). If your csv contains multivariate data with
@@ -49,8 +49,8 @@ Calculation with `numpy <https://numpy.org/doc/stable/reference/generated/numpy.
 
 .. code-block:: python
 
-    h = s.histogram('V1')
-    hist, center = h.hist_data
+    >>> h = s.histogram('V1')
+    >>> hist, center = h.hist_data
     >>> hist
     array([ 2,  0,  0,  0,  0,  1,  1,  0,  1,  0,  5,  4,  9, 15, 17, 10,  1,
         1,  1,  0,  1]
@@ -92,7 +92,7 @@ Calculation with `scipy <https://docs.scipy.org/doc/scipy/reference/generated/sc
 
 .. code-block:: python
 
-    pearson_mat = s.correlation_matrix()
+    >>> pearson_mat = s.correlation_matrix()
     >>> pearson_mat.corr  # correlation array
     array([[1.        , 0.93160407, 0.72199862, 0.56239953, 0.51856243, 0.49619153],
            [0.93160407, 1.        , 0.86121347, 0.66329274, 0.5737434 , 0.51111648],
@@ -117,7 +117,7 @@ Calculation with `scipy <https://docs.scipy.org/doc/scipy/reference/generated/sc
 
 .. code-block:: python
 
-    spearman_mat = s.correlation_matrix("Spearman")
+    >>> spearman_mat = s.correlation_matrix("Spearman")
     >>> spearman_mat.show()
 
 |spearman|
@@ -126,7 +126,7 @@ Univariate Control Chart
 ########################
 .. code-block:: python
 
-    ucc = s.univariate_control_charts()
+    >>> ucc = s.univariate_control_charts()
     >>> ucc['V1']
     center_line: 42.845
     control_limits: 22.210, 63.480
@@ -140,7 +140,7 @@ Multivariate Control Chart
 ##########################
 .. code-block:: python
 
-    ht2 = s.hotelling_t2()
+    >>> ht2 = s.hotelling_t2()
     >>> ht2
     Q: [ 5.75062092  3.80141786  3.67243782 18.80124504  2.03849294 18.15447155
          4.54475048 10.40783971  3.60614333  4.03138994  6.45171623  4.60475303
@@ -168,7 +168,7 @@ Calculation with `scipy <https://docs.scipy.org/doc/scipy/reference/generated/sc
 
 .. code-block:: python
 
-    bc = s.box_cox_by_index(0)
+    >>> bc = s.box_cox_by_index(0)
     >>> bc
     array([3185.2502073 , 2237.32503551, 2257.79294148, 4346.90639712,
            2136.50469314, 2425.19594298, 2382.73410297, 2319.80580872,
@@ -193,7 +193,7 @@ Multivariate Control Chart (w/ non-normal data)
 ###############################################
 .. code-block:: python
 
-    ht2_bc = s.hotelling_t2(box_cox=True)
+    >>> ht2_bc = s.hotelling_t2(box_cox=True)
     >>> ht2_bc.show()
 
 |hotelling-t2-bc|
@@ -204,8 +204,7 @@ Calculation with `sklearn <https://scikit-learn.org/stable/modules/generated/skl
 
 .. code-block:: python
 
-    mvr = s.linear_reg("V1")
-
+    >>> mvr = s.linear_reg("V1")
     >>> mvr
 
     Multi-Variable Regression results/model
@@ -236,7 +235,7 @@ Calculation with `sklearn <https://scikit-learn.org/stable/modules/generated/skl
 
 .. code-block:: python
 
-   mvr2 = s.linear_reg("V1", back_elim=True)
+   >>> mvr2 = s.linear_reg("V1", back_elim=True)
    >>> mvr2
 
    Multi-Variable Regression results/model
@@ -259,7 +258,7 @@ Risk-Adjusted Control Chart
 
 .. code-block:: python
 
-    ra_cc = s.risk_adjusted_control_chart("V1", back_elim=True)
+    >>> ra_cc = s.risk_adjusted_control_chart("V1", back_elim=True)
     >>> ra_cc.show()
 
 |ra-cc|
@@ -270,7 +269,7 @@ Calculation with `sklearn <https://scikit-learn.org/stable/modules/generated/skl
 
 .. code-block:: python
 
-    pca = s.pca()
+    >>> pca = s.pca()
     >>> pca.feature_map_data
     array([[ 0.35795147,  0.44569046,  0.51745294,  0.48745318,  0.34479542, 0.22131141],
            [-0.52601728, -0.51017406, -0.02139406,  0.4386136 ,  0.43258992, 0.28819198],
@@ -308,12 +307,12 @@ two rows of data, one for each field id (*i.e.*, 3 or 4).
 
 .. code-block:: python
 
-    from dvhastats.utilities import csv_to_dict, widen_data
-    data_dict = csv_to_dict("path_to_csv_file.csv")
-    uid_columns = ['patient', 'plan', 'field id']  # only field id really needed in this case
-    x_data_cols = ['DD(%)', 'DTA(mm)', 'Threshold(%)']
-    y_data_col = 'Gamma Pass Rate(%)'
-    wide_data = widen_data(data_dict, uid_columns, x_data_cols, y_data_col)
+    >>> from dvhastats.utilities import csv_to_dict, widen_data
+    >>> data_dict = csv_to_dict("path_to_csv_file.csv")
+    >>> uid_columns = ['patient', 'plan', 'field id']  # only field id really needed in this case
+    >>> x_data_cols = ['DD(%)', 'DTA(mm)', 'Threshold(%)']
+    >>> y_data_col = 'Gamma Pass Rate(%)'
+    >>> wide_data = widen_data(data_dict, uid_columns, x_data_cols, y_data_col)
     >>> wide_data
         {'uid': ['ANON1234Plan_name3', 'ANON1234Plan_name4'],
          '2/3/5': ['99.88772435', '99.99533258'],

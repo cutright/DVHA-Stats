@@ -47,8 +47,8 @@ Basic Usage
 
 .. code-block:: python
 
-    from dvhastats.ui import DVHAStats
-    s = DVHAStats("your_data.csv")  # use s = DVHAStats() for test data
+    >>> from dvhastats.ui import DVHAStats
+    >>> s = DVHAStats("your_data.csv")  # use s = DVHAStats() for test data
 
     >>> s.var_names
     ['V1', 'V2', 'V3', 'V4', 'V5', 'V6']
@@ -62,7 +62,7 @@ Multivariate Control Chart (w/ non-normal data)
 ###############################################
 .. code-block:: python
 
-    ht2_bc = s.hotelling_t2(box_cox=True)
+    >>> ht2_bc = s.hotelling_t2(box_cox=True)
     >>> ht2_bc.show()
 
 |hotelling-t2-bc|
@@ -72,7 +72,7 @@ Principal Component Analysis (PCA)
 ##################################
 .. code-block:: python
 
-    pca = s.pca()
+    >>> pca = s.pca()
     >>> pca.show()
 
 |pca|
