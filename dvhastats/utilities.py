@@ -12,6 +12,7 @@
 import numpy as np
 from os.path import isfile, splitext
 from dateutil.parser import parse as date_parser
+import csv
 
 
 def apply_dtype(value, dtype):
@@ -48,7 +49,7 @@ def csv_to_dict(csv_file_path, delimiter=",", dtype=None, header_row=True):
         File path to the CSV file to be processed.
     delimiter : str
         Specify the delimiter used in the csv file (default = ',')
-    dtype : None, Type, optional
+    dtype : callable, type, optional
         Optionally force values to a type (e.g., float, int, str, etc.).
     header_row : bool, optional
         If True, the first row is interpreted as column keys, otherwise row
@@ -60,24 +61,22 @@ def csv_to_dict(csv_file_path, delimiter=",", dtype=None, header_row=True):
         CSV data as a dict, using the first row values as keys
     """
 
-    with open(csv_file_path) as fp:
-
-        # Read first row, determine column keys
-        first_row = fp.readline().strip().split(delimiter)
+    with open(csv_file_path, "r") as fp:
+        reader = csv.reader(fp, delimiter=delimiter)
         if header_row:
+            first_row = next(reader)
             keys = [key.strip() for key in first_row]
-            data = {key: [] for key in keys}
+            data = list(reader)
         else:
-            keys = list(range(len(first_row)))
-            data = {key: [apply_dtype(first_row[key], dtype)] for key in keys}
+            data = list(reader)
+            keys = list(range(len(data[0])))
 
-        # Iterate through remaining rows, append values to data
-        for r, line in enumerate(fp):
-            row = line.strip().split(",")
-            for c, value in enumerate(row):
-                data[keys[c]].append(apply_dtype(value, dtype))
+    data_dict = {key: [] for key in keys}
+    for row in data:
+        for c, value in enumerate(row):
+            data_dict[keys[c]].append(apply_dtype(value, dtype))
 
-    return data
+    return data_dict
 
 
 def dict_to_array(data, key_order=None):
@@ -86,7 +85,7 @@ def dict_to_array(data, key_order=None):
     Parameters
     ----------
     data : dict
-        File path to the CSV file to be processed.
+        Dictionary of data to be converted to np.array.
     key_order : None, list of str
         Optionally the order of columns
 
@@ -199,7 +198,7 @@ def widen_data(
 
         params = "/".join([str(data_dict[col][row]) for col in x_data_cols])
 
-        date = row if date_col is None else data_dict[date_col][row]
+        date = 0 if date_col is None else data_dict[date_col][row]
         if date not in data[uid].keys():
             data[uid][date] = {}
 

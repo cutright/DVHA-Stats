@@ -13,7 +13,7 @@
 import unittest
 from os.path import join
 import numpy as np
-from numpy.testing import assert_array_equal, assert_array_almost_equal
+from numpy.testing import assert_array_equal
 from dvhastats import utilities
 from dateutil.parser import parse as date_parser
 from dateutil.parser._parser import ParserError
@@ -189,12 +189,12 @@ class TestUtilities(unittest.TestCase):
         for key, exp_value in expected.items():
             assert_array_equal(ds[key], exp_value)
 
-        # No date test - currently failing!
-        # kwargs_no_date = {key: value for key, value in kwargs.items()}
-        # kwargs_no_date['date_col'] = None
-        # ds_2 = utilities.widen_data(data_dict, **kwargs_no_date)
-        # for key, ds_2_value in ds_2.items():
-        #     assert_array_equal(ds_2_value, expected[key])
+        # No date test
+        kwargs_no_date = {key: value for key, value in kwargs.items()}
+        kwargs_no_date["date_col"] = None
+        ds_2 = utilities.widen_data(data_dict, **kwargs_no_date)
+        for key, ds_2_value in ds_2.items():
+            assert_array_equal(ds_2_value, expected[key])
 
         # test column length check
         data_dict_2 = utilities.csv_to_dict(example_narrow_data)
