@@ -38,7 +38,7 @@ setup(
     python_requires='>3.5',
     packages=['dvhastats'],
     package_dir={'dvhastats': 'dvhastats'},
-    description='Simple DICOM tag editor built with wxPython and pydicom',
+    description='A library of prediction and statistical process control tools',
     author=__author__,
     author_email=__email__,
     maintainer=__author__,
@@ -50,6 +50,7 @@ setup(
     classifiers=CLASSIFIERS,
     install_requires=requires,
     long_description=long_description,
+    long_description_content_type='text/x-rst',
     test_suite='tests',
     tests_require=[]
 )
