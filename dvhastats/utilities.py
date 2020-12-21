@@ -146,7 +146,8 @@ def widen_data(
     dtype=None,
     date_parser_kwargs=None,
 ):
-    """Convert a flat data dictionary into wide format
+    """Convert a narrow data dictionary into wide format (i.e., from one row
+    per dependent value to one row per observation)
 
     Parameters
     ----------

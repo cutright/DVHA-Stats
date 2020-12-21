@@ -4,7 +4,7 @@ dvhastats
 |logo|
 
 
-|build| |Docs| |pypi| |python-version| |lgtm| |lgtm-cq| |Codecov| |code-style|
+|build| |Docs| |pypi| |python-version| |lgtm| |lgtm-cq| |Codecov| |lines| |repo-size| |code-style|
 
 A library of prediction and statistical process control tools. Although based
 on work in `DVH Analytics <http://www.dvhanalytics.com>`__, all tools in this
@@ -101,6 +101,14 @@ Principal Component Analysis (PCA)
 .. |code-style| image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :target: https://github.com/psf/black
    :alt: Code style: black
+
+.. |lines| image:: https://img.shields.io/tokei/lines/github/cutright/dvha-stats
+   :target: https://img.shields.io/tokei/lines/github/cutright/dvha-stats
+   :alt: Lines of code
+
+.. |repo-size| image:: https://img.shields.io/github/languages/code-size/cutright/dvha-stats
+   :target: https://img.shields.io/github/languages/code-size/cutright/dvha-stats
+   :alt: Repo Size
 
 .. |plot| raw:: html
 

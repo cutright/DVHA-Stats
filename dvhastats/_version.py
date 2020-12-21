@@ -3,7 +3,7 @@
 # _version.py
 """Package initialization for DVHA-Stats."""
 # Copyright (c) 2020 Dan Cutright
-# This file is part of dicompyler-core, relased under a MIT license.
+# This file is part of dvha-stats, released under a MIT license.
 #    See the file LICENSE included with this distribution, also
 #    available at https://github.com/cutright/DVHA-Stats
 
