@@ -14,6 +14,7 @@ Welcome to the documentation for DVHA-Stats!
    usage
    Module Reference <modules>
    authors
+   history
 
 
 
