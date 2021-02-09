@@ -158,7 +158,7 @@ Multivariate Control Chart
     control_limits: 0, 13.555
     out_of_control: [ 3  5 13 23 50 51 57 60 65]
 
-    >>> ht2.show()ht
+    >>> ht2.show()
 
 |hotelling-t2|
 
