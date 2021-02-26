@@ -179,11 +179,11 @@ class TestUtilities(unittest.TestCase):
         expected = {
             "uid": ["ANON1234Plan_name3", "ANON1234Plan_name4"],
             "date": ["6/13/2019 7:27", "6/13/2019 7:27"],
-            "2/3/10": [np.nan, 99.99476863],
-            "2/3/5": [99.88772435, 99.99533258],
-            "3/2/10": [99.94708217, 99.99941874],
-            "3/3/10": [99.97706894, 100],
-            "3/3/5": [99.97934552, 100],
+            "2 && 3 && 10": [np.nan, 99.99476863],
+            "2 && 3 && 5": [99.88772435, 99.99533258],
+            "3 && 2 && 10": [99.94708217, 99.99941874],
+            "3 && 3 && 10": [99.97706894, 100],
+            "3 && 3 && 5": [99.97934552, 100],
         }
 
         for key, exp_value in expected.items():
@@ -208,20 +208,20 @@ class TestUtilities(unittest.TestCase):
 
         ds = utilities.widen_data(data_dict, multi_val_policy="last", **kwargs)
         index = ds["uid"].index("ANON1234Plan_name4")
-        self.assertEqual(ds["2/3/10"][index], 50)
+        self.assertEqual(ds["2 && 3 && 10"][index], 50)
 
         ds = utilities.widen_data(data_dict, multi_val_policy="min", **kwargs)
         index = ds["uid"].index("ANON1234Plan_name4")
-        self.assertEqual(ds["2/3/10"][index], 50)
+        self.assertEqual(ds["2 && 3 && 10"][index], 50)
 
         ds = utilities.widen_data(data_dict, multi_val_policy="max", **kwargs)
         index = ds["uid"].index("ANON1234Plan_name4")
-        self.assertEqual(ds["2/3/10"][index], expected["2/3/10"][index])
+        self.assertEqual(ds["2 && 3 && 10"][index], expected["2 && 3 && 10"][index])
 
         ds = utilities.widen_data(
             data_dict, remove_partial_columns=True, **kwargs
         )
-        self.assertTrue("2/3/10" not in ds.keys())
+        self.assertTrue("2 && 3 && 10" not in ds.keys())
 
 
 if __name__ == "__main__":
