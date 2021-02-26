@@ -197,7 +197,7 @@ def widen_data(
         if uid not in list(data):
             data[uid] = {}
 
-        params = "/".join([str(data_dict[col][row]) for col in x_data_cols])
+        params = " && ".join([str(data_dict[col][row]) for col in x_data_cols])
 
         date = 0 if date_col is None else data_dict[date_col][row]
         if date not in data[uid].keys():
