@@ -197,7 +197,9 @@ def widen_data(
         if uid not in list(data):
             data[uid] = {}
 
-        params = " && ".join([str(data_dict[col][row]) for col in x_data_cols])
+        vals = [data_dict[col][row] for col in x_data_cols]
+        vals = [float(v) if is_numeric(v) else v for v in vals]
+        params = " && ".join([str(v) for v in vals])
 
         date = 0 if date_col is None else data_dict[date_col][row]
         if date not in data[uid].keys():
@@ -350,3 +352,23 @@ def str_arr_to_date_arr(arr, date_parser_kwargs=None, force=False):
                 raise e
         dates.append(date)
     return dates
+
+
+def is_numeric(val):
+    """Check if value is numeric (float or int)
+
+    Parameters
+    ----------
+    val : any
+        Any value
+
+    Returns
+    -------
+    bool
+        Returns true if float(val) doesn't raise a ValueError
+    """
+    try:
+        float(val)
+        return True
+    except ValueError:
+        return False

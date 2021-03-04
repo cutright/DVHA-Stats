@@ -12,3 +12,4 @@ omit =
     tests/*
     docs/*
     venv/*
+    dvhastats/machine_learning.py

@@ -47,6 +47,7 @@ ALGORITHMS = {
 }
 
 
+# TODO: re-enable in .coveragerc when ready
 class MachineLearning:
     """Generic Machine Learning class based on scikit-learn
 
