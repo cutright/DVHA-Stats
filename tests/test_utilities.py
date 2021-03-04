@@ -226,6 +226,10 @@ class TestUtilities(unittest.TestCase):
         )
         self.assertTrue("2.0 && 3.0 && 10.0" not in ds.keys())
 
+    def test_is_numeric(self):
+        self.assertTrue(utilities.is_numeric(3))
+        self.assertFalse(utilities.is_numeric('a'))
+
 
 if __name__ == "__main__":
     import sys
