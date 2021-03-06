@@ -192,7 +192,7 @@ def widen_data(
 
     data = {}
     for row in range(len(data_dict[y_data_col])):
-        uid = "".join([str(data_dict[col][row]) for col in uid_columns])
+        uid = " && ".join([str(data_dict[col][row]) for col in uid_columns])
 
         if uid not in list(data):
             data[uid] = {}
