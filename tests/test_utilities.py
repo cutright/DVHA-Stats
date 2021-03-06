@@ -177,7 +177,7 @@ class TestUtilities(unittest.TestCase):
         ds = utilities.widen_data(data_dict, **kwargs)
 
         expected = {
-            "uid": ["ANON1234Plan_name3", "ANON1234Plan_name4"],
+            "uid": ["ANON1234 && Plan_name && 3", "ANON1234 && Plan_name && 4"],
             "date": ["6/13/2019 7:27", "6/13/2019 7:27"],
             "2.0 && 3.0 && 10.0": [np.nan, 99.99476863],
             "2.0 && 3.0 && 5.0": [99.88772435, 99.99533258],
@@ -207,15 +207,15 @@ class TestUtilities(unittest.TestCase):
             utilities.widen_data(data_dict, multi_val_policy="test", **kwargs)
 
         ds = utilities.widen_data(data_dict, multi_val_policy="last", **kwargs)
-        index = ds["uid"].index("ANON1234Plan_name4")
+        index = ds["uid"].index("ANON1234 && Plan_name && 4")
         self.assertEqual(ds["2.0 && 3.0 && 10.0"][index], 50)
 
         ds = utilities.widen_data(data_dict, multi_val_policy="min", **kwargs)
-        index = ds["uid"].index("ANON1234Plan_name4")
+        index = ds["uid"].index("ANON1234 && Plan_name && 4")
         self.assertEqual(ds["2.0 && 3.0 && 10.0"][index], 50)
 
         ds = utilities.widen_data(data_dict, multi_val_policy="max", **kwargs)
-        index = ds["uid"].index("ANON1234Plan_name4")
+        index = ds["uid"].index("ANON1234 && Plan_name && 4")
         self.assertEqual(
             ds["2.0 && 3.0 && 10.0"][index],
             expected["2.0 && 3.0 && 10.0"][index],
